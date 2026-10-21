@@ -12,6 +12,14 @@
 #include <filesystem>
 
 static int checks = 0;
+struct FileFixture {
+    std::filesystem::path folder;
+    explicit FileFixture(std::filesystem::path const& base) : folder(std::filesystem::absolute(base) /
+        (L"SeedFlow-regression-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64()))) {
+        if (!std::filesystem::create_directory(folder)) throw std::runtime_error("Fixture directory already exists");
+    }
+    ~FileFixture() { std::error_code ignored; std::filesystem::remove_all(folder, ignored); }
+};
 static void check(bool condition, char const* name) {
     if (!condition) throw std::runtime_error(name);
     ++checks;
@@ -28,6 +36,27 @@ int wmain(int argc, wchar_t** argv) {
     HMODULE module = nullptr;
     try {
         check(argc == 2 || argc == 3, "executable argument");
+        {
+            FileFixture fixture(std::filesystem::path(argv[1]).parent_path());
+            auto path = fixture.folder / L"settings.dat";
+            std::vector<char> first{'o', 'l', 'd'}, second{'n', 'e', 'w'}, read{'x'};
+            std::string error = "previous error";
+            bool const first_saved = sf::file_io::write_atomic(path, first, error, true);
+            if (!first_saved) std::cerr << "File I/O: " << error << "\n";
+            check(first_saved && error.empty(), "first atomic write succeeds and clears old error");
+            check(sf::file_io::read_bounded(path, read, 3) && read == first, "bounded file read accepts exact limit");
+            check(!sf::file_io::read_bounded(path, read, 2) && read == first, "oversized file rejected before replacing caller buffer");
+            check(sf::file_io::write_atomic(path, second, error, true), "atomic replacement succeeds on existing Windows file");
+            check(sf::file_io::read_bounded(path.wstring() + L".bak", read, 3) && read == first, "backup preserves previous complete settings");
+            check(sf::file_io::read_bounded(path, read, 3) && read == second, "replacement contains the new complete data");
+            std::filesystem::remove(path.wstring() + L".bak");
+            std::filesystem::create_directory(path.wstring() + L".bak");
+            check(!sf::file_io::write_atomic(path, first, error, true) && !error.empty(), "backup failure is reported instead of ignored");
+            check(sf::file_io::read_bounded(path, read, 3) && read == second, "backup failure leaves existing settings unchanged");
+            check(!std::filesystem::exists(path.wstring() + L".tmp"), "failed replacement removes its temporary file");
+            auto empty = fixture.folder / L"empty.dat";
+            check(sf::file_io::write_atomic(empty, {}, error) && sf::file_io::read_bounded(empty, read, 0) && read.empty(), "empty file write and read remain supported");
+        }
         std::wstring text = L"Identità · Velocità · Giù · è à ì ò ù · 中文 · \U0001f642";
         check(sf::widen(sf::narrow(text)) == text, "UTF-8 / UTF-16 accents, CJK and supplementary character");
         check(sf::json_unescape("Velocit\\u00e0") == sf::narrow(L"Velocità"), "legacy JSON accent");

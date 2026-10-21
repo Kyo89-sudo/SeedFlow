@@ -1,10 +1,10 @@
 #include "settings.hpp"
+#include "file_io.hpp"
 #include <algorithm>
 #include "util.hpp"
 #include <libtorrent/entry.hpp>
 #include <libtorrent/bencode.hpp>
 #include <libtorrent/bdecode.hpp>
-#include <fstream>
 #include <iterator>
 #include <regex>
 #include <vector>
@@ -22,10 +22,8 @@ wchar_t const* const kRatioActionLabels[4] = {
 static fs::path settings_file() { return state_dir() / L"settings.dat"; }
 
 static bool read_file(fs::path const& p, std::vector<char>& out) {
-    std::ifstream in(p, std::ios::binary);
-    if (!in) return false;
-    out.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-    return true;
+    // Settings and the old JSON import are small metadata files, not payload data.
+    return file_io::read_bounded(p, out, 32u * 1024u * 1024u);
 }
 
 static std::int64_t gi(lt::bdecode_node const& d, char const* k, std::int64_t def) { return d.dict_find_int_value(k, def); }
@@ -167,19 +165,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         }
         std::vector<char> out;
         lt::bencode(std::back_inserter(out), e);
-        fs::create_directories(state_dir());
-        fs::path file = settings_file();
-        fs::path tmp = file.wstring() + L".tmp";
-        {
-            std::ofstream o(tmp, std::ios::binary | std::ios::trunc);
-            o.write(out.data(), static_cast<std::streamsize>(out.size()));
-            if (!o) { error = "scrittura non riuscita"; return false; }
-        }
-        std::error_code fec;
-        if (fs::exists(file)) fs::copy_file(file, file.wstring() + L".bak", fs::copy_options::overwrite_existing, fec);
-        fs::rename(tmp, file, fec);
-        if (fec) { error = fec.message(); return false; }
-        return true;
+        return file_io::write_atomic(settings_file(), out, error, true);
     } catch (std::exception const& ex) { error = ex.what(); return false; }
 }
 
