@@ -46,7 +46,7 @@ Chiudi prima eventuali altre istanze, anche nella tray. Lo stato viene conservat
 ## Schermata del programma
 
 <p align="center">
-<a href="docs/seedflow-0.8.4-main-window.png"><img src="docs/seedflow-0.8.4-main-window.png" alt="SeedFlow 0.8.4 — finestra principale" width="820"></a>
+<a href="docs/seedflow-0.8.4-main-window.png"><img src="docs/seedflow-preview.svg" alt="SeedFlow 0.8.4 — finestra principale" width="640"></a>
 </p>
 
 *Clicca sull’immagine per aprirla nelle dimensioni originali.*
