@@ -1,339 +1,72 @@
-SeedFlow 0.8.4 (r14) - 21/10/2026
-- Aggiunta scheda Velocità: grafico nativo Windows di download e upload globali,
-  ultimi cinque minuti di sessione, scala automatica e due curve distinguibili.
-  Memoria storica limitata a 301 campioni, nessuna DLL o libreria grafica nuova.
-- FIX diagnostica porta: risultato in una mailbox con proprietario condiviso,
-  messaggio Windows di sola notifica. La chiusura durante la verifica non lascia
-  un risultato allocato nella coda messaggi; recupero anche dal timer se serve.
-  Gestiti anche gli errori di avvio del thread e le eccezioni del controllo.
-- FIX disposizione colonne salvata: rifiutati duplicati, indici fuori intervallo,
-  valori non numerici e larghezze fuori intervallo, con ripristino dei default
-  solo per la parte non valida. Ordini validi e intestazioni con frecce conservati.
-- FIX icone: argomenti nulli/dimensioni non valide respinti prima dell'allocazione.
-- Aggiornati versione condivisa, manifest, CMake, script e documentazione.
+SeedFlow — note di rilascio
 
-Storico precedente fornito con l'archivio r13:
+0.8.4 r15 · in prova · 21 ottobre 2026
 
-SeedFlow 0.8.3 (r13) - 20/10/2026
-- Nuovo set di icone SeedFlow (stile A "duotone": griglia 24, tratto 2,
-  riempimento in tinta 18%, palette unica). 42 icone originali in
-  res/icons/svg, pre-renderizzate in strisce PNG 16/20/24/28/32/40/48 px e
-  incorporate nell'EXE; decodifica con WIC (componente di Windows), nessuna
-  dipendenza nuova. Sostituiscono i glifi Segoe Fluent/MDL2 in barra
-  strumenti, menu, filtri, stati, schede, area di notifica e Preferenze.
-  Rigenerazione: tools/make_icons.py.
-- Barra di avanzamento ridisegnata nello stesso stile: angoli arrotondati con
-  antialias, traccia in tinta del colore di stato, contorno e riempimento
-  pieno; percentuale bianca sopra il riempimento e scura sulla traccia.
-- Verifica dei file rifatta: barra arancione a strisce animate con
-  "Verifica 45,2%", "In coda: verifica" per i torrent in attesa di verifica,
-  "Verifica in pausa", "Lettura dati di ripristino..." animata; "Recupero
-  metadati..." e "Spostamento..." con segmento animato. L'animazione (100 ms)
-  e' attiva solo quando serve e ridisegna solo le celle interessate.
-- Nuova colonna "Salute" (dopo Peer): cinque tacche e copie complete stimate
-  dello sciame (disponibilita' dei peer connessi, seed da scrape, la tua copia
-  se completo). Critica / Scarsa / Sufficiente / Buona / Ottima, ordinabile.
-  Anche nella scheda Generale ("Salute: Buona (2,37 copie)").
-- Preferenze unificate come uTorrent (Opzioni > Preferenze, Ctrl+P o pulsante
-  in barra strumenti): albero a sinistra con Generale, Cartelle, Connessione,
-  Banda, BitTorrent, Code e ratio, Identita' client, Avanzate > Prestazioni e
-  memoria; OK / Annulla / Applica. Se un valore non e' valido si apre la pagina
-  interessata. Sostituisce le finestre separate Rete, Trasferimenti,
-  Prestazioni, User-Agent e Cartella (codice rimosso).
-- Generale: "Avvia SeedFlow all'accesso a Windows" (chiave Run dell'utente)
-  con "Avvia ridotto nell'area di notifica".
-- Avanzate: priorita' del processo (Normale / Sotto il normale / Bassa).
-- Colori di stato allineati alla palette delle icone.
-- Pulsante Ratio: senza torrent selezionati non faceva nulla; ora apre
-  Preferenze > Code e ratio (ratio globale). Con torrent selezionati apre il
-  limite del torrent e la regola viene applicata subito al salvataggio.
-- Barra di stato: "Velocita' download" / "Velocita' upload" (con il limite
-  globale tra parentesi quadre) e "Totale scaricati / caricati"; anche nel
-  suggerimento dell'icona nella tray.
-- Revisione bug/leak:
-  - Preferenze: se una pagina rifiutava un valore, le pagine precedenti
-    restavano modificate in memoria e venivano salvate dopo Annulla; ora le
-    impostazioni tornano com'erano e l'avvio automatico si scrive nel
-    registro solo quando tutte le pagine sono valide.
-  - Menu contestuali: prima ogni clic destro creava ~40 bitmap (poi liberate)
-    anche per voci assenti; ora solo per le voci presenti.
-  - Icone del menu principale rigenerate al cambio di DPI (monitor diverso).
-  - Tema della lista aperto una volta e riaperto solo al cambio di tema,
-    non a ogni cella disegnata.
-  - Motore: valore non inizializzato nel ripristino dei .fastresume
-    (poteva far mancare il messaggio di errore nel log).
-- Test di regressione: menu Preferenze, modelli delle pagine, strisce di
-  icone incorporate (una cella per icona), soglie della Salute; il test si
-  collega anche con llvm-mingw (-municode).
+Questa revisione riparte dalla r14. L'interfaccia e le funzioni restano quelle
+che già conosci; il lavoro riguarda soprattutto affidabilità e piccoli difetti.
 
-SeedFlow 0.8.2 (r12) - 20/10/2026
-- FIX tracker tutti in errore. libtorrent 2.x annuncia da ogni indirizzo locale
-  (ogni scheda di rete, IPv4 e IPv6). Gli indirizzi che non raggiungono Internet
-  (vEthernet Hyper-V/WSL, VPN, VirtualBox, IPv6 senza connettivita') andavano in
-  timeout e passavano ai tier di riserva: ogni tracker accumulava "timed out" e
-  quello funzionante restava su "Aggiornamento...". La tab Tracker ora ignora gli
-  indirizzi locali che nessun tracker raggiunge (finche' almeno uno funziona),
-  mostra lo stato dell'indirizzo migliore e una riga informativa con il numero
-  di indirizzi ignorati.
-- Annuncio a tutti i tracker e a tutti i tier (come uTorrent/qBittorrent):
-  piu' peer e stato reale di ogni tracker; i tracker non necessari non
-  compaiono piu' come errori.
-- Opzioni > Rete: "Annuncia sempre a tutti i tracker dello stesso tier" e
-  "Annuncia sempre a tutti i tier" (come qBittorrent), attive di default.
-- Nuovo stato "Di riserva" per i tracker non contattati perche' un altro risponde.
-- Opzioni > Rete: "Usa anche IPv6" per non ascoltare/annunciare su IPv6 quando
-  la linea non lo supporta.
-- Diagnostica: un errore UPnP precedente non resta piu' visibile dopo la
-  mappatura riuscita; avviso quando il router assegna una porta esterna
-  diversa (porta gia' occupata da un'altra regola) con il rimedio.
-- Coda alert portata a 5000: con molti torrent all'avvio gli eventi di ascolto
-  e UPnP andavano persi ("nessun evento di ascolto ricevuto").
-- "Download completato" nel log solo per i torrent scaricati davvero (non piu'
-  ad ogni avvio per i torrent gia' completi).
-- L'User-Agent predefinito segue la versione dell'applicazione.
-- Riprodotto e verificato con un tracker HTTP/UDP locale e libtorrent 2.1.2:
-  prima un tracker funzionante risultava "Aggiornamento" e gli altri in errore,
-  ora risultano funzionanti; un tracker inesistente resta correttamente in errore.
+Nell'interfaccia
+- "Prestazioni e memoria" ora entra per intero nell'albero delle Preferenze.
+- La barra di stato si adatta meglio alle finestre strette. Passando il mouse
+  sui riquadri puoi leggere i valori completi anche quando manca spazio.
+- Nel pannello Generale vuoto, il messaggio usa tutta la larghezza disponibile.
 
-SeedFlow 0.8.1 (r11) - 20/10/2026
-- Corretti accenti menu/dialoghi: UTF-8 esplicito per rc.exe e windres.
-- Suddivisa una descrizione che RC troncava a 256 caratteri.
-- Controlli lista e toolbar Unicode; buffer notifiche testo protetti.
-- Corrette coppie surrogate/escape JSON nella migrazione dalla GUI WPF.
-- Percorsi della diagnostica fast resume mantenuti in UTF-8.
-- Rilasciate le bitmap dopo ogni menu contestuale/tray; niente accumulo GDI.
-- Corretti overflow nel parsing numerico e formato INT64_MIN.
-- Gli appunti vengono svuotati solo dopo la preparazione dei dati da copiare.
-- Versione condivisa in src/version.h: titolo, Informazioni, manifest,
-  metadati Windows, User-Agent e fingerprint predefiniti coerenti.
-  Le identita' personalizzate sono conservate.
-- Fix MSVC: parametro small rinominato (conflitto macro Windows); corretta
-  interrogazione vswhere nello script di build.
-- Test offline ripetibili con SF_BUILD_TESTS; 45 asserzioni superate,
-  incluse 25 ripetizioni menu e conteggio handle GDI.
-- Edizione statica r11: libtorrent 2.1.2, Boost 1.92.0 e OpenSSL 3.6.5
-  collegati con runtime MSVC /MT. Un solo EXE, nessuna DLL da distribuire.
-- CMake rifiuta libtorrent shared quando viene richiesto il runtime statico.
-- Aggiunto test isolato dei flag Super-seeding (SF_BUILD_ENGINE_TESTS).
-  Il collaudo non misura trasferimenti o prestazioni su uno sciame reale.
-- GUI interattiva e trasferimenti reali non collaudati per r11.
+Impostazioni e salvataggi
+- I numeri fuori intervallo nei file di configurazione non vengono più
+  convertiti in valori diversi; vengono usati i valori predefiniti.
+- Il caricamento delle impostazioni e della vecchia sessione JSON ha un limite
+  di 32 MiB, controllato prima di allocare la memoria.
+- Impostazioni e fast resume condividono il codice di scrittura su file
+  temporaneo. Vengono controllati scrittura, chiusura e sostituzione del file.
+- Se il backup delle impostazioni non riesce, il file corrente resta intatto.
+  Gli errori di scrittura del fast resume vengono segnalati nel log.
+- Corretti il ripristino di statistiche mancanti e alcuni casi limite degli
+  appunti Unicode.
 
-Storico r10 fornito con i sorgenti:
-SeedFlow - CHANGELOG
+Diagnostica della rete
+- Il risultato del controllo resta legato alla porta realmente verificata.
+  Un controllo avviato prima di cambiare porta non aggiorna lo stato della nuova.
+- Un vecchio risultato non rimane valido se l'orologio torna indietro.
+- Risposte HTTPS incomplete o troppo grandi vengono rifiutate. Le risorse della
+  richiesta vengono liberate anche se il controllo termina con un'eccezione.
 
-Revisione 10 - SeedFlow 0.8.0 - Win32 nativa (20/10/2026)
-=========================================================
-Riscrittura
-- Interfaccia portata da WPF/.NET a Win32 C++ nativo; un solo SeedFlow.exe con
-  libtorrent, Boost e OpenSSL statici (vcpkg x64-windows-static, runtime /MT).
-- Rimossi: progetto WPF, ponte DLL con API C e JSON, cache dei .torrent, copia
-  DLL/CRT, requisito .NET SDK/Runtime, COMPILA.bat/Compila.ps1 (sostituiti da
-  build.bat e scripts\build.ps1, compatibili VS 2026 e VS 2022).
-- Persistenza: impostazioni in State\settings.dat (bencode, con copia .bak),
-  stato dei torrent nei fast resume di libtorrent, tabella DHT in session.dat.
-- Migrazione automatica dalla 0.7.x (fast resume, magnet, .torrent, impostazioni).
-- Nuova icona vettoriale (SVG sorgente in res\, .ico multi-risoluzione 16-256).
+Distribuzione e verifiche
+- GPL versione 3 e documenti inclusi anche nei pacchetti creati da build.bat.
+- Con -RunTests vengono eseguite entrambe le suite, compreso il test del motore.
+- Rimossi rapporti di verifica storici dal nuovo archivio sorgenti.
+- Nessuna nuova dipendenza: la distribuzione statica resta un solo EXE, oltre
+  ai documenti e alle licenze che lo accompagnano.
+- 124 controlli di regressione superati. Per modalità di compilazione, prove
+  eseguite e limiti del collaudo, consulta VERIFICA.txt.
 
-Interfaccia
-- Elenco torrent virtuale con barra di avanzamento disegnata, icona di stato,
-  colonne ordinabili/riordinabili e larghezze salvate; # coda, Tempo, Seed e Peer
-  "connessi (sciame)", Ratio e Obiettivo accanto a Seed/Peer, Aggiunto.
-- Filtri con contatori: Tutti, In download, In seeding, Completati, Attivi,
-  In pausa, Con errori. Selezione multipla.
-- Tab compatti con icone: Generale (riscritto, griglia adattiva), Tracker, Peer
-  (flag I/O, E cifrato, P uTP, S seed), File (priorita'), Log.
-- Toolbar e menu con icone vettoriali; High-DPI per monitor; Segment Heap.
-- Globo di stato rete nella barra di stato (aperta / firewall-NAT / porta non in
-  ascolto / nessuna connessione), DHT, velocita' e limiti, totali storici, RAM.
-- Tray: chiudi e minimizza nell'area di notifica, tooltip con velocita',
-  ricreazione dopo il riavvio di Explorer; istanza singola con inoltro argomenti;
-  trascinamento .torrent; Ctrl+O, Ctrl+U, Ctrl+V (incolla magnet), Canc,
-  Maiusc+Canc, F5.
+0.8.4 r14 · 21 ottobre 2026
 
-Funzioni nuove
-- Tracker: elenco con stato, messaggio, seed/peer/completati dello scrape e
-  prossimo annuncio; aggiunta multipla con tier, rimozione, copia, riannuncio;
-  righe DHT/PeX/LSD.
-- Rimuovi e cancella i file (con conferma esplicita).
-- Ratio globale e per torrent con azione: pausa, Super-seeding, rimozione,
-  rimozione con cancellazione file. Ratio stile qBittorrent per i torrent
-  aggiunti gia' completi. Un riavvio manuale non ripete l'azione.
-- Diagnostica rete riscritta: ascolto, UPnP/NAT-PMP, IP esterno, CGNAT e doppio
-  NAT, interfacce, verifica online della porta (ifconfig.co), regola firewall.
-- Wizard "Ottimizza per la mia connessione" (ADSL ... FTTH 1/1 Gb, 2,5 e 10 Gb)
-  basato sui preset di libtorrent min_memory_usage/high_performance_seed.
-- Prestazioni, cache e memoria: 10 parametri libtorrent, profili, motore I/O
-  (pread/mmap/POSIX), riduzione del working set con finestra nascosta.
-  Profilo predefinito Bilanciato: cache di scrittura 32 MiB invece di 100 MiB.
-- Statistiche di sessione e storiche (persistenti, inclusi i torrent rimossi).
-- Identita' client: preset qBittorrent 5.1.4, Transmission 4.1.1, Deluge 2.2.0,
-  libtorrent 2.1.2 (User-Agent + prefisso peer ID + nome handshake),
-  personalizzato, modalita' anonima. Opzione PeX (al riavvio).
-- Informazioni riscritte: versioni reali di motore e sistema, percorsi, licenze,
-  copia delle informazioni di sistema.
+Aggiunta la scheda Velocità, con download e upload complessivi degli ultimi
+cinque minuti. Corrette la gestione del risultato asincrono della diagnostica,
+la disposizione delle colonne salvata e la validazione delle dimensioni icona.
+Questa è la prima versione pubblicata su GitHub.
 
-Correzioni
-- Tracker assenti: il tier (uint8_t) veniva scritto come carattere, il byte NUL
-  troncava il JSON e la tab restava vuota.
-- Pausa annullata dalla coda automatica: ora la pausa toglie l'auto-gestione e
-  l'avvio la ripristina; "Avvio forzato" separato.
-- Stato "In pausa"/"In coda" non mostrato (i torrent in pausa apparivano in Download).
-- Torrent duplicati registrati due volte (libtorrent 2.x restituisce l'handle
-  esistente senza errore): ora duplicate_is_error.
-- Nomi con caratteri non ASCII corrotti (marshalling ANSI).
-- Fast resume solo all'uscita: ora salvato all'aggiunta, a fine download, alla
-  ricezione dei metadati e ogni 5 minuti se modificato; salvataggio anche alla
-  chiusura di Windows.
-- Alert di libtorrent mai letti durante l'esecuzione.
-- Selezione e scorrimento dei dettagli persi a ogni aggiornamento.
-- Log senza limite di dimensione; aggiornamento interrotto definitivamente al
-  primo errore.
+0.8.3 r13 · 20 ottobre 2026
 
-Verifiche eseguite
-- Compilazione e link per Windows x64 con llvm-mingw (clang 19) e libtorrent
-  2.1.2 statico: 0 errori, 0 warning (-Wall -Wextra). Eseguibile senza DLL
-  esterne oltre a quelle di sistema.
-- Motore: test automatici contro libtorrent 2.1.2 reale (aggiunta file e magnet,
-  duplicati, tracker con tier, aggiunta/rimozione tracker, pausa persistente,
-  limiti, identita', impostazioni per nome, fast resume e ripristino dopo
-  riavvio, rimozione con cancellazione dei dati).
-- NON verificati: avvio e interazione della GUI su Windows reale, build MSVC con
-  build.bat, misura della RAM su Windows.
+Introdotte le Preferenze in un'unica finestra e il nuovo set di icone. Aggiunti
+l'indicatore di salute dello sciame, l'avvio con Windows e la priorità del
+processo. Rivisti barra di avanzamento, menu e gestione delle risorse grafiche.
 
+0.8.2 r12 · 20 ottobre 2026
 
-Storico delle revisioni precedenti (versione WPF 0.7.1)
-=======================================================
-Revisione 9 - Copia magnet (20/10/2026)
-- Tasto destro sul torrent > Copia magnet.
-- La riga cliccata viene selezionata prima di aprire il menu; nessun menu
-  sullo spazio vuoto per evitare la copia del torrent precedente.
-- Per magnet importati viene copiato il link originale completo, inclusi tr.
-- Per file .torrent viene generato un magnet dal motore libtorrent.
-- Errori appunti o generazione mostrati esplicitamente.
-- GUI e backend compilati con successo su Windows.
-- Copia negli appunti tramite interazione GUI non verificata.
+Rivista la visualizzazione dello stato dei tracker quando alcune interfacce di
+rete non raggiungono Internet. Aggiunte le opzioni per IPv6 e per gli annunci
+ai tracker e ai tier. Migliorati i messaggi della diagnostica UPnP.
 
-Revisione 8 - tray, interfaccia compatta, statistiche (20/10/2026)
-- Preferenza persistente CloseToTray, disattivata per default.
-- X nasconde la finestra con trasferimenti in esecuzione; doppio clic o
-  menu Apri ripristina; Esci termina e salva il fast resume.
-- Gestione chiusura Windows, ripristino stato massimizzato, rilascio NotifyIcon.
-- Pulsanti, tab e intestazioni compatti; larghezze colonne riviste.
-- API sf_transfer_stats con contatori all_time_download/all_time_upload.
-- Colonne e dettagli scaricati/caricati/ratio; totale dei torrent presenti.
-- Contatori ripristinati dai fast resume disponibili, senza storico dei rimossi.
-- Build nativa e publish GUI eseguiti con successo su Windows.
-- Sei test automatici superati. Tray e torrent reali non testati.
-Revisione 7 - crash GUI causato dall'icona (20/10/2026)
-- Log reale utente: XamlParseException -> FileFormatException -> 0x88982F60
-  in ImageSourceConverter durante InitializeComponent.
-- Rimosso Icon="Assets/SeedFlow.ico" dalla finestra principale:
-  non viene piu' decodificata quell'immagine da WPF all'avvio.
-- Icona dell'eseguibile conservata; titolo finestra aggiornato a 0.7.1.
-- Conservati log e messaggio di errore introdotti nella diagnostica r6.
-- GUI r7 pubblicata con successo, SDK 8.0.426; avvio r7 da confermare.
-Revisione 5 - correzione effettiva del comando vcpkg (20/10/2026)
-- Rilevato che lo ZIP r4 conteneva ancora il comando errato nonostante
-  documentazione e dichiarazioni precedenti: errore di confezionamento.
-- Sostituito realmente con libtorrent[core,deprfun]:x64-windows.
-- Aggiunto controllo esistenza ports/libtorrent/vcpkg.json.
-- Verificato il comando nel contenuto estratto dello ZIP r5.
-- Nessuna nuova compilazione nativa dichiarata.
-Revisione 4 VS 2026 - controlli di compilazione estesi (20/10/2026)
-- Pubblicazione WPF reale eseguita con SDK 8.0.426, Release win-x64.
-- Corretti CS0051: costruttori AdvancedDialog e NetworkDialog resi internal
-  per coerenza con SavedSession.
-- C++: strict_super_seeding disponibile solo con TORRENT_ABI_VERSION == 1.
-- C++: conversione file_index_t per file_size e file_path; header espliciti.
-- GUI: corretti valori stati libtorrent (checking_files=1, metadata=2,
-  downloading=3, finished=4, seeding=5, checking_resume_data=7).
-- Script: identifica revisione 4 nel log; verifica CRT anticipata;
-  compila GUI prima delle dipendenze native.
-- Parsing script e CheckOnly ripetuti con successo.
-- Build C++ e avvio non verificati; dettagli in VERIFICA.txt.
-Revisione 3 VS 2026 - port libtorrent (20/10/2026)
-- Corretto nome inesistente libtorrent-rasterbar nel comando vcpkg.
-- Usa libtorrent[core,deprfun]:x64-windows, con controllo presenza port.
-- API deprecate abilitate; dipendenze opzionali WebTorrent escluse.
-- Package e target CMake LibtorrentRasterbar invariati.
-- Verificati nome e feature nel catalogo locale, libtorrent versione 2.1.2.
-- Build completa non eseguita.
-Revisione 2 VS 2026 - correzione vcpkg (20/10/2026)
-- Corretto il blocco "fatal: not a git repository" del bundle VS.
-- VCPKG_ROOT acquisito prima di VsDevCmd, che puo' impostarlo al bundle VS.
-- Bundle senza ports escluso dalla modalita' classic; fallback al checkout locale.
-- git rev-parse eseguito solo con .git presente.
-- Test selezione: bundle VS reale, variabile assente e checkout senza .git.
-- Preflight Windows ripetuto con esito 0; build completa non eseguita.
-SeedFlow v0.7.1 - revisione build VS 2026 (18) - 20/10/2026
-- COMPILA.bat delega al nuovo scripts/Compila.ps1 con codici di uscita.
-- vswhere: VS stabili [18.0,19.0), tutti i prodotti, requisito MSVC x64.
-- Ambiente VsDevCmd x64 e verifica Windows SDK.
-- CMake incluso in Visual Studio anche fuori PATH; fallback PATH con controllo
-  del generatore Visual Studio 18 2026 (CMake >= 4.2).
-- Rilevamento Git e SDK .NET 8; global.json seleziona SDK 8 stabile.
-- vcpkg: bootstrap controllato, VCPKG_ROOT rispettato, triplet x64-windows,
-  istanza VS esplicita e commit registrato nel log.
-- Cache nativa separata, output distinto per ogni build, copia DLL vcpkg,
-  app-local e CRT MSVC; controllo dei file finali.
-- Transcript, fase di errore, CheckOnly e NoPause; README aggiornato.
-- Conservati tutti i sorgenti applicativi e asset v0.7.1 disponibili.
-- Nessuna compilazione completa o prova funzionale dichiarata verificata.
-  Vedere VERIFICA.txt per i controlli effettivi.
-SeedFlow v0.7.1 — correzioni preliminari (20/10/2026)
-- Corrette etichette stati libtorrent 2.x.
-- Corretta cifratura «consentita» (accetta cifrato e non cifrato).
-- Intervallo refresh GUI 2 s invece di 1 s.
-- Versioni e User-Agent SeedFlow aggiornati a 0.7.1.
-- Migliorata tracciatura esito negativo COMPILA.bat.
-- Nessuna compilazione o prova Windows effettuata.
+0.8.1 r11 · 20 ottobre 2026
 
-SeedFlow - CHANGELOG
+Corretti accenti e testi troncati nei menu e nei dialoghi. Migliorati appunti,
+conversioni Unicode, parsing numerico e rilascio delle bitmap dei menu.
+Preparata la distribuzione statica per Windows x64.
 
-v0.7 - Compilazione automatica Windows x64
-- Aggiunto COMPILA.bat: verifica i prerequisiti, scarica/prepara vcpkg,
-  installa libtorrent, compila il backend C++ e pubblica l'app WPF.
-- Creazione automatica della cartella SeedFlow-Pronto con EXE e DLL.
-- Creato COMPILAZIONE.log per la diagnosi degli errori.
-- README riscritto con istruzioni semplici, requisiti e limitazioni.
-- Nessuna modifica intenzionale alle funzionalita' torrent della v0.6.
-- Nota: compilazione e avvio Windows NON ancora verificati.
+Versioni precedenti
 
-SeedFlow 0.6 (sorgenti, build Windows non verificata)
-- Priorità file (skip/bassa/normale/alta) e persistenza
-- Limiti velocità globali e per torrent, connessioni e slot
-- Gestione code e spostamento torrent
-- Diagnostica rete locale, senza falso stato porta aperta
-- Cifratura protocollo selezionabile
-- Preallocazione nuovi torrent e verifica forzata
-
-SeedFlow v0.5
-- Preferenze di rete: porta TCP/uTP, DHT, UPnP, NAT-PMP e LSD.
-- Applicazione impostazioni a libtorrent e persistenza nel file session.json.
-- Menu e finestra WPF dedicati.
-- PeX resta gestito da libtorrent.
-- Build Windows da verificare.
-
-SeedFlow v0.4 — 2026-10-20
-- Menu a tendina User-Agent HTTP con preset qBittorrent, Transmission, rTorrent, Deluge, libtorrent e SeedFlow.
-- Opzione personalizzata e convalida input.
-- Persistenza delle impostazioni preesistente conservata.
-- Aggiornata stringa SeedFlow/0.4.0.
-
-SeedFlow v0.3 — 20/10/2026
-- Fast Resume nativo: save_resume_data, alert e serializzazione binaria.
-- Ripristino da fastresume e fallback a magnet/.torrent.
-- Eliminazione del fastresume alla rimozione del torrent.
-- Limite massimo di attesa di 12 secondi alla chiusura.
-- Codice non compilato né verificato su Windows.
-
-SeedFlow 0.2 — bozza sorgenti
-- Ripristino elenco torrent, cartella e preferenze tramite session.json
-- Cache locale dei .torrent per ripristino dopo chiusura
-- Schede File, Peer e Tracker con dati nativi libtorrent
-- User-Agent HTTP configurabile (default SeedFlow/0.2.0)
-- API C++ JSON UTF-8 per interrogare file, peer e tracker
-- Ripristino del flag super-seeding dopo ritorno allo stato di seed
-- Fast-resume binario libtorrent resta da completare
-- Build Windows non verificata
-
+Le prime versioni usavano un'interfaccia C#/WPF e un motore nativo. La linea
+0.8.x è passata a C++/Win32. Quelle bozze e i loro tentativi di compilazione
+non fanno parte dell'attuale build. Lo storico sopra riassume le versioni
+precedenti; non estende a quelle versioni le verifiche eseguite sulla r15.
