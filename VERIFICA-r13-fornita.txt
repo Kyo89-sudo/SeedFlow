@@ -1,0 +1,80 @@
+VERIFICHE r13 (20/10/2026)
+- SeedFlow.exe r13 e test di regressione compilati e collegati per Windows x64
+  con llvm-mingw (libtorrent 2.1.2 + OpenSSL 3.5.4 statici): 0 errori,
+  0 warning. Build MSVC statica da ripetere con build.bat.
+- Icone: 42 SVG rasterizzati con Chromium in 7 strisce PNG RGBA; controllate
+  dimensioni (cella = lato x numero icone) e resa a 16 e 24 px su chiaro e scuro.
+- Barra di avanzamento e Salute: anteprima generata con una copia Python della
+  stessa geometria di src/paint.cpp (download, verifica, coda di verifica,
+  metadati, seeding, pausa, errore, super-seeding).
+- Preferenze: anteprima delle pagine ricostruita dalle coordinate del file .rc;
+  tutte le pagine stanno nell'area di 342x272 DLU senza sovrapposizioni.
+- Analisi statica clang (--analyze) su tutti i sorgenti: corretti i due
+  avvisi reali (valore non inizializzato nel motore; il secondo e' un
+  PortCheck che resta in coda solo se si chiude il programma durante la
+  verifica porta, trascurabile).
+- Test completo del motore su Linux con AddressSanitizer + LeakSanitizer +
+  UBSan (aggiunta, duplicati, tracker, limiti, fast resume, ripristino,
+  rimozione con cancellazione): tutti superati, 0 errori di memoria, 0 leak.
+- Revisione manuale di GDI/COM nelle parti nuove: ogni bitmap, DC, font,
+  image list, icona e oggetto WIC viene rilasciato.
+- Non verificati: GUI interattiva su Windows (decodifica WIC delle icone,
+  animazioni, DPI 125-200%), test di regressione eseguiti su Windows.
+
+VERIFICHE r12 (20/10/2026)
+- Riproduzione del bug tracker su Linux con libtorrent 2.1.2 e tracker locale
+  HTTP+UDP (due indirizzi locali, uno senza percorso verso il tracker):
+  r11 -> tracker UDP funzionante mostrato "Aggiornamento", altri senza esito;
+  r12 -> tutti i tracker raggiungibili "Funzionante", host inesistente "Errore"
+  ("Host not found"), indirizzo locale morto ignorato.
+- Test motore precedenti ripetuti su r12: tutti superati (aggiunta, duplicati,
+  tracker, pausa, limiti, fast resume e ripristino, rimozione con cancellazione)
+  e test super-seeding di r11 superato.
+- SeedFlow.exe r12 compilato e collegato per Windows x64 con llvm-mingw:
+  0 errori, 0 warning. Build MSVC statica da ripetere con build.bat.
+- Non verificati: tracker reali su Internet da Windows, GUI interattiva.
+
+VERIFICA SeedFlow 0.8.1 r11 - 20/10/2026
+
+Origine: i due ZIP 0.8.0-r10 forniti dall'utente.
+Il rapporto originale e' conservato in VERIFICA-r10-originale.txt.
+
+Eseguito su Windows:
+- Analisi PE risorse originali con REA senza eseguire il target:
+  evidenza ev_eaea8f34aa68991160cd50f77e8f761ae138f7088e14e6c5721792bd80174dcd.
+  Nei menu originali il testo Identita' accentato era codificato male.
+- Build sorgenti aggiornati: MSVC 19.51, VS 2026, SDK 10.0.28000.0,
+  C++17, /utf-8, /W4; risorse con rc.exe /c65001.
+- Edizione finale: link Release x64 /MT, libtorrent 2.1.2 e OpenSSL 3.6.5
+  ricompilati staticamente dai sorgenti. Boost 1.92.0 usato come header.
+  Ricetta, versioni e commit in BUILD-STATIC-RECIPE.txt.
+- I passi finali sono stati completati direttamente con cl/link/rc dopo
+  un blocco dell'orchestrazione MSBuild. Nessuna patch binaria:
+  EXE e test sono prodotti dai sorgenti aggiornati.
+- 45 asserzioni offline superate; 25 sono ripetizioni del controllo menu.
+  Test: UTF-8/UTF-16 (accenti, CJK, emoji); JSON/surrogati; overflow;
+  migrazione versione, User-Agent personalizzato; testi reali menu/dialoghi
+  letti dall'EXE; stringa lunga completa; bitmap liberate; conteggio GDI.
+- Versioni PE: FileVersion 0.8.1.11 e ProductVersion 0.8.1.
+- EXE statico: 10.209.280 byte. dumpbin /dependents elenca solo DLL Windows:
+  COMCTL32, SHELL32, ole32, UxTheme, WINHTTP, IPHLPAPI, WS2_32, MSWSOCK,
+  CRYPT32, KERNEL32, USER32, GDI32, ADVAPI32.
+  Nessuna importazione libtorrent, Boost, OpenSSL, MSVCP o VCRUNTIME.
+- Rieseguite le 45 asserzioni sul nuovo EXE statico: tutte superate.
+- Test isolato Super-seeding superato sul nuovo motore statico:
+  torrent incompleto rifiutato; torrent locale completo riconosciuto;
+  flag super_seeding attivato e disattivato realmente in libtorrent.
+  Discovery e trasporti peer disabilitati, nessun tracker/peer esterno.
+- build.bat -NoPause -CheckOnly: esito 0. Parsing script senza errori.
+- ZIP estratti e verificati file per file con SHA-256.
+- I test testo/menu non avviano sessioni torrent. Il test Super-seeding usa
+  una sessione locale isolata e dati nella directory di build.
+  Nessun test modifica appunti o impostazioni dell'utente.
+
+Limiti:
+- Il percorso vcpkg automatico era bloccato da un errore named pipe
+  dell'ambiente ristretto. La compilazione statica diretta e' completata;
+  non e' stato aggirato il blocco o modificato il binario di vcpkg.
+- Non sono stati misurati efficienza Super-seeding o upload fra peer reali.
+- GUI interattiva, DPI, tray e trasferimenti reali non collaudati per r11.
+- Nessuna promessa di assenza totale di bug o riduzione misurata della RAM.

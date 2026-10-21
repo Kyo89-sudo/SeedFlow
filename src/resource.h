@@ -1,0 +1,157 @@
+// SeedFlow resource identifiers
+#pragma once
+
+#define IDI_APP                 1
+#define IDR_MAINMENU            100
+#define IDR_ACCEL               101
+#define IDR_CTX_TORRENT         102
+#define IDR_CTX_TRACKER         103
+#define IDR_CTX_FILE            104
+#define IDR_CTX_TRAY            105
+#define IDR_ICONS_BASE          2000   // + strip size in px (RCDATA PNG)
+
+// Commands
+#define ID_FILE_OPEN            1001
+#define ID_FILE_MAGNET          1002
+#define ID_FILE_PASTE           1003
+#define ID_FILE_EXIT            1004
+#define ID_OPT_CLOSETRAY        1010
+#define ID_OPT_MINTRAY          1011
+#define ID_OPT_STARTPAUSED      1012
+#define ID_OPT_CONFIRMREMOVE    1013
+#define ID_OPT_PREFS            1019
+#define ID_TOOLS_WIZARD         1020
+#define ID_TOOLS_DIAG           1021
+#define ID_TOOLS_STATS          1022
+#define ID_TOOLS_DATAFOLDER     1023
+#define ID_HELP_ABOUT           1030
+
+#define ID_T_START              1100
+#define ID_T_FORCESTART         1101
+#define ID_T_PAUSE              1102
+#define ID_T_REMOVE             1103
+#define ID_T_DELETE             1104
+#define ID_T_COPYMAGNET         1105
+#define ID_T_OPENFOLDER         1106
+#define ID_T_RATIO              1107
+#define ID_T_LIMITS             1108
+#define ID_T_SUPERSEED          1109
+#define ID_T_QTOP               1110
+#define ID_T_QUP                1111
+#define ID_T_QDOWN              1112
+#define ID_T_QBOTTOM            1113
+#define ID_T_REANNOUNCE         1114
+#define ID_T_RECHECK            1115
+#define ID_T_SELECTALL          1116
+#define ID_T_STARTALL           1117
+#define ID_T_PAUSEALL           1118
+
+#define ID_TR_ADD               1200
+#define ID_TR_REMOVE            1201
+#define ID_TR_COPY              1202
+#define ID_TR_REANNOUNCE        1203
+#define ID_F_SKIP               1210
+#define ID_F_LOW                1211
+#define ID_F_NORMAL             1212
+#define ID_F_HIGH               1213
+#define ID_F_OPEN               1214
+#define ID_TRAY_OPEN            1220
+
+// Dialogs
+#define IDD_MAGNET              200
+#define IDD_WIZARD              204
+#define IDD_DIAG                205
+#define IDD_STATS               206
+#define IDD_ABOUT               207
+#define IDD_RATIO               208
+#define IDD_LIMITS              209
+#define IDD_TRACKERS            210
+#define IDD_PREFS               212
+#define IDD_PG_GENERAL          213
+#define IDD_PG_FOLDERS          214
+#define IDD_PG_CONNECTION       215
+#define IDD_PG_BANDWIDTH        216
+#define IDD_PG_BITTORRENT       217
+#define IDD_PG_QUEUE            218
+#define IDD_PG_IDENTITY         219
+#define IDD_PG_SYSTEM           220
+#define IDD_PG_PERFORMANCE      221
+
+// Common controls
+#define IDC_EDIT                300
+#define IDC_FOLDER              301
+#define IDC_BROWSE              302
+#define IDC_PAUSED              303
+#define IDC_PORT                310
+#define IDC_RANDOMPORT          311
+#define IDC_DHT                 312
+#define IDC_UPNP                313
+#define IDC_NATPMP              314
+#define IDC_LSD                 315
+#define IDC_ENCRYPTION          316
+#define IDC_AUTOCHECK           317
+#define IDC_PEX                 318
+#define IDC_IPV6                319
+#define IDC_ALLTRACKERS         330
+#define IDC_ALLTIERS            331
+#define IDC_DOWN                320
+#define IDC_UP                  321
+#define IDC_CONNECTIONS         322
+#define IDC_SLOTS               323
+#define IDC_ACTIVEDL            324
+#define IDC_ACTIVESEED          325
+#define IDC_PREALLOC            326
+#define IDC_RATIOON             327
+#define IDC_RATIO               328
+#define IDC_RATIOACTION         329
+#define IDC_PROFILE             340
+#define IDC_APPLYPROFILE        341
+#define IDC_DISKIO              342
+#define IDC_TRIM                343
+#define IDC_MEMINFO             344
+#define IDC_HELPTEXT            345
+#define IDC_DEFAULTS            346
+#define IDC_FIELD0              350   // 350..359 performance fields
+#define IDC_FLABEL0             360   // 360..369 labels
+#define IDC_FUNIT0              370   // 370..379 units
+#define IDC_CONNTYPE            380
+#define IDC_DOWNMBPS            381
+#define IDC_UPMBPS              382
+#define IDC_DISKTYPE            383
+#define IDC_RAMPRIO             384
+#define IDC_LIMITUP             385
+#define IDC_CALC                386
+#define IDC_RESULTS             387
+#define IDC_REPORT              390
+#define IDC_CHECKPORT           391
+#define IDC_REFRESH             392
+#define IDC_FIREWALL            393
+#define IDC_COPY                394
+#define IDC_RESETSTATS          395
+#define IDC_LOGO                396
+#define IDC_TITLE               397
+#define IDC_VERSION             398
+#define IDC_LINK                399
+#define IDC_DATAFOLDER          400
+#define IDC_R_GLOBAL            410
+#define IDC_R_NONE              411
+#define IDC_R_CUSTOM            412
+#define IDC_R_CURRENT           413
+#define IDC_UA_PRESET           420
+#define IDC_UA_VALUE            421
+#define IDC_UA_HANDSHAKE        422
+#define IDC_UA_ANON             423
+#define IDC_UA_PEERID           424
+#define IDC_UA_CLIENT           425
+#define IDC_STATUS              430
+#define IDC_PREFTREE            440
+#define IDC_PAGETITLE           441
+#define IDC_PAGEAREA            442
+#define IDC_APPLYNOW            443
+#define IDC_CLOSETRAY           444
+#define IDC_MINTRAY             445
+#define IDC_STARTPAUSED         446
+#define IDC_CONFIRMREMOVE       447
+#define IDC_AUTOSTART           448
+#define IDC_STARTMIN            449
+#define IDC_PRIORITY            454

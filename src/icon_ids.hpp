@@ -1,0 +1,51 @@
+// Generato da tools/make_icons.py - non modificare a mano.
+#pragma once
+
+namespace sf::icons {
+enum Id : int {
+    IcAdd = 0,
+    IcMagnet = 1,
+    IcPlay = 2,
+    IcPause = 3,
+    IcRemove = 4,
+    IcDelete = 5,
+    IcUp = 6,
+    IcDown = 7,
+    IcSuperseed = 8,
+    IcRatio = 9,
+    IcWizard = 10,
+    IcStats = 11,
+    IcDiagnostics = 12,
+    IcRefresh = 13,
+    IcCopy = 14,
+    IcFolder = 15,
+    IcGlobe = 16,
+    IcSettings = 17,
+    IcInfo = 18,
+    IcDownload = 19,
+    IcUpload = 20,
+    IcHealth = 21,
+    IcPeers = 22,
+    IcFile = 23,
+    IcError = 24,
+    IcCheck = 25,
+    IcQueue = 26,
+    IcTracker = 27,
+    IcLog = 28,
+    IcAll = 29,
+    IcChecking = 30,
+    IcMoving = 31,
+    IcIdentity = 32,
+    IcPreferences = 33,
+    IcExit = 34,
+    IcSpeed = 35,
+    IcCalendar = 36,
+    IcTurtle = 37,
+    IcWindow = 38,
+    IcCpu = 39,
+    IcBandwidth = 40,
+    IcPriority = 41,
+    IcCount = 42
+};
+inline constexpr int kStripSizes[] = {16, 20, 24, 28, 32, 40, 48};
+} // namespace sf::icons

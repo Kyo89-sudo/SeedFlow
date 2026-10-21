@@ -1,0 +1,468 @@
+// SeedFlow resources (UTF-8)
+#pragma code_page(65001)
+#include <winres.h>
+#include "../src/resource.h"
+#include "../src/version.h"
+
+LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
+
+IDI_APP ICON "SeedFlow.ico"
+
+// Icon set (stile A) - strisce PNG generate da tools/make_icons.py; ID = IDR_ICONS_BASE + dimensione
+2016 RCDATA "icons/strip16.png"
+2020 RCDATA "icons/strip20.png"
+2024 RCDATA "icons/strip24.png"
+2028 RCDATA "icons/strip28.png"
+2032 RCDATA "icons/strip32.png"
+2040 RCDATA "icons/strip40.png"
+2048 RCDATA "icons/strip48.png"
+1 24 "SeedFlow.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION SF_FILE_VERSION
+ PRODUCTVERSION SF_FILE_VERSION
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041004b0"
+        BEGIN
+            VALUE "CompanyName", "SeedFlow"
+            VALUE "FileDescription", "SeedFlow - client BitTorrent"
+            VALUE "FileVersion", SF_FILE_VERSION_STRING
+            VALUE "InternalName", "SeedFlow"
+            VALUE "OriginalFilename", "SeedFlow.exe"
+            VALUE "ProductName", "SeedFlow"
+            VALUE "ProductVersion", SF_VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x410, 1200
+    END
+END
+
+IDR_ACCEL ACCELERATORS
+BEGIN
+    "O", ID_FILE_OPEN, VIRTKEY, CONTROL
+    "U", ID_FILE_MAGNET, VIRTKEY, CONTROL
+    "V", ID_FILE_PASTE, VIRTKEY, CONTROL
+    "A", ID_T_SELECTALL, VIRTKEY, CONTROL
+    VK_DELETE, ID_T_REMOVE, VIRTKEY
+    VK_DELETE, ID_T_DELETE, VIRTKEY, SHIFT
+    VK_F5, ID_T_REANNOUNCE, VIRTKEY
+    "P", ID_OPT_PREFS, VIRTKEY, CONTROL
+END
+
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "Apri file .torrent...\tCtrl+O", ID_FILE_OPEN
+        MENUITEM "Aggiungi magnet...\tCtrl+U", ID_FILE_MAGNET
+        MENUITEM "Incolla magnet dagli appunti\tCtrl+V", ID_FILE_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Avvia tutti", ID_T_STARTALL
+        MENUITEM "Metti tutti in pausa", ID_T_PAUSEALL
+        MENUITEM SEPARATOR
+        MENUITEM "Esci", ID_FILE_EXIT
+    END
+    POPUP "&Opzioni"
+    BEGIN
+        MENUITEM "Chiudi nell'area di notifica (X)", ID_OPT_CLOSETRAY
+        MENUITEM "Minimizza nell'area di notifica", ID_OPT_MINTRAY
+        MENUITEM "Aggiungi i nuovi torrent in pausa", ID_OPT_STARTPAUSED
+        MENUITEM "Chiedi conferma prima di rimuovere", ID_OPT_CONFIRMREMOVE
+        MENUITEM SEPARATOR
+        MENUITEM "Preferenze...\tCtrl+P", ID_OPT_PREFS
+    END
+    POPUP "&Strumenti"
+    BEGIN
+        MENUITEM "Ottimizza per la mia connessione...", ID_TOOLS_WIZARD
+        MENUITEM "Diagnostica rete...", ID_TOOLS_DIAG
+        MENUITEM "Statistiche...", ID_TOOLS_STATS
+        MENUITEM SEPARATOR
+        MENUITEM "Apri cartella dati SeedFlow", ID_TOOLS_DATAFOLDER
+    END
+    POPUP "&Aiuto"
+    BEGIN
+        MENUITEM "Informazioni su SeedFlow", ID_HELP_ABOUT
+    END
+END
+
+IDR_CTX_TORRENT MENU
+BEGIN
+    POPUP "torrent"
+    BEGIN
+        MENUITEM "Avvia", ID_T_START
+        MENUITEM "Avvio forzato (ignora la coda)", ID_T_FORCESTART
+        MENUITEM "Pausa", ID_T_PAUSE
+        MENUITEM SEPARATOR
+        MENUITEM "Copia magnet", ID_T_COPYMAGNET
+        MENUITEM "Apri cartella", ID_T_OPENFOLDER
+        MENUITEM SEPARATOR
+        MENUITEM "Limite ratio...", ID_T_RATIO
+        MENUITEM "Limiti di velocità...", ID_T_LIMITS
+        MENUITEM "Attiva/disattiva Super-seeding", ID_T_SUPERSEED
+        POPUP "Coda"
+        BEGIN
+            MENUITEM "In cima", ID_T_QTOP
+            MENUITEM "Su", ID_T_QUP
+            MENUITEM "Giù", ID_T_QDOWN
+            MENUITEM "In fondo", ID_T_QBOTTOM
+        END
+        MENUITEM "Riannuncia ai tracker\tF5", ID_T_REANNOUNCE
+        MENUITEM "Verifica forzata", ID_T_RECHECK
+        MENUITEM SEPARATOR
+        MENUITEM "Rimuovi (conserva i file)\tCanc", ID_T_REMOVE
+        MENUITEM "Rimuovi e cancella i file\tMaiusc+Canc", ID_T_DELETE
+    END
+END
+
+IDR_CTX_TRACKER MENU
+BEGIN
+    POPUP "tracker"
+    BEGIN
+        MENUITEM "Aggiungi tracker...", ID_TR_ADD
+        MENUITEM "Rimuovi tracker selezionati", ID_TR_REMOVE
+        MENUITEM "Copia URL", ID_TR_COPY
+        MENUITEM SEPARATOR
+        MENUITEM "Riannuncia ora", ID_TR_REANNOUNCE
+    END
+END
+
+IDR_CTX_FILE MENU
+BEGIN
+    POPUP "file"
+    BEGIN
+        MENUITEM "Apri", ID_F_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "Non scaricare", ID_F_SKIP
+        MENUITEM "Priorità bassa", ID_F_LOW
+        MENUITEM "Priorità normale", ID_F_NORMAL
+        MENUITEM "Priorità alta", ID_F_HIGH
+    END
+END
+
+IDR_CTX_TRAY MENU
+BEGIN
+    POPUP "tray"
+    BEGIN
+        MENUITEM "Apri SeedFlow", ID_TRAY_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "Avvia tutti", ID_T_STARTALL
+        MENUITEM "Metti tutti in pausa", ID_T_PAUSEALL
+        MENUITEM SEPARATOR
+        MENUITEM "Chiudi nell'area di notifica (X)", ID_OPT_CLOSETRAY
+        MENUITEM "Minimizza nell'area di notifica", ID_OPT_MINTRAY
+        MENUITEM SEPARATOR
+        MENUITEM "Esci", ID_FILE_EXIT
+    END
+END
+
+// ------------------------------------------------------------------ dialogs
+IDD_MAGNET DIALOGEX 0, 0, 340, 168
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Aggiungi magnet"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "Incolla uno o più magnet link (uno per riga):", -1, 8, 8, 320, 9
+    EDITTEXT        IDC_EDIT, 8, 20, 324, 76, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Salva in:", -1, 8, 104, 40, 9
+    EDITTEXT        IDC_FOLDER, 8, 115, 276, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Sfoglia...", IDC_BROWSE, 288, 114, 44, 15
+    AUTOCHECKBOX    "Aggiungi in pausa", IDC_PAUSED, 8, 134, 120, 10
+    DEFPUSHBUTTON   "Aggiungi", IDOK, 228, 148, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 282, 148, 50, 14
+END
+
+// ------------------------------------------------------------------ preferences (unified, uTorrent style)
+IDD_PREFS DIALOGEX 0, 0, 478, 326
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Preferenze"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    CONTROL         "", IDC_PREFTREE, "SysTreeView32", TVS_SHOWSELALWAYS | TVS_FULLROWSELECT | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_TRACKSELECT | WS_BORDER | WS_TABSTOP, 8, 8, 112, 290
+    LTEXT           "", IDC_PAGETITLE, 128, 8, 342, 12
+    CONTROL         "", -1, "Static", SS_ETCHEDHORZ, 128, 22, 342, 1
+    LTEXT           "", IDC_PAGEAREA, 128, 28, 342, 272, NOT WS_VISIBLE
+    DEFPUSHBUTTON   "OK", IDOK, 312, 306, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 366, 306, 50, 14
+    PUSHBUTTON      "Applica", IDC_APPLYNOW, 420, 306, 50, 14
+END
+
+IDD_PG_GENERAL DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Finestra e area di notifica", -1, 0, 0, 342, 64
+    AUTOCHECKBOX    "Chiudi nell'area di notifica quando premi la X", IDC_CLOSETRAY, 8, 14, 326, 10
+    AUTOCHECKBOX    "Riduci nell'area di notifica quando minimizzi", IDC_MINTRAY, 8, 28, 326, 10
+    AUTOCHECKBOX    "Chiedi conferma prima di rimuovere un torrent", IDC_CONFIRMREMOVE, 8, 42, 326, 10
+    GROUPBOX        "Avvio", -1, 0, 70, 342, 50
+    AUTOCHECKBOX    "Avvia SeedFlow all'accesso a Windows", IDC_AUTOSTART, 8, 84, 326, 10
+    AUTOCHECKBOX    "Avvia ridotto nell'area di notifica", IDC_STARTMIN, 20, 98, 314, 10
+    GROUPBOX        "Nuovi torrent", -1, 0, 126, 342, 32
+    AUTOCHECKBOX    "Aggiungi i nuovi torrent in pausa", IDC_STARTPAUSED, 8, 140, 326, 10
+END
+
+IDD_PG_FOLDERS DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Cartella di download", -1, 0, 0, 342, 50
+    EDITTEXT        IDC_FOLDER, 8, 14, 270, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Sfoglia...", IDC_BROWSE, 284, 13, 50, 15
+    LTEXT           "Vale per i nuovi torrent; quelli già aggiunti restano nella loro cartella.", -1, 8, 32, 326, 9
+    GROUPBOX        "Disco", -1, 0, 56, 342, 32
+    AUTOCHECKBOX    "Prealloca lo spazio dei nuovi torrent (riduce la frammentazione)", IDC_PREALLOC, 8, 70, 326, 10
+END
+
+IDD_PG_CONNECTION DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Porta di ascolto (TCP e uTP)", -1, 0, 0, 342, 40
+    EDITTEXT        IDC_PORT, 8, 16, 56, 13, ES_NUMBER | WS_TABSTOP
+    PUSHBUTTON      "Porta casuale", IDC_RANDOMPORT, 70, 15, 64, 15
+    LTEXT           "Usa una porta tra 10000 e 65535; la 6881-6889 è spesso filtrata dai provider.", -1, 142, 13, 192, 20
+    GROUPBOX        "Apertura porta sul router", -1, 0, 46, 342, 56
+    AUTOCHECKBOX    "UPnP (apertura automatica della porta)", IDC_UPNP, 8, 60, 326, 10
+    AUTOCHECKBOX    "NAT-PMP / PCP (apertura automatica della porta)", IDC_NATPMP, 8, 74, 326, 10
+    AUTOCHECKBOX    "Verifica la porta online all'avvio (servizio ifconfig.co)", IDC_AUTOCHECK, 8, 88, 326, 10
+    GROUPBOX        "Protocollo", -1, 0, 108, 342, 84
+    AUTOCHECKBOX    "Usa anche IPv6 (disattiva se la tua linea non ha IPv6 funzionante)", IDC_IPV6, 8, 122, 326, 10
+    LTEXT           "Cifratura del protocollo", -1, 8, 138, 326, 9
+    COMBOBOX        IDC_ENCRYPTION, 8, 149, 326, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "«Richiesta» riduce i peer disponibili ma evita il traffico in chiaro (utile con provider che rallentano il BitTorrent).", -1, 8, 166, 326, 18
+END
+
+IDD_PG_BANDWIDTH DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Limiti globali di velocità (0 = illimitato)", -1, 0, 0, 342, 50
+    LTEXT           "Download (KiB/s)", -1, 8, 16, 76, 9
+    EDITTEXT        IDC_DOWN, 86, 14, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "Upload (KiB/s)", -1, 176, 16, 70, 9
+    EDITTEXT        IDC_UP, 248, 14, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "1 Gb/s = 122.070 KiB/s. Lascia un 10-20% di margine sull'upload reale per non saturare la linea.", -1, 8, 33, 326, 9
+    GROUPBOX        "Connessioni", -1, 0, 56, 342, 50
+    LTEXT           "Connessioni max", -1, 8, 72, 76, 9
+    EDITTEXT        IDC_CONNECTIONS, 86, 70, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "Slot upload", -1, 176, 72, 70, 9
+    EDITTEXT        IDC_SLOTS, 248, 70, 60, 13, WS_TABSTOP
+    LTEXT           "Slot upload: -1 = illimitati (consigliato con fibra veloce).", -1, 8, 89, 326, 9
+END
+
+IDD_PG_BITTORRENT DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Scoperta dei peer", -1, 0, 0, 342, 70
+    AUTOCHECKBOX    "DHT (rete decentralizzata)", IDC_DHT, 8, 14, 326, 10
+    AUTOCHECKBOX    "PeX, scambio dei peer (al riavvio)", IDC_PEX, 8, 28, 326, 10
+    AUTOCHECKBOX    "LSD, scoperta in rete locale", IDC_LSD, 8, 42, 326, 10
+    LTEXT           "Sui torrent privati DHT, PeX e LSD sono sempre disattivati.", -1, 8, 56, 326, 9
+    GROUPBOX        "Tracker", -1, 0, 76, 342, 48
+    AUTOCHECKBOX    "Annuncia sempre a tutti i tracker dello stesso livello (tier)", IDC_ALLTRACKERS, 8, 90, 326, 10
+    AUTOCHECKBOX    "Annuncia sempre a tutti i livelli (tier) di tracker", IDC_ALLTIERS, 8, 104, 326, 10
+END
+
+IDD_PG_QUEUE DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Code automatiche", -1, 0, 0, 342, 34
+    LTEXT           "Download attivi", -1, 8, 16, 76, 9
+    EDITTEXT        IDC_ACTIVEDL, 86, 14, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "Seed attivi", -1, 176, 16, 70, 9
+    EDITTEXT        IDC_ACTIVESEED, 248, 14, 60, 13, ES_NUMBER | WS_TABSTOP
+    GROUPBOX        "Ratio globale (vale per i torrent impostati su «globale»)", -1, 0, 40, 342, 84
+    AUTOCHECKBOX    "Al raggiungimento del ratio", IDC_RATIOON, 8, 56, 120, 10
+    EDITTEXT        IDC_RATIO, 130, 54, 40, 13, WS_TABSTOP
+    COMBOBOX        IDC_RATIOACTION, 8, 72, 326, 80, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "Il ratio è caricati / scaricati; per i torrent aggiunti già completi si usa la dimensione completata. Se riavvii a mano un torrent che ha già raggiunto il limite, l'azione non viene ripetuta finché non cambi il limite.", -1, 8, 90, 326, 28
+END
+
+IDD_PG_IDENTITY DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "Preset (imposta insieme User-Agent, peer ID e nome nell'handshake)", -1, 8, 0, 284, 9
+    COMBOBOX        IDC_UA_PRESET, 8, 12, 284, 140, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "User-Agent HTTP (tracker e web seed)", -1, 8, 32, 284, 9
+    EDITTEXT        IDC_UA_VALUE, 8, 43, 284, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Prefisso peer ID (es. -qB5140-)", -1, 8, 62, 140, 9
+    EDITTEXT        IDC_UA_PEERID, 8, 73, 140, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Nome client nell'handshake", -1, 154, 62, 138, 9
+    EDITTEXT        IDC_UA_CLIENT, 154, 73, 138, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    AUTOCHECKBOX    "Invia il nome del client nell'handshake BitTorrent (extension protocol)", IDC_UA_HANDSHAKE, 8, 92, 284, 10
+    AUTOCHECKBOX    "Modalità anonima (non rivela client, versione e porta di ascolto)", IDC_UA_ANON, 8, 106, 284, 10
+    LTEXT           "Il resto del peer ID è casuale. L'emulazione copre User-Agent, prefisso del peer ID e nome nell'handshake, non il comportamento di rete.", -1, 8, 122, 284, 22
+    LTEXT           "Alcuni tracker privati riconoscono il client: aggirarne la whitelist viola le loro regole (rischio di ban). Campi vuoti = identità SeedFlow.", -1, 8, 148, 284, 26
+END
+
+IDD_PG_SYSTEM DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Priorità del processo", -1, 0, 0, 342, 48
+    COMBOBOX        IDC_PRIORITY, 8, 14, 160, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "«Sotto il normale» lascia la precedenza a giochi e programmi in primo piano.", -1, 8, 32, 326, 9
+    LTEXT           "Thread del disco e della verifica hash, cache e memoria: Avanzate › Prestazioni e memoria.", -1, 0, 56, 342, 9
+END
+
+IDD_PG_PERFORMANCE DIALOGEX 0, 0, 342, 272
+STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "Profilo:", -1, 8, 2, 30, 9
+    COMBOBOX        IDC_PROFILE, 40, 0, 110, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    PUSHBUTTON      "Applica profilo", IDC_APPLYPROFILE, 154, 0, 64, 15
+    PUSHBUTTON      "Predefiniti libtorrent", IDC_DEFAULTS, 222, 0, 110, 15
+    RTEXT           "", IDC_FLABEL0, 8, 24, 150, 9
+    EDITTEXT        IDC_FIELD0, 162, 22, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0, 222, 24, 30, 9
+    RTEXT           "", IDC_FLABEL0+1, 8, 40, 150, 9
+    EDITTEXT        IDC_FIELD0+1, 162, 38, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+1, 222, 40, 30, 9
+    RTEXT           "", IDC_FLABEL0+2, 8, 56, 150, 9
+    EDITTEXT        IDC_FIELD0+2, 162, 54, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+2, 222, 56, 30, 9
+    RTEXT           "", IDC_FLABEL0+3, 8, 72, 150, 9
+    EDITTEXT        IDC_FIELD0+3, 162, 70, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+3, 222, 72, 30, 9
+    RTEXT           "", IDC_FLABEL0+4, 8, 88, 150, 9
+    EDITTEXT        IDC_FIELD0+4, 162, 86, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+4, 222, 88, 30, 9
+    RTEXT           "", IDC_FLABEL0+5, 8, 104, 150, 9
+    EDITTEXT        IDC_FIELD0+5, 162, 102, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+5, 222, 104, 30, 9
+    RTEXT           "", IDC_FLABEL0+6, 8, 120, 150, 9
+    EDITTEXT        IDC_FIELD0+6, 162, 118, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+6, 222, 120, 30, 9
+    RTEXT           "", IDC_FLABEL0+7, 8, 136, 150, 9
+    EDITTEXT        IDC_FIELD0+7, 162, 134, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+7, 222, 136, 30, 9
+    RTEXT           "", IDC_FLABEL0+8, 8, 152, 150, 9
+    EDITTEXT        IDC_FIELD0+8, 162, 150, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+8, 222, 152, 30, 9
+    RTEXT           "", IDC_FLABEL0+9, 8, 168, 150, 9
+    EDITTEXT        IDC_FIELD0+9, 162, 166, 56, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+9, 222, 168, 30, 9
+    LTEXT           "", IDC_HELPTEXT, 8, 184, 324, 20
+    RTEXT           "Motore di I/O su disco (al riavvio)", -1, 8, 210, 150, 9
+    COMBOBOX        IDC_DISKIO, 162, 208, 170, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    AUTOCHECKBOX    "Riduci la memoria quando la finestra è nascosta o minimizzata", IDC_TRIM, 8, 228, 324, 10
+    LTEXT           "", IDC_MEMINFO, 8, 244, 324, 20
+END
+
+IDD_WIZARD DIALOGEX 0, 0, 420, 300
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Ottimizza per la mia connessione"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "Scegli il tipo di linea: le impostazioni di libtorrent vengono calcolate in base alla banda reale. Usa i valori misurati con uno speed test, non quelli nominali del contratto.", -1, 8, 6, 404, 18
+    LTEXT           "Connessione", -1, 8, 30, 60, 9
+    COMBOBOX        IDC_CONNTYPE, 72, 28, 170, 120, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "Download (Mb/s)", -1, 250, 30, 60, 9
+    EDITTEXT        IDC_DOWNMBPS, 312, 28, 40, 13, WS_TABSTOP
+    LTEXT           "Upload", -1, 358, 30, 26, 9
+    EDITTEXT        IDC_UPMBPS, 384, 28, 28, 13, WS_TABSTOP
+    LTEXT           "Disco", -1, 8, 48, 60, 9
+    COMBOBOX        IDC_DISKTYPE, 72, 46, 170, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "Priorità", -1, 250, 48, 60, 9
+    COMBOBOX        IDC_RAMPRIO, 312, 46, 100, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    AUTOCHECKBOX    "Limita l'upload per lasciare banda agli altri dispositivi", IDC_LIMITUP, 8, 66, 300, 10
+    PUSHBUTTON      "Calcola", IDC_CALC, 362, 63, 50, 15
+    CONTROL         "", IDC_RESULTS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP, 8, 84, 404, 186
+    LTEXT           "Le impostazioni vengono applicate subito e salvate. Puoi ritoccarle da Opzioni.", -1, 8, 278, 250, 9
+    DEFPUSHBUTTON   "Applica", IDOK, 308, 276, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 362, 276, 50, 14
+END
+
+IDD_DIAG DIALOGEX 0, 0, 420, 300
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Diagnostica rete"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "", IDC_STATUS, 8, 8, 404, 18
+    EDITTEXT        IDC_REPORT, 8, 30, 404, 240, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_HSCROLL
+    PUSHBUTTON      "Verifica porta online", IDC_CHECKPORT, 8, 278, 86, 15
+    PUSHBUTTON      "Aggiorna", IDC_REFRESH, 98, 278, 50, 15
+    PUSHBUTTON      "Regola firewall Windows", IDC_FIREWALL, 152, 278, 96, 15
+    PUSHBUTTON      "Copia", IDC_COPY, 252, 278, 50, 15
+    DEFPUSHBUTTON   "Chiudi", IDCANCEL, 362, 278, 50, 15
+END
+
+IDD_STATS DIALOGEX 0, 0, 380, 290
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Statistiche"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_REPORT, 8, 8, 364, 252, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL
+    PUSHBUTTON      "Azzera storico...", IDC_RESETSTATS, 8, 268, 70, 15
+    PUSHBUTTON      "Copia", IDC_COPY, 82, 268, 50, 15
+    DEFPUSHBUTTON   "Chiudi", IDCANCEL, 322, 268, 50, 15
+END
+
+IDD_ABOUT DIALOGEX 0, 0, 320, 230
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Informazioni su SeedFlow"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    ICON            IDI_APP, IDC_LOGO, 10, 10, 32, 32, SS_REALSIZEIMAGE
+    LTEXT           "SeedFlow", IDC_TITLE, 52, 10, 260, 16
+    LTEXT           "", IDC_VERSION, 52, 28, 260, 18
+    EDITTEXT        IDC_REPORT, 10, 52, 300, 132, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL
+    CONTROL         "<a href=""https://www.libtorrent.org"">libtorrent.org</a>", IDC_LINK, "SysLink", WS_TABSTOP, 10, 190, 120, 10
+    PUSHBUTTON      "Copia info di sistema", IDC_COPY, 10, 208, 86, 15
+    PUSHBUTTON      "Cartella dati", IDC_DATAFOLDER, 100, 208, 60, 15
+    DEFPUSHBUTTON   "OK", IDOK, 260, 208, 50, 15
+END
+
+IDD_RATIO DIALOGEX 0, 0, 260, 150
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Limite ratio del torrent"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "", IDC_R_CURRENT, 8, 8, 244, 18
+    AUTORADIOBUTTON "Usa l'impostazione globale", IDC_R_GLOBAL, 8, 30, 240, 10, WS_GROUP | WS_TABSTOP
+    AUTORADIOBUTTON "Nessun limite per questo torrent", IDC_R_NONE, 8, 44, 240, 10
+    AUTORADIOBUTTON "Limite personalizzato:", IDC_R_CUSTOM, 8, 58, 100, 10
+    EDITTEXT        IDC_RATIO, 110, 56, 40, 13, WS_TABSTOP | WS_GROUP
+    LTEXT           "Azione al raggiungimento", -1, 8, 78, 120, 9
+    COMBOBOX        IDC_RATIOACTION, 8, 90, 244, 80, CBS_DROPDOWNLIST | WS_TABSTOP
+    DEFPUSHBUTTON   "Salva", IDOK, 148, 128, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 202, 128, 50, 14
+END
+
+IDD_LIMITS DIALOGEX 0, 0, 220, 96
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Limiti di velocità del torrent"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "Download (KiB/s, 0 = illimitato)", -1, 8, 10, 130, 9
+    EDITTEXT        IDC_DOWN, 150, 8, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "Upload (KiB/s, 0 = illimitato)", -1, 8, 30, 130, 9
+    EDITTEXT        IDC_UP, 150, 28, 60, 13, ES_NUMBER | WS_TABSTOP
+    DEFPUSHBUTTON   "Salva", IDOK, 106, 74, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 160, 74, 50, 14
+END
+
+IDD_TRACKERS DIALOGEX 0, 0, 320, 160
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Aggiungi tracker"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "Un URL per riga (http, https, udp, wss). Una riga vuota separa i livelli (tier): i tracker dello stesso livello sono alternativi.", -1, 8, 6, 304, 18
+    EDITTEXT        IDC_EDIT, 8, 28, 304, 106, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "Aggiungi", IDOK, 208, 140, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 262, 140, 50, 14
+END
+

@@ -1,0 +1,12 @@
+/.vs/
+/.build-tools/
+/build*/
+/SeedFlow-Pronto/
+/CMakeUserPresets.json
+/COMPILAZIONE.log
+*.obj
+*.pdb
+*.ilk
+*.tlog
+*.user
+*.suo

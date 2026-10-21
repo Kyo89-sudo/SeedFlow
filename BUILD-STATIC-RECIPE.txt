@@ -1,0 +1,61 @@
+Edizione 0.8.4 r14: compilata nativamente su Windows con MSVC /MT.
+Dipendenze statiche non modificate: libtorrent 2.1.2, Boost 1.92.0,
+OpenSSL 3.6.5, ricostruite in precedenza con la ricetta conservata sotto.
+Aggiunto src/speed_graph.cpp a EXE e test. Nessuna patch di libtorrent richiesta.
+Le risorse usano rc /c65001; il link GUI usa /MANIFEST:NO.
+Vedi VERIFICA.txt per gli esiti attuali.
+
+Ricetta conservata della compilazione delle dipendenze:
+
+SeedFlow 0.8.1 r11 - ricostruzione statica Windows x64
+
+Percorso normale supportato: build.bat -NoPause -RunTests
+Usa vcpkg x64-windows-static, MSVC /MT, senza .NET.
+
+Per questa consegna sono state compilate direttamente le dipendenze:
+il processo vcpkg nell'ambiente ristretto non riusciva ad aprire la propria
+named pipe (CreateFileW stdin, errore 5). Non e' un errore dei sorgenti.
+
+Strumenti: Visual Studio 2026 Community, MSVC 19.51.36260,
+Windows SDK 10.0.28000.0, CMake 4.3.1-msvc1.
+
+OpenSSL 3.6.5:
+https://github.com/openssl/openssl
+tag openssl-3.6.5, commit c8bd5a57108599ac650bbae77fcabe3109dab2e8
+Perl Strawberry 5.42.2.1 nativo, NASM 3.01, jom 1.1.7.
+Configurazione out-of-source:
+perl Configure VC-WIN64A no-shared no-module no-tests no-docs no-apps
+  no-makedepend --prefix=<openssl-install> --openssldir=SSL "CFLAGS=/MT /O2"
+Nel Makefile generato: /Zi /Fdossl_static.pdb sostituito con /Z7
+per evitare il PDB condiviso durante la compilazione parallela.
+jom -j4, poi nmake install_sw.
+Nessuna DLL provider esterna (no-module).
+
+libtorrent 2.1.2:
+https://github.com/arvidn/libtorrent
+tag v2.1.2, commit 6da363d2994f17c0b3c0450d124cf73a31a73847
+deps/try_signal da https://github.com/arvidn/try_signal
+commit 105cce59972f925a33aa6b1c3109e4cd3caf583d
+Boost 1.92.0: header/configurazione dalla cache locale vcpkg.
+Nessuna libreria Boost dinamica collegata.
+CMake: Visual Studio 18 2026, x64, Release, BUILD_SHARED_LIBS=OFF,
+static_runtime=ON, deprecated-functions=ON, webtorrent=OFF,
+build_tests=OFF, build_examples=OFF, build_tools=OFF,
+CMAKE_POLICY_DEFAULT_CMP0167=NEW, CMAKE_SUPPRESS_REGENERATION=ON,
+OPENSSL_ROOT_DIR=<openssl-install>, OPENSSL_USE_STATIC_LIBS=ON,
+OPENSSL_MSVC_STATIC_RT=ON, Boost_DIR=<boost-prefix>/share/boost.
+Compilazione MSBuild con TrackFileAccess=false e installazione CMake.
+
+SeedFlow e test: cl /std:c++17 /MT /O2 /utf-8 /W4 /permissive- /EHsc.
+Definizioni pubbliche libtorrent del target statico, TORRENT_ABI_VERSION=2.
+Risorse: rc /c65001. Link GUI: /SUBSYSTEM:WINDOWS /MANIFEST:NO.
+Stesse versioni e sorgenti dell'edizione r11; cambia il collegamento.
+
+Per ripetere i test tramite CMake con dipendenze statiche installate:
+SF_STATIC_RUNTIME=ON, SF_BUILD_TESTS=ON, SF_BUILD_ENGINE_TESTS=ON.
+ctest --test-dir <build> -C Release --output-on-failure
+Il test superseed usa un torrent locale senza tracker e disabilita discovery
+e trasporti peer: controlla i flag, non l'efficienza su uno sciame reale.
+
+Licenze delle dipendenze in licenses/.
+Esiti e limiti effettivi della verifica in VERIFICA.txt.
