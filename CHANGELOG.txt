@@ -11,7 +11,6 @@ SeedFlow 0.8.4 (r14) - 21/10/2026
   solo per la parte non valida. Ordini validi e intestazioni con frecce conservati.
 - FIX icone: argomenti nulli/dimensioni non valide respinti prima dell'allocazione.
 - Aggiornati versione condivisa, manifest, CMake, script e documentazione.
-- Nessuna modifica ai contatori comunicati ai tracker o ai trasferimenti reali.
 
 Storico precedente fornito con l'archivio r13:
 
