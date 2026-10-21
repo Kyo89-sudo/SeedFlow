@@ -1,72 +1,75 @@
-SeedFlow — note di rilascio
+SeedFlow — Changelog
 
-0.8.4 r15 · in prova · 21 ottobre 2026
+0.8.4 r15 — Unreleased — 2026-10-21
 
-Questa revisione riparte dalla r14. L'interfaccia e le funzioni restano quelle
-che già conosci; il lavoro riguarda soprattutto affidabilità e piccoli difetti.
+GUI
+- Aumentata la larghezza dell'albero Preferenze per evitare il clipping di
+  "Prestazioni e memoria".
+- Corretto il layout dei pannelli della status bar a larghezze ridotte.
+  Aggiunti tooltip con i valori completi.
+- Corretto il rettangolo di testo dello stato vuoto nel pannello Generale.
 
-Nell'interfaccia
-- "Prestazioni e memoria" ora entra per intero nell'albero delle Preferenze.
-- La barra di stato si adatta meglio alle finestre strette. Passando il mouse
-  sui riquadri puoi leggere i valori completi anche quando manca spazio.
-- Nel pannello Generale vuoto, il messaggio usa tutta la larghezza disponibile.
+Persistence
+- Aggiunto file_io.hpp per condividere la scrittura su file temporaneo tra
+  settings e fast resume; verificati write, flush, close e rename.
+- Interrotta la sostituzione di settings.dat se la creazione del backup fallisce.
+- Aggiunto logging degli errori di scrittura del fast resume.
+- Limitata a 32 MiB la lettura di settings.dat e dell'import JSON legacy;
+  controllo della dimensione prima dell'allocazione.
+- Validate le conversioni int64 -> int dei valori persistiti; valori fuori
+  range sostituiti con i default. Normalizzati i flag booleani.
+- Azzerate le statistiche quando la relativa sezione non è presente.
 
-Impostazioni e salvataggi
-- I numeri fuori intervallo nei file di configurazione non vengono più
-  convertiti in valori diversi; vengono usati i valori predefiniti.
-- Il caricamento delle impostazioni e della vecchia sessione JSON ha un limite
-  di 32 MiB, controllato prima di allocare la memoria.
-- Impostazioni e fast resume condividono il codice di scrittura su file
-  temporaneo. Vengono controllati scrittura, chiusura e sostituzione del file.
-- Se il backup delle impostazioni non riesce, il file corrente resta intatto.
-  Gli errori di scrittura del fast resume vengono segnalati nel log.
-- Corretti il ripristino di statistiche mancanti e alcuni casi limite degli
-  appunti Unicode.
+Network
+- Associato PortCheck alla porta verificata. Scartati i risultati asincroni
+  ricevuti dopo un cambio porta.
+- Invalidata la cache della diagnostica se il timestamp è nel futuro.
+- Limitata a 64 KiB la risposta HTTP prima dell'allocazione; risposte incomplete
+  rifiutate. Handle WinHTTP gestiti con RAII.
 
-Diagnostica della rete
-- Il risultato del controllo resta legato alla porta realmente verificata.
-  Un controllo avviato prima di cambiare porta non aggiorna lo stato della nuova.
-- Un vecchio risultato non rimane valido se l'orologio torna indietro.
-- Risposte HTTPS incomplete o troppo grandi vengono rifiutate. Le risorse della
-  richiesta vengono liberate anche se il controllo termina con un'eccezione.
+Core e build
+- Limitata la lettura degli appunti Unicode alla dimensione del blocco globale;
+  aggiunto controllo overflow al calcolo della dimensione di copia.
+- -RunTests abilita sia la regressione Win32 sia il test isolato del motore.
+- Inclusi GPL-3.0 e documentazione nel pacchetto generato da build.bat.
+- Rimossi include inutilizzati, duplicazioni I/O e report storici dal pacchetto.
+- FileVersion aggiornata a 0.8.4.15. Nessuna nuova dipendenza.
 
-Distribuzione e verifiche
-- GPL versione 3 e documenti inclusi anche nei pacchetti creati da build.bat.
-- Con -RunTests vengono eseguite entrambe le suite, compreso il test del motore.
-- Rimossi rapporti di verifica storici dal nuovo archivio sorgenti.
-- Nessuna nuova dipendenza: la distribuzione statica resta un solo EXE, oltre
-  ai documenti e alle licenze che lo accompagnano.
-- 124 controlli di regressione superati. Per modalità di compilazione, prove
-  eseguite e limiti del collaudo, consulta VERIFICA.txt.
+Verifiche
+- Compilazione/link nativi MSVC x64 /MT; 124 controlli di regressione e CTest 2/2.
+- Build MSBuild completa e test end-to-end della GUI non verificati.
+- Dettagli e limiti: VERIFICA.txt.
 
-0.8.4 r14 · 21 ottobre 2026
+0.8.4 r14 — 2026-10-21
 
-Aggiunta la scheda Velocità, con download e upload complessivi degli ultimi
-cinque minuti. Corrette la gestione del risultato asincrono della diagnostica,
-la disposizione delle colonne salvata e la validazione delle dimensioni icona.
-Questa è la prima versione pubblicata su GitHub.
+- Aggiunta la tab Velocità: download/upload globali, finestra di cinque minuti,
+  ring buffer da 301 campioni e scala automatica.
+- Corretto il lifetime del risultato asincrono della diagnostica con mailbox
+  condivisa; i messaggi Windows trasportano solo la notifica.
+- Validati ordine e larghezze delle colonne persistite.
+- Validati dimensioni e argomenti delle icone prima dell'allocazione.
+- Prima release pubblicata su GitHub.
 
-0.8.3 r13 · 20 ottobre 2026
+0.8.3 r13 — 2026-10-20
 
-Introdotte le Preferenze in un'unica finestra e il nuovo set di icone. Aggiunti
-l'indicatore di salute dello sciame, l'avvio con Windows e la priorità del
-processo. Rivisti barra di avanzamento, menu e gestione delle risorse grafiche.
+- Unificate le Preferenze e aggiunto il set di icone duotone.
+- Aggiunti indicatore di health dello swarm, avvio con Windows e process priority.
+- Rivisti progress bar, rendering dei menu e gestione delle risorse GDI.
 
-0.8.2 r12 · 20 ottobre 2026
+0.8.2 r12 — 2026-10-20
 
-Rivista la visualizzazione dello stato dei tracker quando alcune interfacce di
-rete non raggiungono Internet. Aggiunte le opzioni per IPv6 e per gli annunci
-ai tracker e ai tier. Migliorati i messaggi della diagnostica UPnP.
+- Rivista l'aggregazione dello stato dei tracker sulle interfacce locali.
+- Aggiunte opzioni IPv6, announce a tutti i tracker e announce a tutti i tier.
+- Migliorata la diagnostica UPnP e la gestione degli eventi di port mapping.
 
-0.8.1 r11 · 20 ottobre 2026
+0.8.1 r11 — 2026-10-20
 
-Corretti accenti e testi troncati nei menu e nei dialoghi. Migliorati appunti,
-conversioni Unicode, parsing numerico e rilascio delle bitmap dei menu.
-Preparata la distribuzione statica per Windows x64.
+- Corretti encoding UTF-8 delle risorse e clipping dei testi nei dialoghi.
+- Corretti conversioni Unicode, parsing numerico e gestione degli appunti.
+- Corretto il rilascio delle bitmap dei menu.
+- Aggiunta la distribuzione statica Windows x64 con runtime MSVC /MT.
 
-Versioni precedenti
+Legacy
 
-Le prime versioni usavano un'interfaccia C#/WPF e un motore nativo. La linea
-0.8.x è passata a C++/Win32. Quelle bozze e i loro tentativi di compilazione
-non fanno parte dell'attuale build. Lo storico sopra riassume le versioni
-precedenti; non estende a quelle versioni le verifiche eseguite sulla r15.
+Le versioni precedenti alla linea Win32 usavano una GUI C#/WPF con motore
+nativo. Lo storico di quelle bozze è stato escluso dal changelog corrente.
