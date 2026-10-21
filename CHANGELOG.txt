@@ -12,6 +12,9 @@ Nuovo: creazione di torrent
   principale resta reattiva.
 - Il torrent creato viene riletto e validato; può partire subito in seeding
   senza ricontrollare i dati (seed mode) e il magnet può essere copiato.
+- Formato v2 con una cartella che contiene un solo file: libtorrent crea un
+  torrent a file singolo con il nome del file; il seeding immediato parte
+  dalla cartella giusta.
 - Nuova icona nello stesso stile del set.
 
 Affidabilità

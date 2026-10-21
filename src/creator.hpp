@@ -28,6 +28,7 @@ struct CreateResult {
     std::string error;
     std::vector<char> torrent;                   // bencoded .torrent
     std::string name, magnet;
+    std::string seed_dir;                        // UTF-8 folder to seed from (the save path of the new torrent)
     std::int64_t total_size = 0;
     int num_files = 0, num_pieces = 0, piece_size = 0;
 };

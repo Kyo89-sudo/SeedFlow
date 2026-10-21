@@ -859,7 +859,7 @@ static void create_finish(HWND dlg, CreateCtx& c) {
     std::wstring extra;
     if (c.copy_magnet && copy_to_clipboard(g.main, widen(r.magnet))) extra += L"\nMagnet copiato negli appunti.";
     if (c.seed) {
-        int id = add_created_torrent(c.output, c.save_dir, error);
+        int id = add_created_torrent(c.output, r.seed_dir.empty() ? c.save_dir : widen(r.seed_dir), error);
         extra += id > 0 ? L"\nSeeding avviato." : L"\nSeeding non avviato: " + widen(error);
     }
     MessageBoxW(dlg, (L"Torrent creato.\n\n" + summary + extra).c_str(), L"Crea torrent", MB_ICONINFORMATION);

@@ -146,6 +146,12 @@ CreateResult create_torrent_file(CreateRequest const& req, std::atomic<bool> con
         if (!atp.ti) { r.error = "Torrent generato non valido."; r.torrent.clear(); return r; }
         r.name = atp.ti->name();
         r.magnet = lt::make_magnet_uri(atp);
+        // Seed from the folder that contains the torrent root. libtorrent 2.1 turns a v2-only
+        // torrent of a folder holding a single file into a single-file torrent named after
+        // that file (the folder name is dropped): its data then lives inside the source folder.
+        r.seed_dir = parent;
+        if (fs::is_directory(fs::u8path(trimmed), ec) && r.name != fs::u8path(trimmed).filename().u8string())
+            r.seed_dir = trimmed;
         r.ok = true;
     } catch (Cancelled const&) {
         r = CreateResult{};

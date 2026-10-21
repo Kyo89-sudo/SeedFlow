@@ -17,7 +17,11 @@ Eseguito realmente:
   (v1+v2), v1 (con flag privato) e v2, hash e tier verificati rileggendo il
   file; file singolo con pezzi da 64 KiB; sorgente mancante, cartella vuota e
   dimensione pezzi non valida rifiutate; annullamento durante l'hash e
-  riavvio; aggiunta al motore in seed mode: seeding immediato senza recheck.
+  riavvio; aggiunta al motore in seed mode: seeding immediato senza recheck,
+  anche per un torrent v2 di una cartella con un solo file.
+- Windows (utente): build MSVC 19.51 /MT riuscita; la prima esecuzione della
+  regressione Win32 ha trovato il caso v2 con un solo file in cartella
+  (nome del torrent = nome del file), corretto in questa revisione.
 - Annullamento: libtorrent non ha un'API di interruzione, l'hash viene fermato
   dalla callback (come qBittorrent). LeakSanitizer rileva circa 5 KB non
   liberati dentro libtorrent per ogni annullamento: trascurabile, nessun

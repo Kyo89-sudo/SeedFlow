@@ -125,7 +125,12 @@ int wmain(int argc, wchar_t** argv) {
                 request.tiers = tiers;
                 request.format = static_cast<sf::TorrentFormat>(format);
                 auto result = sf::create_torrent_file(request);
-                check(result.ok && !result.torrent.empty() && result.name == sf::narrow(L"Dati àè") &&
+                // v2-only + a folder with a single file: libtorrent names the torrent after the file
+                // and the data is seeded from inside the folder.
+                bool const v2_single = format == 2;
+                check(result.ok && !result.torrent.empty() &&
+                      result.name == (v2_single ? std::string("uno.bin") : sf::narrow(L"Dati àè")) &&
+                      std::filesystem::path(sf::widen(result.seed_dir)).lexically_normal() == (v2_single ? dir / L"Dati àè" : dir).lexically_normal() &&
                       result.magnet.rfind("magnet:?", 0) == 0, "create torrent: hybrid / v1 / v2 from a Unicode folder");
             }
             std::filesystem::remove_all(dir, ec);
