@@ -6,7 +6,8 @@ SeedFlow — Changelog
   relativo viene mantenuto.
 - Pulsanti e voci del menu Coda disattivati per i torrent completati o in
   seeding, che non hanno una posizione in coda.
-- Colonna # con "*" per i torrent fuori coda, come in qBittorrent.
+- Colonna # numerata per tutti i torrent: prima la coda di download, poi
+  quelli completati o in seeding in ordine di aggiunta.
 
 0.8.5 r16 — 2026-10-21
 

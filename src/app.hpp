@@ -32,6 +32,7 @@ struct Row {
     int state_icon = 0;
     COLORREF color = 0;
     std::wstring state;
+    int number = 0;          // # column: queue position + 1, then seeds/finished numbered after the queue
 };
 
 // The worker owns its mailbox until completion. Window messages never own a pointer.

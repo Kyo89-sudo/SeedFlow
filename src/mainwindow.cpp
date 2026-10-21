@@ -639,7 +639,7 @@ static void update_filter_counts() {
 static std::wstring cell_text(Row const& r, int col) {
     auto const& v = r.v;
     switch (col) {
-        case ColQueue: return v.queue_position >= 0 ? std::to_wstring(v.queue_position + 1) : L"*";   // * = not queued (seed/finished), as qBittorrent
+        case ColQueue: return r.number > 0 ? std::to_wstring(r.number) : L"";
         case ColName: return v.name.empty() ? L"(recupero metadati…) " + widen(v.hash) : widen(v.name);
         case ColSize: return v.has_metadata ? fmt_bytes(v.total_wanted) : L"?";
         case ColProgress: return fmt_double(v.progress * 100.0, 1) + L"%";
@@ -665,10 +665,7 @@ static std::wstring cell_text(Row const& r, int col) {
 static bool less_by(Row const& a, Row const& b, int col) {
     auto const &x = a.v, &y = b.v;
     switch (col) {
-        case ColQueue: {
-            int qa = x.queue_position < 0 ? 1 << 30 : x.queue_position, qb = y.queue_position < 0 ? 1 << 30 : y.queue_position;
-            return qa != qb ? qa < qb : x.id < y.id;
-        }
+        case ColQueue: return a.number != b.number ? a.number < b.number : x.id < y.id;
         case ColName: return _wcsicmp(widen(x.name).c_str(), widen(y.name).c_str()) < 0;
         case ColSize: return x.total_wanted < y.total_wanted;
         case ColProgress: return x.progress < y.progress;
@@ -888,6 +885,19 @@ void refresh_now() {
         g.rows.push_back(std::move(r));
     }
     g.current_down = down; g.current_up = up;
+    // # column: queued torrents keep their libtorrent position; torrents outside the
+    // queue (seeding / finished) are numbered after them in the order they were added.
+    {
+        int queued = 0;
+        std::vector<Row*> rest;
+        for (auto& r : g.rows) {
+            if (r.v.queue_position >= 0) { r.number = r.v.queue_position + 1; queued = std::max(queued, r.number); }
+            else rest.push_back(&r);
+        }
+        std::sort(rest.begin(), rest.end(), [](Row const* a, Row const* b) {
+            return a->v.added != b->v.added ? a->v.added < b->v.added : a->v.id < b->v.id; });
+        for (Row* r : rest) r->number = ++queued;
+    }
     apply_ratio_rules();
 
     // global statistics from the session payload counters (includes removed torrents)
