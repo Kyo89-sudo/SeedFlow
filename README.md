@@ -2,57 +2,66 @@
 
 <img src="docs/seedflow-banner.svg" alt="SeedFlow — client BitTorrent per Windows" width="100%">
 
-Torrent e magnet in un'applicazione desktop nativa, con interfaccia in italiano.
+**Client BitTorrent per Windows, scritto in C++ / Win32 e basato su libtorrent.**
 
-[![Scarica SeedFlow](https://img.shields.io/badge/Scarica_per_Windows_x64-0.8.4_r14-258b45?style=for-the-badge&logo=windows)](https://github.com/Kyo89-sudo/SeedFlow/releases/tag/v0.8.4-r14)
-[![GPL v3](https://img.shields.io/badge/Licenza-GPL_v3-1565c0?style=for-the-badge)](LICENSE)
+[![Download Windows x64](https://img.shields.io/badge/Download-Windows_x64-258b45?style=for-the-badge&logo=windows)](https://github.com/Kyo89-sudo/SeedFlow/releases)
+[![GPL v3](https://img.shields.io/badge/License-GPL_v3-1565c0?style=for-the-badge)](LICENSE)
 
-[Download](https://github.com/Kyo89-sudo/SeedFlow/releases) · [Changelog](CHANGELOG.txt) · [Compilazione](BUILDING.md) · [Segnalazioni](https://github.com/Kyo89-sudo/SeedFlow/issues)
+[Release](https://github.com/Kyo89-sudo/SeedFlow/releases) · [Changelog](CHANGELOG.txt) · [Build](BUILDING.md) · [Issue tracker](https://github.com/Kyo89-sudo/SeedFlow/issues)
 
 </div>
 
-## Prova SeedFlow
+## SeedFlow
 
-SeedFlow funziona su **Windows 10 e 11, a 64 bit**. Scarica lo ZIP `win64-static` dalla [pagina delle release](https://github.com/Kyo89-sudo/SeedFlow/releases), estrailo e apri `SeedFlow.exe`.
+SeedFlow gestisce torrent e magnet con una GUI desktop nativa. Include priorità dei file, queue management, fast resume, statistiche e diagnostica di rete. La build statica contiene le librerie e il runtime MSVC: **un solo EXE, senza DLL aggiuntive o .NET**.
 
-Non serve .NET e non ci sono DLL aggiuntive da installare. Le librerie sono incluse nell'eseguibile; documenti e licenze accompagnano il pacchetto.
+La release pubblicata è **0.8.4 r14**. La **r15** è una revisione di manutenzione, disponibile nel [ramo dedicato](https://github.com/Kyo89-sudo/SeedFlow/pull/1).
 
-Prima di sostituire una versione, chiudila con **File → Esci**, anche se è nella tray. I torrent e le impostazioni restano in `%LOCALAPPDATA%\SeedFlow\State`.
+## Funzionalità
 
-**La versione pubblicata è la 0.8.4 r14.** La revisione di manutenzione **r15** è in prova nel [ramo dedicato](https://github.com/Kyo89-sudo/SeedFlow/pull/1). Le modifiche sono descritte nel [changelog](CHANGELOG.txt).
+| Area | Supporto |
+| :--- | :--- |
+| Torrent e magnet | Aggiunta da file o magnet link, copia magnet, selezione e priorità dei file |
+| Download e seeding | Queue, limiti globali e per torrent, ratio target e Super-seeding |
+| Peer discovery | Tracker HTTP/UDP, DHT, PeX e Local Peer Discovery |
+| NAT e connessioni | Port mapping tramite UPnP e NAT-PMP, IPv4/IPv6 e diagnostica della porta |
+| Monitoraggio | Peer e tracker, health dello swarm, dati trasferiti, ratio e grafico download/upload |
+| Desktop | System tray, avvio con Windows e ripristino dei trasferimenti tramite fast resume |
 
-## Cosa puoi fare
+**Super-seeding:** disponibile per torrent completi. Riduce l'invio di piece duplicate nella fase di distribuzione iniziale; l'efficacia dipende dai peer e dal comportamento dello swarm.
 
-- Aggiungere torrent e magnet, scegliere i file da scaricare e gestire le priorità della coda.
-- Controllare tracker, peer, ratio e quantità di dati trasferiti.
-- Seguire download e upload dal grafico delle velocità complessive.
-- Tenere il programma nella tray e riprendere i trasferimenti alla riapertura.
-- Regolare connessioni, limiti di velocità e impostazioni di rete dalle Preferenze.
+**NAT:** UPnP e NAT-PMP possono configurare il port mapping su router compatibili. Con CGNAT o doppio NAT può servire una configurazione aggiuntiva o un IP pubblico fornito dall'ISP.
 
-## Schermata del programma
+## Screenshot
 
 <p align="center">
-<a href="docs/seedflow-0.8.4-main-window.png"><img src="docs/seedflow-preview.svg" alt="La finestra principale di SeedFlow 0.8.4" width="640"></a>
+<a href="docs/seedflow-0.8.4-main-window.png"><img src="docs/seedflow-preview.svg" alt="SeedFlow 0.8.4 — main window" width="640"></a>
 </p>
 
-*Apri l'immagine per vederla nelle dimensioni originali.*
+*Click sull'immagine per aprire lo screenshot originale.*
 
-## Compilare il programma
+## Download e avvio
 
-Il progetto è scritto in C++17 / Win32 e usa libtorrent. Per compilarlo servono Visual Studio 2026 o 2022, MSVC x64, Windows SDK, CMake e Git. Con VS 2026 usa CMake 4.2 o successivo.
+Richiede **Windows 10/11 x64**. Scarica lo ZIP `win64-static` dalla [pagina delle release](https://github.com/Kyo89-sudo/SeedFlow/releases), estrailo e avvia `SeedFlow.exe`. Conserva le licenze incluse nel pacchetto.
+
+Prima di aggiornare, chiudi la versione precedente con **File → Esci**, anche se è nella tray. Stato e impostazioni sono in `%LOCALAPPDATA%\SeedFlow\State`.
+
+## Build
+
+Servono Visual Studio 2026 o 2022, MSVC x64, Windows SDK, CMake e Git. Con VS 2026 è richiesto CMake 4.2 o successivo.
 
 ```bat
 build.bat -NoPause -RunTests
 ```
 
-Lo script prepara le dipendenze, compila ed esegue i test. La prima volta può richiedere tempo. Le istruzioni complete sono in [BUILDING.md](BUILDING.md).
+Il default è `x64-windows-static` con runtime `/MT`. La prima build compila anche le dipendenze. Opzioni e istruzioni CMake: [BUILDING.md](BUILDING.md).
 
-La r15 è stata compilata su Windows con MSVC e ha superato 124 controlli di regressione e il test isolato del motore. Il [rapporto della r15](https://github.com/Kyo89-sudo/SeedFlow/blob/maintenance/0.8.4-r15/VERIFICA.txt) spiega come sono state eseguite le prove e cosa resta da collaudare. Per la versione che stai usando, consulta anche il rapporto incluso nel suo ZIP.
+La r15 ha superato la compilazione/link nativi su Windows, 124 controlli di regressione e il test isolato del motore. Modalità di verifica e limiti sono nel [report della r15](https://github.com/Kyo89-sudo/SeedFlow/blob/maintenance/0.8.4-r15/VERIFICA.txt). Queste prove non equivalgono a un collaudo end-to-end su uno swarm pubblico.
 
-## Licenza
+## License
 
-SeedFlow è distribuito sotto **GNU GPL versione 3** (`GPL-3.0-only`). Il testo completo è in [LICENSE](LICENSE); le librerie mantengono le [proprie licenze](licenses/README.md).
+**GNU GPL v3** (`GPL-3.0-only`): [LICENSE](LICENSE). I componenti di terze parti mantengono le [rispettive licenze](licenses/README.md).
 
-## Segnalare un problema
+## Bug report
 
-Apri una [issue](https://github.com/Kyo89-sudo/SeedFlow/issues) con la versione di SeedFlow, quella di Windows e i passaggi per riprodurre il problema. Se alleghi un log, rimuovi prima dati personali, indirizzi IP e tracker privati.
+Apri una [issue](https://github.com/Kyo89-sudo/SeedFlow/issues) indicando versione di SeedFlow, versione di Windows, passaggi per riprodurre il problema e risultato atteso. Prima di allegare log o screenshot, rimuovi dati personali, indirizzi IP e tracker privati.
