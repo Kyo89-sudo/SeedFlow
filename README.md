@@ -9,6 +9,8 @@ Scritto in C++ / Win32 · Motore libtorrent · Interfaccia italiana
 [![Download Windows x64](https://img.shields.io/badge/Scarica_per_Windows_x64-0.8.4_r14-258b45?style=for-the-badge&logo=windows)](https://github.com/Kyo89-sudo/SeedFlow/releases/tag/v0.8.4-r14)
 [![Codice C++17](https://img.shields.io/badge/C%2B%2B-17-1565c0?style=for-the-badge&logo=cplusplus)](BUILDING.md)
 
+[![Licenza GPL v3](https://img.shields.io/badge/Licenza-GPL_v3-258b45)](LICENSE)
+
 [Download](https://github.com/Kyo89-sudo/SeedFlow/releases/tag/v0.8.4-r14) · [Compilazione](BUILDING.md) · [Changelog](CHANGELOG.txt) · [Segnala un problema](https://github.com/Kyo89-sudo/SeedFlow/issues)
 
 </div>
@@ -68,7 +70,9 @@ Non è stato eseguito un collaudo interattivo completo della GUI o un test di tr
 
 ## Licenze
 
-Le licenze delle dipendenze sono nella cartella [licenses](licenses). Per il codice originale di SeedFlow non è ancora stata scelta una licenza di riutilizzo: la pubblicazione dei sorgenti non concede automaticamente una licenza open source.
+SeedFlow è distribuito sotto **GNU GPL versione 3** (`GPL-3.0-only`): vedi [LICENSE](LICENSE).
+
+Le dipendenze mantengono le proprie licenze, disponibili nella cartella [licenses](licenses). Il programma è fornito senza garanzie, nei termini della licenza.
 
 ## Segnalazioni
 
