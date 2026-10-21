@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param([switch]$NoPause, [switch]$CheckOnly, [switch]$DebugBuild, [switch]$SharedLibraries, [switch]$RunTests)
-# SeedFlow 0.8.4 (r14) - build nativa Win32 C++ con libtorrent statico.
+# SeedFlow 0.8.4 (r15) - build nativa Win32 C++ con libtorrent statico.
 # Requisiti: Visual Studio 2026 (18) o 2022 (17) con "Sviluppo desktop con C++",
 # CMake (incluso in VS) e Git. NON serve piu' .NET.
 Set-StrictMode -Version Latest
@@ -113,7 +113,8 @@ try {
     Run $cmake @('-S', $root, '-B', $build, '-G', $generator, '-A', 'x64', "-DCMAKE_GENERATOR_INSTANCE=$vs",
         "-DCMAKE_TOOLCHAIN_FILE=$toolchain", "-DVCPKG_TARGET_TRIPLET=$triplet",
         "-DSF_STATIC_RUNTIME=$(if ($SharedLibraries) { 'OFF' } else { 'ON' })",
-        "-DSF_BUILD_TESTS=$(if ($RunTests) { 'ON' } else { 'OFF' })")
+        "-DSF_BUILD_TESTS=$(if ($RunTests) { 'ON' } else { 'OFF' })",
+        "-DSF_BUILD_ENGINE_TESTS=$(if ($RunTests) { 'ON' } else { 'OFF' })")
 
     $stage = 'compilazione'
     Run $cmake @('--build', $build, '--config', $config, '--parallel')
@@ -136,7 +137,10 @@ try {
     if ($RunTests) {
         Run (Join-Path (Split-Path $cmake -Parent) 'ctest.exe') @('--test-dir', $build, '-C', $config, '--output-on-failure')
     }
-    foreach ($doc in @('README.md', 'CHANGELOG.txt')) { Copy-Item -LiteralPath (Join-Path $root $doc) -Destination $out }
+    foreach ($doc in @('README.md', 'BUILDING.md', 'BUILD-STATIC-RECIPE.txt', 'CHANGELOG.txt', 'LICENSE', 'VERIFICA.txt')) { Copy-Item -LiteralPath (Join-Path $root $doc) -Destination $out }
+    if (Test-Path -LiteralPath (Join-Path $root 'docs')) {
+        Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $out -Recurse
+    }
     if (Test-Path -LiteralPath (Join-Path $root 'licenses')) {
         Copy-Item -LiteralPath (Join-Path $root 'licenses') -Destination $out -Recurse
     }

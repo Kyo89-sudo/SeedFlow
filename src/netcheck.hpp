@@ -11,6 +11,7 @@ enum class NetState { Starting, Open, Firewalled, NoConnection, NotListening };
 
 struct PortCheck {
     bool done = false, success = false, reachable = false;
+    int port = 0; // A result is valid only for the port that was actually tested.
     std::string ip, status;
     std::time_t when = 0;
 };

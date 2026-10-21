@@ -3,7 +3,6 @@
 #include "paint.hpp"
 #include "util.hpp"
 #include <cmath>
-#include <limits>
 #include <string>
 
 namespace sf {

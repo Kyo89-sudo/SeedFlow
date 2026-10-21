@@ -7,6 +7,7 @@
 #include <ws2tcpip.h>
 #include <shellapi.h>
 #include <regex>
+#include <memory>
 
 namespace sf {
 
@@ -15,7 +16,9 @@ wchar_t const* const kFirewallRule = L"SeedFlow (BitTorrent)";
 NetState evaluate_network(NetView const& n, PortCheck const& last, std::wstring& text, std::wstring& tip) {
     bool any_ok = n.listen.empty() ? n.listening : false;
     for (auto const& l : n.listen) if (l.ok) any_ok = true;
-    bool ext_valid = last.done && last.success && std::time(nullptr) - last.when < 30 * 60;
+    auto const now = std::time(nullptr);
+    bool ext_valid = last.done && last.success && last.port == n.port &&
+        last.when > 0 && now >= last.when && now - last.when < 30 * 60;
     std::wstring port = std::to_wstring(n.port);
     if (!n.listening || !any_ok) {
         text = L"Porta non in ascolto";
@@ -51,34 +54,39 @@ NetState evaluate_network(NetView const& n, PortCheck const& last, std::wstring&
 PortCheck check_port_online(int port) {
     PortCheck r;
     r.done = true;
+    r.port = port;
     r.when = std::time(nullptr);
-    HINTERNET s = WinHttpOpen(L"SeedFlow/" SF_VERSION_WSTRING, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-    if (!s) s = WinHttpOpen(L"SeedFlow/" SF_VERSION_WSTRING, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if (port < 1 || port > 65535) { r.status = "Porta non valida"; return r; }
+    using HttpHandle = std::unique_ptr<void, decltype(&WinHttpCloseHandle)>;
+    HttpHandle s(WinHttpOpen(L"SeedFlow/" SF_VERSION_WSTRING, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0), &WinHttpCloseHandle);
+    if (!s) s.reset(WinHttpOpen(L"SeedFlow/" SF_VERSION_WSTRING, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
     if (!s) { r.status = "WinHTTP non disponibile"; return r; }
-    WinHttpSetTimeouts(s, 10000, 10000, 15000, 15000);
+    WinHttpSetTimeouts(s.get(), 10000, 10000, 15000, 15000);
     std::string body;
     DWORD code = 0;
-    if (HINTERNET c = WinHttpConnect(s, L"ifconfig.co", INTERNET_DEFAULT_HTTPS_PORT, 0)) {
+    if (HttpHandle c{WinHttpConnect(s.get(), L"ifconfig.co", INTERNET_DEFAULT_HTTPS_PORT, 0), &WinHttpCloseHandle}) {
         std::wstring path = L"/port/" + std::to_wstring(port);
-        if (HINTERNET q = WinHttpOpenRequest(c, L"GET", path.c_str(), nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE)) {
-            if (WinHttpSendRequest(q, L"Accept: application/json\r\n", static_cast<DWORD>(-1), WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
-                WinHttpReceiveResponse(q, nullptr)) {
+        if (HttpHandle q{WinHttpOpenRequest(c.get(), L"GET", path.c_str(), nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE), &WinHttpCloseHandle}) {
+            if (WinHttpSendRequest(q.get(), L"Accept: application/json\r\n", static_cast<DWORD>(-1), WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
+                WinHttpReceiveResponse(q.get(), nullptr)) {
                 DWORD len = sizeof(code);
-                WinHttpQueryHeaders(q, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &code, &len, WINHTTP_NO_HEADER_INDEX);
+                WinHttpQueryHeaders(q.get(), WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &code, &len, WINHTTP_NO_HEADER_INDEX);
                 DWORD avail = 0;
-                while (WinHttpQueryDataAvailable(q, &avail) && avail > 0 && body.size() < 65536) {
+                constexpr std::size_t limit = 65536;
+                for (;;) {
+                    if (!WinHttpQueryDataAvailable(q.get(), &avail)) { r.status = "Lettura della risposta non riuscita"; break; }
+                    if (!avail) break;
+                    if (avail > limit - body.size()) { r.status = "Risposta del servizio troppo grande"; break; }
                     std::string chunk(avail, '\0');
                     DWORD read = 0;
-                    if (!WinHttpReadData(q, chunk.data(), avail, &read) || read == 0) break;
+                    if (!WinHttpReadData(q.get(), chunk.data(), avail, &read) || read == 0) { r.status = "Risposta del servizio incompleta"; break; }
                     body.append(chunk.data(), read);
                 }
             } else r.status = "richiesta non riuscita (errore " + std::to_string(GetLastError()) + ")";
-            WinHttpCloseHandle(q);
         }
-        WinHttpCloseHandle(c);
     }
-    WinHttpCloseHandle(s);
-    if (body.empty()) { if (r.status.empty()) r.status = "nessuna risposta dal servizio"; return r; }
+    if (!r.status.empty()) return r;
+    if (body.empty()) { r.status = "nessuna risposta dal servizio"; return r; }
     if (code != 200) { r.status = "HTTP " + std::to_string(code); return r; }
     std::smatch m;
     if (std::regex_search(body, m, std::regex("\"reachable\"\\s*:\\s*(true|false)"))) {

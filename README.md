@@ -19,7 +19,9 @@ Scritto in C++ / Win32 · Motore libtorrent · Interfaccia italiana
 
 SeedFlow è un client BitTorrent per **Windows 10/11 x64**: torrent, magnet, statistiche e gestione della coda in un’applicazione desktop nativa.
 
-## Download — 0.8.4 r14
+## Download — versione pubblica 0.8.4 r14
+
+Questi sorgenti includono la revisione di manutenzione **0.8.4 r15** (FileVersion `0.8.4.15`). Vedi [CHANGELOG](CHANGELOG.txt) e [VERIFICA.txt](VERIFICA.txt).
 
 [Scarica la release](https://github.com/Kyo89-sudo/SeedFlow/releases/tag/v0.8.4-r14). Estrai lo ZIP `win64-static` e avvia `SeedFlow.exe`.
 Il programma include staticamente libtorrent, OpenSSL e il runtime MSVC: nessuna DLL aggiuntiva o .NET richiesti. Conserva le licenze incluse nel pacchetto.
@@ -65,7 +67,7 @@ build.bat -NoPause -RunTests
 La configurazione predefinita usa vcpkg `x64-windows-static` e runtime `/MT`.
 Consulta [BUILDING.md](BUILDING.md), [ricetta delle dipendenze statiche](BUILD-STATIC-RECIPE.txt) e [CHANGELOG](CHANGELOG.txt).
 
-La r14 è stata compilata e collegata realmente su Windows x64 con MSVC di Visual Studio 2026. CTest: 2/2 test superati; regressione: 94 controlli. La compilazione verificata ha utilizzato direttamente cl/link/rc, con configurazione e registrazione dei test tramite CMake.
+La r15 è stata compilata e collegata realmente su Windows x64 con MSVC di Visual Studio 2026. CTest: 2/2 test superati; regressione: 114 controlli. La compilazione verificata ha utilizzato direttamente cl/link/rc, con configurazione e registrazione dei test tramite CMake.
 Non è stato eseguito un collaudo interattivo completo della GUI o un test di trasferimento verso tracker pubblici. Dettagli in [VERIFICA.txt](VERIFICA.txt).
 
 ## Licenze

@@ -1,3 +1,22 @@
+SeedFlow 0.8.4 (r15) - 21/10/2026
+Revisione di manutenzione della build Win32 r14.
+- FIX GUI: albero Preferenze più largo; "Prestazioni e memoria" non viene tagliato.
+- FIX GUI: riquadri della barra di stato ordinati anche nelle finestre strette,
+  con testo completo disponibile nel suggerimento al passaggio del mouse.
+- FIX GUI: il messaggio del pannello Generale vuoto usa la larghezza disponibile.
+- FIX diagnostica: ogni esito resta associato alla porta verificata; scartati
+  i risultati di controlli terminati dopo un cambio porta. Gestiti orologi arretrati.
+- FIX diagnostica: risposta HTTPS limitata a 64 KiB prima dell'allocazione;
+  risposte incomplete respinte e handle WinHTTP rilasciati anche sulle eccezioni.
+- FIX configurazione: controllo dell'intervallo prima delle conversioni in int,
+  flag booleani normalizzati e statistiche mancanti azzerate al caricamento.
+- FIX appunti: lettura Unicode entro la dimensione del blocco e controllo
+  dell'overflow prima dell'allocazione per la copia.
+- Pulizia mirata: include inutilizzato rimosso; pacchetto senza rapporti di
+  verifica obsoleti; licenza GPL-3.0 inclusa anche nell'output di build.bat.
+- build.bat -RunTests abilita anche il test isolato del motore.
+- Nessuna nuova dipendenza o modifica allo stile della GUI.
+
 SeedFlow 0.8.4 (r14) - 21/10/2026
 - Aggiunta scheda Velocità: grafico nativo Windows di download e upload globali,
   ultimi cinque minuti di sessione, scala automatica e due curve distinguibili.

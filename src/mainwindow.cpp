@@ -353,7 +353,7 @@ static LRESULT CALLBACK general_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) 
         int pad = scale(10), y = scale(8);
         HGDIOBJ oldf = SelectObject(mem, g.bold);
         SetTextColor(mem, GetSysColor(COLOR_WINDOWTEXT));
-        RECT tr{pad, y, rc.right - pad - scale(230), y + scale(20)};
+        RECT tr{pad, y, std::max(pad, static_cast<int>(rc.right) - pad - (general_items.empty() ? 0 : scale(230))), y + scale(20)};
         DrawTextW(mem, general_title.c_str(), -1, &tr, DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX | DT_VCENTER);
         if (!general_items.empty()) {
             RECT pr{rc.right - pad - scale(220), y, rc.right - pad, y + scale(20)};
@@ -766,6 +766,8 @@ static void update_status(std::int64_t down, std::int64_t up) {
     SendMessageW(g.status, SB_SETTEXTW, 3, reinterpret_cast<LPARAM>(u.c_str()));
     SendMessageW(g.status, SB_SETTEXTW, 4, reinterpret_cast<LPARAM>(totals.c_str()));
     SendMessageW(g.status, SB_SETTEXTW, 5, reinterpret_cast<LPARAM>(ram.c_str()));
+    wchar_t const* tips[] = {dht.c_str(), d.c_str(), u.c_str(), totals.c_str(), ram.c_str()};
+    for (int i = 0; i < 5; ++i) SendMessageW(g.status, SB_SETTIPTEXTW, i + 1, reinterpret_cast<LPARAM>(tips[i]));
     tray_update_tip(down, up);
 }
 static void update_network_indicator() {
@@ -786,17 +788,24 @@ static void update_network_indicator() {
     g.net_tip = tip;
     SendMessageW(g.status, SB_SETTIPTEXTW, 0, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
 }
+static std::array<int, 6> status_part_edges(int width, UINT dpi) {
+    constexpr int base[] = {150, 120, 250, 250, 300, 110};
+    int const desired = MulDiv(1180, static_cast<int>(dpi ? dpi : 96), 96);
+    int const available = std::max(0, width);
+    int cumulative = 0;
+    std::array<int, 6> edges{};
+    for (int i = 0; i < 5; ++i) {
+        cumulative += base[i];
+        edges[i] = available < desired ? MulDiv(cumulative, available, 1180)
+            : available - desired + MulDiv(cumulative, static_cast<int>(dpi ? dpi : 96), 96);
+    }
+    edges[5] = -1;
+    return edges;
+}
 static void layout_status() {
     RECT rc; GetClientRect(g.main, &rc);
-    int w[6];
-    int right = rc.right;
-    w[5] = -1;
-    w[4] = right - scale(110);
-    w[3] = w[4] - scale(300);
-    w[2] = w[3] - scale(250);   // "Velocità upload: 123,4 MiB/s [max 122070 KiB/s]"
-    w[1] = w[2] - scale(250);   // "Velocità download: ..."
-    w[0] = std::max(scale(150), w[1] - scale(120));
-    SendMessageW(g.status, SB_SETPARTS, 6, reinterpret_cast<LPARAM>(w));
+    auto const edges = status_part_edges(rc.right, g.dpi);
+    SendMessageW(g.status, SB_SETPARTS, edges.size(), reinterpret_cast<LPARAM>(edges.data()));
 }
 
 static NOTIFYICONDATAW tray_data() {
@@ -930,6 +939,11 @@ static void consume_port_check() {
     if (!g.port_check_job->take(result)) return;
     g.port_check_job.reset();
     g.port_check_running = false;
+    if (result.port != g.settings.port) {
+        log_line(L"Verifica porta ignorata: la porta è cambiata durante il controllo.");
+        update_network_indicator();
+        return;
+    }
     g.port_check = std::move(result);
     auto const& pc = g.port_check;
     if (pc.success) log_line(L"Verifica porta online: " + std::wstring(pc.reachable ? L"APERTA" : L"CHIUSA") + L" (IP " + widen(pc.ip) + L")");
@@ -1749,6 +1763,7 @@ void start_port_check(HWND notify) {
             try { result = check_port_online(port); }
             catch (std::exception const& ex) { result.done = true; result.status = ex.what(); }
             catch (...) { result.done = true; result.status = "Errore inatteso nella verifica porta"; }
+            result.port = port;
             job->complete(std::move(result));
             PostMessageW(notify, WM_APP_PORTCHECK, 0, 0);
         }).detach();

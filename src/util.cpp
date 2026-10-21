@@ -156,6 +156,7 @@ void trim_working_set() {
 }
 
 bool copy_to_clipboard(void* hwnd, std::wstring const& text) {
+    if (text.size() > (std::numeric_limits<std::size_t>::max)() / sizeof(wchar_t) - 1) return false;
     std::size_t bytes = (text.size() + 1) * sizeof(wchar_t);
     HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, bytes);
     bool ok = false;
@@ -176,7 +177,12 @@ std::wstring clipboard_text(void* hwnd) {
     std::wstring out;
     if (!IsClipboardFormatAvailable(CF_UNICODETEXT) || !OpenClipboard(static_cast<HWND>(hwnd))) return out;
     if (HANDLE h = GetClipboardData(CF_UNICODETEXT)) {
-        if (auto* p = static_cast<wchar_t const*>(GlobalLock(h))) { out = p; GlobalUnlock(h); }
+        if (auto* p = static_cast<wchar_t const*>(GlobalLock(h))) {
+            auto const count = GlobalSize(h) / sizeof(wchar_t);
+            auto const* end = std::find(p, p + count, L'\0');
+            if (end != p + count) out.assign(p, end);
+            GlobalUnlock(h);
+        }
     }
     CloseClipboard();
     return out;

@@ -1,45 +1,48 @@
-VERIFICHE SeedFlow 0.8.4 r14 - 21/10/2026
+VERIFICHE SeedFlow 0.8.4 r15 - 21/10/2026
 
-Origine: SeedFlow-0.8.3-r13-Win32-sorgenti_1.zip fornito dall'utente.
-Archivio originale verificato con CRC ZIP prima dell'estrazione.
-Il rapporto ricevuto e' conservato in VERIFICA-r13-fornita.txt:
-le sue dichiarazioni storiche non sono nuove verifiche della r14.
+Base: sorgenti Win32 0.8.4 r14 pubblicati su GitHub, con documentazione GPL.
+Questa e' una revisione di manutenzione della r14, non la precedente
+anteprima 0.9.0 r15 con interfaccia e font diversi.
 
 Eseguito realmente su Windows x64:
-- Compilazione e link con MSVC 19.51.36260 (VS 2026), SDK 10.0.28000.0,
-  C++17, /utf-8, /MT, /O2, /W4. Risorse con rc /c65001.
-  Comandi nativi cl/link/rc; configurazione e registrazione test con CMake.
-  Nessuna compilazione MSBuild completa viene dichiarata per questa consegna.
-- Dipendenze statiche originali non modificate: libtorrent 2.1.2, Boost 1.92.0
-  (header), OpenSSL 3.6.5. Nessuna modifica ai contatori annunciati ai tracker.
-- Sorgenti dell'applicazione compilati senza warning. Il test motore mantiene
-  un avviso C4996 per il costruttore compatibile deprecato di create_torrent.
-- CTest: entrambi i test superati (regressione e flag Super-seeding).
-- Regressione: 94 controlli, inclusi codifica, risorse effettive dell'EXE,
-  pagine Preferenze, icone incorporate, soglie Salute, menu e risorse GDI;
-  ordine colonne non valido, proprieta' del risultato della diagnostica e
-  completamento del worker dopo la distruzione del proprietario;
-  dimensioni icone non valide; buffer velocita' limitato e cronologico,
-  duplicati temporali, campioni negativi e ridisegno del grafico.
-- Grafico: 40 ridisegni, dopo il caricamento iniziale del font, con contatore
-  GDI stabile (4 -> 4). Provati anche area molto piccola, storico vuoto,
-  DPI diversi. Rendering nativo esportato e controllato visivamente;
-  il test di esportazione porta il conteggio a 95 controlli in quel run.
-  Il rendering usa esclusivamente dati sintetici di prova.
-- Test motore: torrent locale senza tracker, discovery e trasporti peer
-  disattivati. Rifiuto Super-seeding su incompleto, attivazione e disattivazione
-  del flag su torrent completo: tutti superati.
-- Metadati Windows: FileVersion 0.8.4.14, ProductVersion 0.8.4.
-- dumpbin /dependents: solo DLL di sistema Windows. Nessuna DLL libtorrent,
-  Boost, OpenSSL o runtime MSVC da distribuire; nessun requisito .NET.
-- Script PowerShell controllato sintatticamente; ZIP estratti e verificati
-  file per file con SHA-256 prima della consegna.
+- Compilazione e link nativi cl/link/rc con MSVC 19.51.36260 (VS 2026),
+  SDK 10.0.28000.0, C++17, /utf-8, /MT, /O2, /W4; risorse rc /c65001.
+- Sorgenti applicazione senza warning. Il test motore mantiene un avviso
+  C4996 per il costruttore compatibile deprecato di create_torrent.
+- Dipendenze statiche: libtorrent 2.1.2, Boost 1.92.0, OpenSSL 3.6.5.
+- Configurazione CMake e registrazione dei test riuscite.
+- CTest 2/2 superati, con gli eseguibili della compilazione nativa copiati
+  nella directory Release configurata. Regressione: 114 controlli.
+- Controllati regressioni Unicode/risorse/icona, colonne, ownership diagnostica,
+  input numerici persistiti fuori intervallo, flag booleani grandi, reset
+  statistiche assenti, cache diagnostica di porta diversa/scaduta/futura,
+  rifiuto porta non valida senza accesso alla rete.
+- Barra di stato controllata a larghezze 760/1024/1920 e DPI 96/144/192.
+- Creata la finestra Preferenze dalle risorse effettive dell'EXE e misurata
+  la larghezza del testo Prestazioni e memoria, includendo rientri e icona.
+- Controlli GDI ripetuti del grafico e dei menu superati.
+- Test motore: fixture locale senza tracker e con discovery e trasporti peer
+  disabilitati; flag Super-seeding su incompleto/completo e disattivazione.
+- FileVersion 0.8.4.15, ProductVersion 0.8.4.
+- dumpbin /dependents: solo DLL di sistema; nessuna DLL aggiuntiva da distribuire.
+- Script PowerShell controllato sintatticamente; licenza e documentazione
+  incluse nell'output di build. -RunTests abilita entrambe le suite CMake.
+- ZIP verificati con CRC e manifesto SHA-256 di ogni file.
 
 Limiti:
-- Non e' stato eseguito un collaudo interattivo completo della GUI principale,
-  della tray o dei cambi monitor/DPI su hardware diversi.
-- Nessun trasferimento reale, annuncio a tracker pubblici o misura comparativa
-  di RAM/CPU/throughput eseguiti per la r14.
-- La chiusura durante la diagnostica e' verificata a livello di proprieta'
-  della mailbox e del worker, senza contattare il servizio di verifica porta.
-- Nessuna promessa di assenza totale di bug.
+- Il tentativo completo tramite MSBuild in questo ambiente e' stato fermato
+  per assenza di avanzamento dopo Checking Build System; il secondo tentativo,
+  con rigenerazione CMake disattivata localmente, ha prodotto gli oggetti ma
+  non ha terminato. Non viene dichiarata una build MSBuild completa verificata.
+- Non e' stato eseguito un collaudo interattivo completo della GUI, della tray
+  o del cambio monitor/DPI. Le verifiche GUI sono controlli delle risorse,
+  della geometria e del rendering previsti dalla suite.
+- Nessuna verifica online reale della porta, annuncio a tracker pubblici,
+  trasferimento esterno o confronto prestazionale eseguito per questa revisione.
+- Il limite HTTP e la gestione delle eccezioni WinHTTP sono stati verificati
+  in revisione del codice, senza simulatore del servizio HTTPS remoto.
+
+Pulizia locale autorizzata:
+Eliminate 25 vecchie cartelle di lavoro C#/WPF 0.7.x e copie estratte per
+le verifiche (circa 127.9 MiB). Conservati gli archivi consegnati, la base
+Win32 r14 e le dipendenze riutilizzate. Nessuna cancellazione dei dati utente.
