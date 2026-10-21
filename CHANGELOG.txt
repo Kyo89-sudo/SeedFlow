@@ -2,38 +2,16 @@ SeedFlow — Changelog
 
 0.8.5 r16 — 2026-10-21
 
-Torrent creator
-- Aggiunto creator.cpp/.hpp: creazione .torrent v1, v2 o hybrid (default) su
-  worker thread, con progress, cancel e validazione del file generato.
-- Aggiunto dialog File › Crea torrent… (Ctrl+N) e pulsante toolbar "Crea":
-  sorgente file/cartella con drag & drop, tracker per tier (riga vuota = nuovo
-  tier), web seed, comment, private flag, piece size auto o 16 KiB–16 MiB.
-- Aggiunto seeding immediato in seed mode (no recheck) e copia del magnet.
-- Persistiti format, piece size, tracker e opzioni dell'ultimo torrent creato.
-- Corretto il save path per v2-only con cartella a file singolo: libtorrent 2.1
-  genera un single-file torrent con il nome del file, il seed parte dalla
-  cartella sorgente.
-- Engine::add_torrent_file accetta seed_mode. Nuova icona create nel set duotone.
-
-Persistence
-- file_io::write_atomic su Windows: CreateFileW/WriteFile, FlushFileBuffers e
-  MoveFileExW(MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH); niente file
-  vuoti o troncati dopo un power loss. Fallback POSIX invariato.
-- Aggiunta sanitize() dopo il parse di settings.dat: port, encryption, limiti,
-  connessioni, upload slot, code, ratio/action per torrent e geometria della
-  finestra riportati nei range delle Preferenze.
-
-Core e build
-- FileVersion aggiornata a 0.8.5.16. Nessuna nuova dipendenza.
-- Rimosso dal report r15 il riferimento alla build sperimentale 0.9.0.
-
-Verifiche
-- clang --analyze e clang-tidy (bugprone, clang-analyzer) su tutti i sorgenti.
-- Engine, creator e file_io sotto ASan/LSan/UBSan su Linux; ~5 KB trattenuti
-  da libtorrent a ogni cancel del creator (nessuna API di interruzione).
-- Regressione Win32 estesa (creator hybrid/v1/v2 su cartella Unicode, valori
-  fuori range); build MSVC x64 /MT e CTest 2/2 su Windows.
-- Dettagli e limiti: VERIFICA.txt.
+- Aggiunta la creazione di torrent v1, v2 e hybrid da file o cartella
+  (File › Crea torrent…, Ctrl+N): tracker per tier, web seed, commento,
+  private flag e piece size automatica o manuale.
+- Hashing in background con progress bar e annullamento; seeding immediato
+  in seed mode e copia del magnet.
+- Corretto il seeding dei torrent v2 creati da una cartella con un solo file.
+- Salvataggio di impostazioni e fast resume scritto su disco prima della
+  sostituzione del file, per evitare file vuoti dopo un'interruzione di corrente.
+- Validati i valori di settings.dat fuori range.
+- Estesa la regressione Win32; build MSVC x64 /MT con CTest 2/2.
 
 0.8.4 r15 — 2026-10-21
 
