@@ -909,7 +909,8 @@ static INT_PTR CALLBACK create_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
         double frac = total > 0 ? static_cast<double>(done) / total : 0.0;
         std::wstring text = busy ? (total > 0 ? L"Hash " + fmt_double(frac * 100.0, 1) + L"%  (" + std::to_wstring(done) + L" / " +
                                     std::to_wstring(total) + L" pezzi)" : L"Preparazione…") : L"";
-        paint::progress_bar(di->hDC, di->rcItem, busy ? frac : 0.0, paint::kOrange, busy ? paint::Bar::Striped : paint::Bar::Solid,
+        paint::progress_bar(di->hDC, di->rcItem, busy ? frac : 0.0, paint::kGreen,   // same green as the Crea icon
+                            busy ? paint::Bar::Striped : paint::Bar::Solid,
                             g.anim_phase, text, g.font);
         return TRUE;
     }
