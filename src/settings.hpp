@@ -45,6 +45,11 @@ struct AppSettings {
     bool send_client_name = true;   // client name in the BitTorrent extension handshake
     bool anonymous_mode = false;    // libtorrent anonymous_mode: hides client identification
     bool start_minimized = true;    // "start with Windows" launches with --tray
+    // torrent creation dialog (last choices)
+    int create_format = 0;          // 0 hybrid v1+v2, 1 v1, 2 v2
+    int create_piece = 0;           // 0 automatic, else index into piece_size_choices() + 1
+    std::string create_trackers;    // UTF-8, one per line, blank line = new tier
+    bool create_seed = true, create_private = false, create_copy_magnet = false;
     int process_priority = 0;       // 0 normal, 1 below normal, 2 idle (applied at start and on change)
     // network
     int port = 51413;

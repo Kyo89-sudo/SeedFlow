@@ -15,6 +15,7 @@
 #define ID_FILE_MAGNET          1002
 #define ID_FILE_PASTE           1003
 #define ID_FILE_EXIT            1004
+#define ID_FILE_CREATE          1005
 #define ID_OPT_CLOSETRAY        1010
 #define ID_OPT_MINTRAY          1011
 #define ID_OPT_STARTPAUSED      1012
@@ -76,6 +77,7 @@
 #define IDD_PG_IDENTITY         219
 #define IDD_PG_SYSTEM           220
 #define IDD_PG_PERFORMANCE      221
+#define IDD_CREATE              222
 
 // Common controls
 #define IDC_EDIT                300
@@ -155,3 +157,17 @@
 #define IDC_AUTOSTART           448
 #define IDC_STARTMIN            449
 #define IDC_PRIORITY            454
+#define IDC_C_SOURCE            460
+#define IDC_C_FILE              461
+#define IDC_C_FOLDER            462
+#define IDC_C_TRACKERS          463
+#define IDC_C_WEBSEEDS          464
+#define IDC_C_COMMENT           465
+#define IDC_C_PRIVATE           466
+#define IDC_C_FORMAT            467
+#define IDC_C_PIECE             468
+#define IDC_C_SEED              469
+#define IDC_C_MAGNET            470
+#define IDC_C_PROGRESS          471
+#define IDC_C_STATUS            472
+#define IDC_C_INFO              473

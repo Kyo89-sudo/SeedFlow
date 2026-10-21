@@ -1,6 +1,40 @@
 SeedFlow — Changelog
 
-0.8.4 r15 — Unreleased — 2026-10-21
+0.8.5 r16 — 2026-10-21
+
+Nuovo: creazione di torrent
+- File › Crea torrent… (Ctrl+N) e pulsante "Crea" nella barra strumenti.
+- Sorgente file o cartella (anche trascinandola nella finestra), tracker per
+  livello (riga vuota = nuovo tier), web seed, commento, flag privato.
+- Formato ibrido v1+v2 (predefinito), solo v1 o solo v2; dimensione dei pezzi
+  automatica o da 16 KiB a 16 MiB. Le scelte e i tracker vengono ricordati.
+- Hash in un thread separato con barra di avanzamento e Annulla: la finestra
+  principale resta reattiva.
+- Il torrent creato viene riletto e validato; può partire subito in seeding
+  senza ricontrollare i dati (seed mode) e il magnet può essere copiato.
+- Formato v2 con una cartella che contiene un solo file: libtorrent crea un
+  torrent a file singolo con il nome del file; il seeding immediato parte
+  dalla cartella giusta.
+- Nuova icona nello stesso stile del set.
+
+Affidabilità
+- Salvataggi su Windows: dati scaricati su disco (FlushFileBuffers) prima della
+  sostituzione e rinomina write-through (MoveFileExW): un'interruzione di
+  corrente subito dopo il salvataggio non lascia settings.dat o un fast resume
+  vuoti o troncati.
+- Impostazioni: oltre ai controlli di overflow della r15, ogni valore salvato
+  torna nell'intervallo accettato dalle Preferenze (porta 1024–65535,
+  cifratura, connessioni, slot, code, ratio e azioni per torrent, dimensioni
+  della finestra): un settings.dat danneggiato o modificato a mano non arriva
+  più a libtorrent così com'è.
+
+Verifiche
+- Analisi statica clang e clang-tidy (controlli bugprone) su tutti i sorgenti.
+- Motore, creazione torrent e scrittura dei file sotto AddressSanitizer,
+  LeakSanitizer e UBSan su Linux; nuovi controlli di regressione Win32.
+- Dettagli e limiti: VERIFICA.txt.
+
+0.8.4 r15 — 2026-10-21
 
 GUI
 - Aumentata la larghezza dell'albero Preferenze per evitare il clipping di

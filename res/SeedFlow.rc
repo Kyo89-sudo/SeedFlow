@@ -51,6 +51,7 @@ BEGIN
     "O", ID_FILE_OPEN, VIRTKEY, CONTROL
     "U", ID_FILE_MAGNET, VIRTKEY, CONTROL
     "V", ID_FILE_PASTE, VIRTKEY, CONTROL
+    "N", ID_FILE_CREATE, VIRTKEY, CONTROL
     "A", ID_T_SELECTALL, VIRTKEY, CONTROL
     VK_DELETE, ID_T_REMOVE, VIRTKEY
     VK_DELETE, ID_T_DELETE, VIRTKEY, SHIFT
@@ -65,6 +66,8 @@ BEGIN
         MENUITEM "Apri file .torrent...\tCtrl+O", ID_FILE_OPEN
         MENUITEM "Aggiungi magnet...\tCtrl+U", ID_FILE_MAGNET
         MENUITEM "Incolla magnet dagli appunti\tCtrl+V", ID_FILE_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Crea torrent...\tCtrl+N", ID_FILE_CREATE
         MENUITEM SEPARATOR
         MENUITEM "Avvia tutti", ID_T_STARTALL
         MENUITEM "Metti tutti in pausa", ID_T_PAUSEALL
@@ -424,6 +427,36 @@ BEGIN
     PUSHBUTTON      "Copia info di sistema", IDC_COPY, 10, 208, 86, 15
     PUSHBUTTON      "Cartella dati", IDC_DATAFOLDER, 100, 208, 60, 15
     DEFPUSHBUTTON   "OK", IDOK, 260, 208, 50, 15
+END
+
+IDD_CREATE DIALOGEX 0, 0, 360, 300
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_ACCEPTFILES
+CAPTION "Crea torrent"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "File o cartella da condividere (puoi anche trascinarlo qui)", -1, 8, 8, 344, 9
+    EDITTEXT        IDC_C_SOURCE, 8, 19, 236, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "File...", IDC_C_FILE, 248, 18, 50, 15
+    PUSHBUTTON      "Cartella...", IDC_C_FOLDER, 302, 18, 50, 15
+    LTEXT           "", IDC_C_INFO, 8, 35, 344, 9
+    LTEXT           "Tracker (uno per riga; una riga vuota separa i livelli)", -1, 8, 48, 344, 9
+    EDITTEXT        IDC_C_TRACKERS, 8, 59, 344, 52, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Web seed (URL http/https, uno per riga)", -1, 8, 116, 344, 9
+    EDITTEXT        IDC_C_WEBSEEDS, 8, 127, 344, 26, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Commento", -1, 8, 158, 344, 9
+    EDITTEXT        IDC_C_COMMENT, 8, 169, 344, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Formato", -1, 8, 188, 170, 9
+    COMBOBOX        IDC_C_FORMAT, 8, 199, 170, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "Dimensione dei pezzi", -1, 186, 188, 166, 9
+    COMBOBOX        IDC_C_PIECE, 186, 199, 166, 140, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    AUTOCHECKBOX    "Torrent privato (solo tracker: niente DHT, PeX e LSD)", IDC_C_PRIVATE, 8, 218, 344, 10
+    AUTOCHECKBOX    "Avvia subito il seeding", IDC_C_SEED, 8, 232, 170, 10
+    AUTOCHECKBOX    "Copia il magnet negli appunti", IDC_C_MAGNET, 186, 232, 166, 10
+    CONTROL         "", IDC_C_PROGRESS, "Static", SS_OWNERDRAW, 8, 248, 344, 11
+    LTEXT           "", IDC_C_STATUS, 8, 263, 344, 9
+    DEFPUSHBUTTON   "Crea...", IDOK, 248, 280, 50, 14
+    PUSHBUTTON      "Chiudi", IDCANCEL, 302, 280, 50, 14
 END
 
 IDD_RATIO DIALOGEX 0, 0, 260, 150

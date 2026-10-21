@@ -2,6 +2,8 @@
 // starting a torrent session, touching user settings or changing the clipboard.
 #include "../src/mainwindow.cpp"
 #include "../src/settings.cpp"
+#include "../src/creator.hpp"
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -94,6 +96,45 @@ int wmain(int argc, wchar_t** argv) {
         check(!settings.int_settings.count("send_buffer_watermark"), "oversized advanced integer setting ignored");
         check(settings.bool_settings.at("enable_dht") == 1, "large nonzero persisted boolean remains true");
         check(settings.stats.uploaded == 0, "missing statistics reset on repeated settings parse");
+        e["port"] = 80; e["encryption"] = 7; e["connections"] = -5; e["upload_slots"] = 0; e["global_ratio"] = -1000;
+        e["torrents"]["00ff"]["ratio_mode"] = 9; e["torrents"]["00ff"]["ratio_action"] = 12; e["torrents"]["00ff"]["ratio_limit"] = 0;
+        encoded.clear(); libtorrent::bencode(std::back_inserter(encoded), e);
+        {
+            sf::AppSettings const def;
+            check(sf::parse_settings(encoded, settings) && settings.port == def.port && settings.encryption == def.encryption &&
+                settings.connections == def.connections && settings.upload_slots == def.upload_slots && settings.global_ratio == 0,
+                "out-of-range saved values restored to defaults");
+            auto const& meta = settings.torrents.at("00ff");
+            check(meta.ratio_mode == sf::RatioGlobal && meta.ratio_action == -1 && meta.ratio_limit == 2.0, "out-of-range torrent ratio values restored");
+        }
+        {
+            std::string error;
+            auto tiers = sf::parse_tracker_tiers("udp://a.example:1/announce\r\nhttp://b.example/announce\r\n\r\nhttps://c.example/announce", error);
+            check(error.empty() && tiers.size() == 2 && tiers[0].size() == 2 && tiers[1].size() == 1, "create torrent: tracker tiers");
+            check(sf::parse_tracker_tiers("magnet:?xt=x", error).empty() && !error.empty(), "create torrent: invalid tracker rejected");
+            check(sf::parse_web_seeds("udp://x", error).empty() && !error.empty(), "create torrent: web seed must be http(s)");
+            check(sf::piece_size_choices().size() == 11 && sf::piece_size_choices().front() == 16384, "create torrent: piece sizes");
+            std::filesystem::path dir = std::filesystem::temp_directory_path() / L"SeedFlowRegressionCreate";
+            std::error_code ec;
+            std::filesystem::remove_all(dir, ec);
+            std::filesystem::create_directories(dir / L"Dati àè", ec);
+            { std::ofstream(dir / L"Dati àè" / L"uno.bin", std::ios::binary) << std::string(300000, 'x'); }
+            for (int format = 0; format < 3; ++format) {
+                sf::CreateRequest request;
+                request.source = sf::narrow((dir / L"Dati àè").wstring());
+                request.tiers = tiers;
+                request.format = static_cast<sf::TorrentFormat>(format);
+                auto result = sf::create_torrent_file(request);
+                // v2-only + a folder with a single file: libtorrent names the torrent after the file
+                // and the data is seeded from inside the folder.
+                bool const v2_single = format == 2;
+                check(result.ok && !result.torrent.empty() &&
+                      result.name == (v2_single ? std::string("uno.bin") : sf::narrow(L"Dati àè")) &&
+                      std::filesystem::path(sf::widen(result.seed_dir)).lexically_normal() == (v2_single ? dir / L"Dati àè" : dir).lexically_normal() &&
+                      result.magnet.rfind("magnet:?", 0) == 0, "create torrent: hybrid / v1 / v2 from a Unicode folder");
+            }
+            std::filesystem::remove_all(dir, ec);
+        }
         sf::NetView network;
         network.port = 51413; network.listening = true; network.uptime = 300; network.peers_connected = 1;
         sf::PortCheck verified; verified.done = verified.success = verified.reachable = true;

@@ -15,13 +15,14 @@
 
 SeedFlow gestisce torrent e magnet con una GUI desktop nativa. Include priorità dei file, queue management, fast resume, statistiche e diagnostica di rete. La build statica contiene le librerie e il runtime MSVC: **un solo EXE, senza DLL aggiuntive o .NET**.
 
-La revisione attuale dei sorgenti è **0.8.4 r15** (ramo `main`). L'ultima release con eseguibile pronto è **0.8.4 r14**.
+La revisione attuale dei sorgenti è **0.8.5 r16**. L'ultima release con eseguibile pronto è **0.8.4 r14**.
 
 ## Funzionalità
 
 | Area | Supporto |
 | :--- | :--- |
 | Torrent e magnet | File .torrent e magnet link, copia magnet, selezione e priorità dei file |
+| Creazione torrent | File .torrent ibridi v1+v2, v1 o v2 da file o cartella, con tracker, web seed e seeding immediato |
 | Queue e bandwidth | Gestione della coda, limiti download/upload globali e per torrent, connessioni e upload slot |
 | Seeding | Ratio target e azioni automatiche al raggiungimento del limite |
 | Super-seeding | Modalità dedicata alla distribuzione iniziale di torrent completi |
@@ -56,7 +57,7 @@ build.bat -NoPause -RunTests
 
 Il default è `x64-windows-static` con runtime `/MT`. La prima build compila anche le dipendenze. Opzioni e istruzioni CMake: [BUILDING.md](BUILDING.md).
 
-La r15 ha superato la compilazione/link nativi su Windows, 124 controlli di regressione e il test isolato del motore. Modalità di verifica e limiti sono nel [report della r15](VERIFICA.txt). Queste prove non equivalgono a un collaudo end-to-end su uno swarm pubblico.
+La r16 è stata compilata con MSVC (build.bat, runtime /MT) e ha superato CTest 2/2, compresa la regressione Win32 con la creazione torrent; motore, creazione torrent e salvataggi sono stati verificati anche con analisi statica e sanitizer. Modalità di verifica e limiti sono nel [report](VERIFICA.txt). Queste prove non equivalgono a un collaudo end-to-end su uno swarm pubblico.
 
 ## License
 

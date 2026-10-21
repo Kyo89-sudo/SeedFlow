@@ -213,7 +213,7 @@ int Engine::add_magnet(std::string const& uri, std::string const& folder, bool p
     } catch (std::exception const& e) { error = e.what(); if (result) *result = AddResult::Error; return -1; }
 }
 
-int Engine::add_torrent_file(std::string const& file, std::string const& folder, bool paused, std::string& error, AddResult* result) {
+int Engine::add_torrent_file(std::string const& file, std::string const& folder, bool paused, std::string& error, AddResult* result, bool seed_mode) {
     if (!session_) { error = "Motore non avviato"; return -1; }
     try {
         std::vector<char> buf;
@@ -225,6 +225,7 @@ int Engine::add_torrent_file(std::string const& file, std::string const& folder,
         p.ti = ti;
         p.save_path = folder;
         prepare(p, paused, preallocate_);
+        if (seed_mode) p.flags |= lt::torrent_flags::seed_mode;
         auto h = session_->add_torrent(std::move(p), ec);
         if (ec) { error = add_error(ec, result); return -1; }
         if (result) *result = AddResult::Ok;
