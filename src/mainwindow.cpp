@@ -639,7 +639,7 @@ static void update_filter_counts() {
 static std::wstring cell_text(Row const& r, int col) {
     auto const& v = r.v;
     switch (col) {
-        case ColQueue: return v.queue_position >= 0 ? std::to_wstring(v.queue_position + 1) : L"";
+        case ColQueue: return v.queue_position >= 0 ? std::to_wstring(v.queue_position + 1) : L"*";   // * = not queued (seed/finished), as qBittorrent
         case ColName: return v.name.empty() ? L"(recupero metadati…) " + widen(v.hash) : widen(v.name);
         case ColSize: return v.has_metadata ? fmt_bytes(v.total_wanted) : L"?";
         case ColProgress: return fmt_double(v.progress * 100.0, 1) + L"%";
@@ -861,6 +861,7 @@ static void restore_from_tray() {
 
 // ------------------------------------------------------------------ refresh
 static void update_animation();
+static void update_queue_buttons();
 void refresh_now() {
     g.current_down = g.current_up = 0;
     if (!g.engine.running()) return;
@@ -905,6 +906,7 @@ void refresh_now() {
     if (g.ticks % 5 == 0 || g.net_icon == nullptr) update_network_indicator();
     update_status(down, up);
     update_animation();
+    update_queue_buttons();
 }
 // Animated progress cells (verifying / metadata / moving): a 100 ms timer runs only
 // while at least one visible row needs it, and repaints just those cells.
@@ -1102,6 +1104,32 @@ static void remove_selected(bool delete_files) {
     persist();
     refresh_now();
 }
+// libtorrent keeps only unfinished torrents in the download queue: seeds and
+// finished torrents have queue position -1 and ignore queue moves.
+static std::vector<std::pair<int, int>> selected_queued() {   // (queue position, id)
+    std::vector<std::pair<int, int>> out;
+    for (int id : selected_ids())
+        if (Row const* r = row_by_id(id); r && r->v.queue_position >= 0) out.emplace_back(r->v.queue_position, id);
+    return out;
+}
+static void update_queue_buttons() {
+    bool const any = !selected_queued().empty();
+    for (int cmd : {ID_T_QUP, ID_T_QDOWN})
+        SendMessageW(g.toolbar, TB_ENABLEBUTTON, static_cast<WPARAM>(cmd), MAKELPARAM(any ? TRUE : FALSE, 0));
+}
+static void queue_selected(int action) {   // 0 up, 1 down, 2 top, 3 bottom
+    auto items = selected_queued();
+    if (items.empty()) {
+        if (!selected_ids().empty())
+            log_line(L"Coda: i torrent selezionati sono completati o in seeding e non hanno una posizione in coda.");
+        return;
+    }
+    // Move in an order that keeps the relative order of a multiple selection.
+    std::sort(items.begin(), items.end());
+    if (action == 1 || action == 2) std::reverse(items.begin(), items.end());
+    for (auto const& [pos, id] : items) g.engine.queue(id, action);
+    refresh_now();
+}
 static void for_selected(void (*fn)(int)) {
     for (int id : selected_ids()) fn(id);
     refresh_now();
@@ -1272,10 +1300,10 @@ static void on_command(int cmd) {
         }
         refresh_now();
         break;
-    case ID_T_QTOP: for_selected([](int id) { g.engine.queue(id, 2); }); break;
-    case ID_T_QUP: for_selected([](int id) { g.engine.queue(id, 0); }); break;
-    case ID_T_QDOWN: for_selected([](int id) { g.engine.queue(id, 1); }); break;
-    case ID_T_QBOTTOM: for_selected([](int id) { g.engine.queue(id, 3); }); break;
+    case ID_T_QTOP: queue_selected(2); break;
+    case ID_T_QUP: queue_selected(0); break;
+    case ID_T_QDOWN: queue_selected(1); break;
+    case ID_T_QBOTTOM: queue_selected(3); break;
     case ID_T_REANNOUNCE: case ID_TR_REANNOUNCE: for_selected([](int id) { g.engine.reannounce(id); }); log_line(L"Riannuncio richiesto."); break;
     case ID_T_RECHECK:
         if (!selected_ids().empty() && MessageBoxW(g.main, L"Verificare di nuovo i file dei torrent selezionati?", L"SeedFlow", MB_ICONQUESTION | MB_YESNO) == IDYES)
@@ -1306,7 +1334,7 @@ static TbButton const kToolbar[] = {
     {ID_FILE_OPEN, 0, L"Torrent", true}, {ID_FILE_MAGNET, 1, L"Magnet", true}, {ID_FILE_CREATE, 17, L"Crea", true}, {0, -1, nullptr, false},
     {ID_T_START, 2, L"Avvia", true}, {ID_T_PAUSE, 3, L"Pausa", true}, {ID_T_REMOVE, 4, L"Rimuovi", true},
     {ID_T_DELETE, 5, L"Elimina", true}, {0, -1, nullptr, false},
-    {ID_T_QUP, 6, L"Su nella coda", false}, {ID_T_QDOWN, 7, L"Giù nella coda", false}, {0, -1, nullptr, false},
+    {ID_T_QUP, 6, L"Su nella coda (torrent in download)", false}, {ID_T_QDOWN, 7, L"Giù nella coda (torrent in download)", false}, {0, -1, nullptr, false},
     {ID_T_SUPERSEED, 8, L"Super-seed", true}, {ID_T_RATIO, 9, L"Ratio", true}, {0, -1, nullptr, false},
     {ID_TOOLS_WIZARD, 10, L"Ottimizza", true}, {ID_TOOLS_STATS, 11, L"Statistiche", true}, {ID_TOOLS_DIAG, 12, L"Diagnostica", true},
     {0, -1, nullptr, false}, {ID_OPT_PREFS, 16, L"Preferenze", true},
@@ -1531,7 +1559,7 @@ static LRESULT on_notify(NMHDR* nm) {
             rebuild_visible();
             return 0;
         }
-        case LVN_ITEMCHANGED: case LVN_ODSTATECHANGED: if (!rebuilding) refresh_details(true); return 0;
+        case LVN_ITEMCHANGED: case LVN_ODSTATECHANGED: if (!rebuilding) { refresh_details(true); update_queue_buttons(); } return 0;
         case NM_DBLCLK: open_selected_folder(); return 0;
         default: break;
         }
@@ -1578,6 +1606,8 @@ static void show_context(HWND target, POINT pt) {
     if (res == IDR_CTX_TORRENT) {
         Row const* r = row_by_id(selected_ids()[0]);
         if (r) CheckMenuItem(popup, ID_T_SUPERSEED, r->v.super_seeding ? MF_CHECKED : MF_UNCHECKED);
+        UINT const queue_state = selected_queued().empty() ? MF_GRAYED : MF_ENABLED;
+        for (UINT cmd : {ID_T_QTOP, ID_T_QUP, ID_T_QDOWN, ID_T_QBOTTOM}) EnableMenuItem(popup, cmd, MF_BYCOMMAND | queue_state);
     }
     TrackPopupMenu(popup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, g.main, nullptr);
     DestroyMenu(menu);

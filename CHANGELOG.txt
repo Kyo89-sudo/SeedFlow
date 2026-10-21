@@ -1,5 +1,13 @@
 SeedFlow — Changelog
 
+0.8.5 r17 — 2026-10-21
+
+- Corretti i pulsanti Su/Giù nella coda: con più torrent selezionati l'ordine
+  relativo viene mantenuto.
+- Pulsanti e voci del menu Coda disattivati per i torrent completati o in
+  seeding, che non hanno una posizione in coda.
+- Colonna # con "*" per i torrent fuori coda, come in qBittorrent.
+
 0.8.5 r16 — 2026-10-21
 
 - Aggiunta la creazione di torrent v1, v2 e hybrid da file o cartella
