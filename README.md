@@ -43,11 +43,17 @@ Chiudi prima eventuali altre istanze, anche nella tray. Lo stato viene conservat
 
 </details>
 
-## Uno sguardo al flusso
+## Schermate
 
-![Grafico velocità](docs/speed-graph.png)
+### Finestra principale
 
-*Rendering nativo del grafico con dati sintetici di prova.*
+![Finestra principale di SeedFlow](docs/main-window.png)
+
+*Vista senza elementi; barra di stato esclusa dall'immagine.*
+
+### Preferenze
+
+<img src="docs/preferences.png" alt="Preferenze di SeedFlow" width="700">
 
 ## Compilazione e verifiche
 
