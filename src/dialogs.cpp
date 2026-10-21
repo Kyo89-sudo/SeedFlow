@@ -836,17 +836,18 @@ static std::wstring diagnostics_report() {
     line(L"  DHT: " + (n.dht ? fmt_int(n.dht_nodes) + L" nodi" : std::wstring(L"disattivato")) + L"   PeX: " + yn(n.pex) + L"   LSD: " + yn(n.lsd));
     line(L"  Tempo dall'avvio: " + fmt_duration(n.uptime));
     line(L"");
+    bool const current_check = g.port_check.done && g.port_check.port == n.port;
     line(L"INDIRIZZI");
     line(L"  IP esterno visto dai peer: " + (n.external_ip.empty() ? std::wstring(L"non ancora noto") : widen(n.external_ip)));
-    if (g.port_check.done && g.port_check.success) line(L"  IP esterno (verifica online): " + widen(g.port_check.ip));
-    std::string ext = !g.port_check.ip.empty() ? g.port_check.ip : n.external_ip;
+    if (current_check && g.port_check.success) line(L"  IP esterno (verifica online): " + widen(g.port_check.ip));
+    std::string ext = current_check && g.port_check.success && !g.port_check.ip.empty() ? g.port_check.ip : n.external_ip;
     if (is_cgnat(ext)) line(L"  ATTENZIONE: indirizzo CGNAT (100.64.0.0/10). Il provider condivide l'IP: la porta non si può aprire senza IP pubblico.");
     else if (is_private_ipv4(ext)) line(L"  ATTENZIONE: l'IP esterno è privato: probabile doppio NAT.");
     for (auto const& a : local_adapters()) line(L"  " + a);
     line(L"");
     line(L"VERIFICA ONLINE (ifconfig.co)");
     if (g.port_check_running) line(L"  in corso…");
-    else if (!g.port_check.done) line(L"  non eseguita: premi «Verifica porta online».");
+    else if (!current_check) line(L"  non eseguita: premi «Verifica porta online».");
     else if (!g.port_check.success) line(L"  non riuscita: " + widen(g.port_check.status));
     else line(L"  porta " + std::to_wstring(n.port) + L" TCP: " + (g.port_check.reachable ? L"RAGGIUNGIBILE" : L"NON raggiungibile") +
               L" (" + fmt_date(g.port_check.when) + L")" + (g.port_check.status.empty() ? L"" : L" — " + widen(g.port_check.status)));
@@ -858,7 +859,7 @@ static std::wstring diagnostics_report() {
     line(L"");
     line(L"SUGGERIMENTI");
     if (st == NetState::NotListening) line(L"  • Cambia porta in Preferenze > Connessione: quella attuale è occupata.");
-    if (st == NetState::Firewalled || (g.port_check.done && g.port_check.success && !g.port_check.reachable)) {
+    if (st == NetState::Firewalled || (current_check && g.port_check.success && !g.port_check.reachable)) {
         line(L"  • Abilita UPnP sul router oppure inoltra manualmente la porta " + std::to_wstring(n.port) + L" TCP+UDP verso questo PC.");
         line(L"  • Verifica che il firewall di Windows (o un antivirus) consenta SeedFlow in ingresso.");
         line(L"  • Con CGNAT chiedi al provider un IP pubblico (spesso gratuito per le FTTH).");

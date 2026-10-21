@@ -1,7 +1,7 @@
-Edizione 0.8.4 r14: compilata nativamente su Windows con MSVC /MT.
+Edizione 0.8.4 r15: compilata nativamente su Windows con MSVC /MT.
 Dipendenze statiche non modificate: libtorrent 2.1.2, Boost 1.92.0,
 OpenSSL 3.6.5, ricostruite in precedenza con la ricetta conservata sotto.
-Aggiunto src/speed_graph.cpp a EXE e test. Nessuna patch di libtorrent richiesta.
+Incluso src/speed_graph.cpp in EXE e test. Nessuna patch di libtorrent richiesta.
 Le risorse usano rc /c65001; il link GUI usa /MANIFEST:NO.
 Vedi VERIFICA.txt per gli esiti attuali.
 

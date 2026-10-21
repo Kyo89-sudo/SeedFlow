@@ -1,13 +1,14 @@
 #include "settings.hpp"
+#include "file_io.hpp"
 #include <algorithm>
 #include "util.hpp"
 #include <libtorrent/entry.hpp>
 #include <libtorrent/bencode.hpp>
 #include <libtorrent/bdecode.hpp>
-#include <fstream>
 #include <iterator>
 #include <regex>
 #include <vector>
+#include <limits>
 
 namespace lt = libtorrent;
 namespace fs = std::filesystem;
@@ -21,13 +22,16 @@ wchar_t const* const kRatioActionLabels[4] = {
 static fs::path settings_file() { return state_dir() / L"settings.dat"; }
 
 static bool read_file(fs::path const& p, std::vector<char>& out) {
-    std::ifstream in(p, std::ios::binary);
-    if (!in) return false;
-    out.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-    return true;
+    // Settings and the old JSON import are small metadata files, not payload data.
+    return file_io::read_bounded(p, out, 32u * 1024u * 1024u);
 }
 
 static std::int64_t gi(lt::bdecode_node const& d, char const* k, std::int64_t def) { return d.dict_find_int_value(k, def); }
+static int gint(lt::bdecode_node const& d, char const* k, int def) {
+    auto const value = gi(d, k, def);
+    return value < (std::numeric_limits<int>::min)() || value > (std::numeric_limits<int>::max)()
+        ? def : static_cast<int>(value);
+}
 static std::string gs(lt::bdecode_node const& d, char const* k, std::string const& def) {
     auto v = d.dict_find_string(k);
     return v ? std::string(v.string_value()) : def;
@@ -47,7 +51,7 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.minimize_to_tray = gi(d, "minimize_to_tray", 0) != 0;
     s.trim_when_hidden = gi(d, "trim_when_hidden", 1) != 0;
     s.start_minimized = gi(d, "start_minimized", 1) != 0;
-    s.process_priority = std::clamp(static_cast<int>(gi(d, "process_priority", 0)), 0, 2);
+    s.process_priority = std::clamp(gint(d, "process_priority", 0), 0, 2);
     s.start_paused = gi(d, "start_paused", 0) != 0;
     s.confirm_remove = gi(d, "confirm_remove", 1) != 0;
     s.user_agent = gs(d, "user_agent", def.user_agent);
@@ -56,47 +60,49 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.peer_id_prefix = gs(d, "peer_id_prefix", "");
     s.client_name = gs(d, "client_name", "");
     s.anonymous_mode = gi(d, "anonymous_mode", 0) != 0;
-    s.port = static_cast<int>(gi(d, "port", def.port));
+    s.port = gint(d, "port", def.port);
     s.dht = gi(d, "dht", 1) != 0; s.upnp = gi(d, "upnp", 1) != 0;
     s.natpmp = gi(d, "natpmp", 1) != 0; s.lsd = gi(d, "lsd", 1) != 0; s.pex = gi(d, "pex", 1) != 0; s.ipv6 = gi(d, "ipv6", 1) != 0;
     s.announce_all_trackers = gi(d, "announce_all_trackers", 1) != 0; s.announce_all_tiers = gi(d, "announce_all_tiers", 1) != 0;
-    s.encryption = static_cast<int>(gi(d, "encryption", 1));
+    s.encryption = gint(d, "encryption", 1);
     s.auto_port_check = gi(d, "auto_port_check", 0) != 0;
-    s.down_kib = static_cast<int>(gi(d, "down_kib", 0));
-    s.up_kib = static_cast<int>(gi(d, "up_kib", 0));
-    s.connections = static_cast<int>(gi(d, "connections", def.connections));
-    s.upload_slots = static_cast<int>(gi(d, "upload_slots", def.upload_slots));
-    s.active_downloads = static_cast<int>(gi(d, "active_downloads", def.active_downloads));
-    s.active_seeds = static_cast<int>(gi(d, "active_seeds", def.active_seeds));
+    s.down_kib = gint(d, "down_kib", 0);
+    s.up_kib = gint(d, "up_kib", 0);
+    s.connections = gint(d, "connections", def.connections);
+    s.upload_slots = gint(d, "upload_slots", def.upload_slots);
+    s.active_downloads = gint(d, "active_downloads", def.active_downloads);
+    s.active_seeds = gint(d, "active_seeds", def.active_seeds);
     s.preallocate = gi(d, "preallocate", 0) != 0;
     s.global_ratio = gd(d, "global_ratio", 0.0);
-    s.global_ratio_action = static_cast<int>(gi(d, "global_ratio_action", ActPause));
-    s.disk_io = static_cast<int>(gi(d, "disk_io", 0));
+    s.global_ratio_action = gint(d, "global_ratio_action", ActPause);
+    s.disk_io = gint(d, "disk_io", 0);
     s.perf_profile = gs(d, "perf_profile", "");
     s.connection_profile = gs(d, "connection_profile", "");
-    s.win_x = static_cast<int>(gi(d, "win_x", -1)); s.win_y = static_cast<int>(gi(d, "win_y", -1));
-    s.win_w = static_cast<int>(gi(d, "win_w", 0)); s.win_h = static_cast<int>(gi(d, "win_h", 0));
-    s.win_max = static_cast<int>(gi(d, "win_max", 0));
-    s.split_left = static_cast<int>(gi(d, "split_left", def.split_left));
-    s.split_bottom = static_cast<int>(gi(d, "split_bottom", def.split_bottom));
+    s.win_x = gint(d, "win_x", -1); s.win_y = gint(d, "win_y", -1);
+    s.win_w = gint(d, "win_w", 0); s.win_h = gint(d, "win_h", 0);
+    s.win_max = gint(d, "win_max", 0);
+    s.split_left = gint(d, "split_left", def.split_left);
+    s.split_bottom = gint(d, "split_bottom", def.split_bottom);
     s.columns = gs(d, "columns", "");
     s.migrated = gi(d, "migrated", 0) != 0;
     s.int_settings.clear(); s.bool_settings.clear(); s.torrents.clear();
     if (auto is = d.dict_find_dict("int_settings"))
         for (int i = 0; i < is.dict_size(); ++i) {
             auto [k, v] = is.dict_at(i);
-            if (v.type() == lt::bdecode_node::int_t) s.int_settings[std::string(k)] = static_cast<int>(v.int_value());
+            if (v.type() == lt::bdecode_node::int_t && v.int_value() >= (std::numeric_limits<int>::min)() &&
+                v.int_value() <= (std::numeric_limits<int>::max)()) s.int_settings[std::string(k)] = static_cast<int>(v.int_value());
         }
     if (auto bs = d.dict_find_dict("bool_settings"))
         for (int i = 0; i < bs.dict_size(); ++i) {
             auto [k, v] = bs.dict_at(i);
-            if (v.type() == lt::bdecode_node::int_t) s.bool_settings[std::string(k)] = static_cast<int>(v.int_value());
+            if (v.type() == lt::bdecode_node::int_t) s.bool_settings[std::string(k)] = v.int_value() != 0;
         }
+    s.stats = {};
     if (auto st = d.dict_find_dict("stats")) {
         s.stats.downloaded = gi(st, "downloaded", 0); s.stats.uploaded = gi(st, "uploaded", 0);
         s.stats.runtime = gi(st, "runtime", 0); s.stats.peak_down = gi(st, "peak_down", 0);
-        s.stats.peak_up = gi(st, "peak_up", 0); s.stats.launches = static_cast<int>(gi(st, "launches", 0));
-        s.stats.added = static_cast<int>(gi(st, "added", 0)); s.stats.completed = static_cast<int>(gi(st, "completed", 0));
+        s.stats.peak_up = gi(st, "peak_up", 0); s.stats.launches = gint(st, "launches", 0);
+        s.stats.added = gint(st, "added", 0); s.stats.completed = gint(st, "completed", 0);
         s.stats.since = gi(st, "since", 0);
     }
     if (auto ts = d.dict_find_dict("torrents"))
@@ -104,9 +110,9 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
             auto [k, v] = ts.dict_at(i);
             if (v.type() != lt::bdecode_node::dict_t) continue;
             TorrentMeta m;
-            m.ratio_mode = static_cast<int>(gi(v, "ratio_mode", RatioGlobal));
+            m.ratio_mode = gint(v, "ratio_mode", RatioGlobal);
             m.ratio_limit = gd(v, "ratio_limit", 2.0);
-            m.ratio_action = static_cast<int>(gi(v, "ratio_action", -1));
+            m.ratio_action = gint(v, "ratio_action", -1);
             m.ratio_done = gi(v, "ratio_done", 0) != 0;
             m.added = gi(v, "added", 0);
             s.torrents[std::string(k)] = m;
@@ -159,19 +165,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         }
         std::vector<char> out;
         lt::bencode(std::back_inserter(out), e);
-        fs::create_directories(state_dir());
-        fs::path file = settings_file();
-        fs::path tmp = file.wstring() + L".tmp";
-        {
-            std::ofstream o(tmp, std::ios::binary | std::ios::trunc);
-            o.write(out.data(), static_cast<std::streamsize>(out.size()));
-            if (!o) { error = "scrittura non riuscita"; return false; }
-        }
-        std::error_code fec;
-        if (fs::exists(file)) fs::copy_file(file, file.wstring() + L".bak", fs::copy_options::overwrite_existing, fec);
-        fs::rename(tmp, file, fec);
-        if (fec) { error = fec.message(); return false; }
-        return true;
+        return file_io::write_atomic(settings_file(), out, error, true);
     } catch (std::exception const& ex) { error = ex.what(); return false; }
 }
 

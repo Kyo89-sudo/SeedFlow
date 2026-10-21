@@ -1,4 +1,5 @@
 #include "engine.hpp"
+#include "file_io.hpp"
 #include "version.h"
 #include <libtorrent/session_params.hpp>
 #include <libtorrent/session_stats.hpp>
@@ -78,18 +79,6 @@ static bool read_file(fs::path const& p, std::vector<char>& out) {
     out.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
     return !out.empty();
 }
-static bool write_file_atomic(fs::path const& p, std::vector<char> const& data) {
-    fs::path tmp = p; tmp += L".tmp";
-    {
-        std::ofstream o(tmp, std::ios::binary | std::ios::trunc);
-        if (!o) return false;
-        o.write(data.data(), static_cast<std::streamsize>(data.size()));
-        if (!o) return false;
-    }
-    std::error_code ec;
-    fs::rename(tmp, p, ec);
-    return !ec;
-}
 
 bool Engine::start(EngineConfig const& cfg, std::string& error) {
     if (session_) return true;
@@ -167,7 +156,9 @@ void Engine::stop(std::chrono::milliseconds wait) {
         if (!state_dir_.empty()) {
             auto buf = lt::write_session_params_buf(session_->session_state(lt::session_handle::save_dht_state),
                 lt::session_handle::save_dht_state);
-            write_file_atomic(state_dir_ / L"session.dat", buf);
+            std::string error;
+            if (!file_io::write_atomic(state_dir_ / L"session.dat", buf, error))
+                push_throttled("session-write", "Salvataggio sessione non riuscito: " + error);
         }
     } catch (...) {}
     items_.clear();
@@ -731,8 +722,12 @@ void Engine::write_resume(lt::add_torrent_params const& p) {
     if (state_dir_.empty()) return;
     try {
         auto buf = lt::write_resume_data_buf(p);
-        write_file_atomic(resume_path(hash_key(p.info_hashes)), buf);
-    } catch (...) {}
+        std::string error;
+        if (!file_io::write_atomic(resume_path(hash_key(p.info_hashes)), buf, error))
+            push_throttled("resume-write", "Salvataggio fast resume non riuscito: " + error);
+    } catch (std::exception const& ex) {
+        push_throttled("resume-write", "Salvataggio fast resume non riuscito: " + std::string(ex.what()));
+    }
 }
 static std::string transport_name(lt::portmap_transport t) { return t == lt::portmap_transport::upnp ? "UPnP" : "NAT-PMP"; }
 static std::string protocol_name(lt::portmap_protocol p) {

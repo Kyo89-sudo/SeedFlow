@@ -12,6 +12,14 @@
 #include <filesystem>
 
 static int checks = 0;
+struct FileFixture {
+    std::filesystem::path folder;
+    explicit FileFixture(std::filesystem::path const& base) : folder(std::filesystem::absolute(base) /
+        (L"SeedFlow-regression-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64()))) {
+        if (!std::filesystem::create_directory(folder)) throw std::runtime_error("Fixture directory already exists");
+    }
+    ~FileFixture() { std::error_code ignored; std::filesystem::remove_all(folder, ignored); }
+};
 static void check(bool condition, char const* name) {
     if (!condition) throw std::runtime_error(name);
     ++checks;
@@ -28,6 +36,27 @@ int wmain(int argc, wchar_t** argv) {
     HMODULE module = nullptr;
     try {
         check(argc == 2 || argc == 3, "executable argument");
+        {
+            FileFixture fixture(std::filesystem::path(argv[1]).parent_path());
+            auto path = fixture.folder / L"settings.dat";
+            std::vector<char> first{'o', 'l', 'd'}, second{'n', 'e', 'w'}, read{'x'};
+            std::string error = "previous error";
+            bool const first_saved = sf::file_io::write_atomic(path, first, error, true);
+            if (!first_saved) std::cerr << "File I/O: " << error << "\n";
+            check(first_saved && error.empty(), "first atomic write succeeds and clears old error");
+            check(sf::file_io::read_bounded(path, read, 3) && read == first, "bounded file read accepts exact limit");
+            check(!sf::file_io::read_bounded(path, read, 2) && read == first, "oversized file rejected before replacing caller buffer");
+            check(sf::file_io::write_atomic(path, second, error, true), "atomic replacement succeeds on existing Windows file");
+            check(sf::file_io::read_bounded(path.wstring() + L".bak", read, 3) && read == first, "backup preserves previous complete settings");
+            check(sf::file_io::read_bounded(path, read, 3) && read == second, "replacement contains the new complete data");
+            std::filesystem::remove(path.wstring() + L".bak");
+            std::filesystem::create_directory(path.wstring() + L".bak");
+            check(!sf::file_io::write_atomic(path, first, error, true) && !error.empty(), "backup failure is reported instead of ignored");
+            check(sf::file_io::read_bounded(path, read, 3) && read == second, "backup failure leaves existing settings unchanged");
+            check(!std::filesystem::exists(path.wstring() + L".tmp"), "failed replacement removes its temporary file");
+            auto empty = fixture.folder / L"empty.dat";
+            check(sf::file_io::write_atomic(empty, {}, error) && sf::file_io::read_bounded(empty, read, 0) && read.empty(), "empty file write and read remain supported");
+        }
         std::wstring text = L"Identità · Velocità · Giù · è à ì ò ù · 中文 · \U0001f642";
         check(sf::widen(sf::narrow(text)) == text, "UTF-8 / UTF-16 accents, CJK and supplementary character");
         check(sf::json_unescape("Velocit\\u00e0") == sf::narrow(L"Velocità"), "legacy JSON accent");
@@ -52,6 +81,45 @@ int wmain(int argc, wchar_t** argv) {
         e["user_agent"] = "Custom/1.0";
         encoded.clear(); libtorrent::bencode(std::back_inserter(encoded), e);
         check(sf::parse_settings(encoded, settings) && settings.user_agent == "Custom/1.0", "custom user agent preserved");
+
+        // Corrupt persisted integers must not wrap into apparently valid settings.
+        e["port"] = std::int64_t{4294979641LL}; // low 32 bits equal a different valid port
+        e["up_kib"] = (std::numeric_limits<std::int64_t>::max)();
+        e["int_settings"]["send_buffer_watermark"] = (std::numeric_limits<std::int64_t>::max)();
+        e["bool_settings"]["enable_dht"] = std::int64_t{4294967296LL};
+        settings.stats.uploaded = 123;
+        encoded.clear(); libtorrent::bencode(std::back_inserter(encoded), e);
+        check(sf::parse_settings(encoded, settings) && settings.port == sf::AppSettings{}.port && settings.up_kib == 0,
+            "oversized saved integers fall back without narrowing wraparound");
+        check(!settings.int_settings.count("send_buffer_watermark"), "oversized advanced integer setting ignored");
+        check(settings.bool_settings.at("enable_dht") == 1, "large nonzero persisted boolean remains true");
+        check(settings.stats.uploaded == 0, "missing statistics reset on repeated settings parse");
+        sf::NetView network;
+        network.port = 51413; network.listening = true; network.uptime = 300; network.peers_connected = 1;
+        sf::PortCheck verified; verified.done = verified.success = verified.reachable = true;
+        verified.port = network.port; verified.when = std::time(nullptr);
+        std::wstring net_text, net_tip;
+        check(sf::evaluate_network(network, verified, net_text, net_tip) == sf::NetState::Open,
+            "recent port check applies to the tested listening port");
+        verified.port = 51414;
+        check(sf::evaluate_network(network, verified, net_text, net_tip) != sf::NetState::Open,
+            "port check from previous port cannot mark a new port open");
+        verified.port = network.port; verified.when = std::time(nullptr) + 3600;
+        check(sf::evaluate_network(network, verified, net_text, net_tip) != sf::NetState::Open,
+            "future-dated port check cannot remain valid after clock rollback");
+        verified.when = std::time(nullptr) - 1801;
+        check(sf::evaluate_network(network, verified, net_text, net_tip) != sf::NetState::Open,
+            "expired port check cannot mark port open");
+        auto invalid_port = sf::check_port_online(65536);
+        check(invalid_port.done && !invalid_port.success && invalid_port.port == 65536 && !invalid_port.status.empty(),
+            "invalid diagnostic port rejected before network access");
+
+        for (UINT dpi : {96u, 144u, 192u}) for (int width : {760, 1024, 1920}) {
+            auto edges = sf::status_part_edges(width, dpi);
+            check(edges[0] >= 0 && edges[4] < width && edges[5] == -1 &&
+                std::is_sorted(edges.begin(), edges.begin() + 5),
+                "status panes stay ordered and within resized client area at multiple DPI");
+        }
 
         std::vector<int> order(sf::ColCount);
         std::iota(order.begin(), order.end(), 0);
@@ -152,6 +220,19 @@ int wmain(int argc, wchar_t** argv) {
         for (int id : {IDD_PREFS, IDD_PG_GENERAL, IDD_PG_FOLDERS, IDD_PG_CONNECTION, IDD_PG_BANDWIDTH, IDD_PG_BITTORRENT,
                        IDD_PG_QUEUE, IDD_PG_IDENTITY, IDD_PG_SYSTEM, IDD_PG_PERFORMANCE})
             check(!resource_text(module, id).empty(), "preferences page template present");
+        HWND preferences = CreateDialogParamW(module, MAKEINTRESOURCEW(IDD_PREFS), nullptr,
+            [](HWND, UINT, WPARAM, LPARAM) -> INT_PTR { return FALSE; }, 0);
+        check(preferences != nullptr, "create preferences frame for layout verification");
+        HWND tree = GetDlgItem(preferences, IDC_PREFTREE);
+        RECT tree_rect{}; GetClientRect(tree, &tree_rect);
+        HDC tree_dc = GetDC(tree);
+        auto tree_font = reinterpret_cast<HFONT>(SendMessageW(tree, WM_GETFONT, 0, 0));
+        auto previous_font = SelectObject(tree_dc, tree_font);
+        SIZE extent{}; GetTextExtentPoint32W(tree_dc, L"Prestazioni e memoria", 21, &extent);
+        SelectObject(tree_dc, previous_font); ReleaseDC(tree, tree_dc);
+        check(tree_rect.right >= extent.cx + 2 * static_cast<int>(TreeView_GetIndent(tree)) + 24,
+            "performance and memory title fits tree including indentation and icon");
+        DestroyWindow(preferences);
         check(resource_text(module, IDD_PG_SYSTEM).find(L"Priorità del processo") != std::wstring::npos, "advanced page accent intact");
         for (int size : sf::icons::kStripSizes) {
             HRSRC r = FindResourceW(module, MAKEINTRESOURCEW(IDR_ICONS_BASE + size), MAKEINTRESOURCEW(10));
@@ -196,3 +277,4 @@ int wmain(int argc, wchar_t** argv) {
         return 1;
     }
 }
+

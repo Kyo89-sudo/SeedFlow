@@ -15,7 +15,7 @@
 
 SeedFlow gestisce torrent e magnet con una GUI desktop nativa. Include priorità dei file, queue management, fast resume, statistiche e diagnostica di rete. La build statica contiene le librerie e il runtime MSVC: **un solo EXE, senza DLL aggiuntive o .NET**.
 
-La release pubblicata è **0.8.4 r14**. La **r15** è una revisione di manutenzione, disponibile nel [ramo dedicato](https://github.com/Kyo89-sudo/SeedFlow/pull/1).
+La revisione attuale dei sorgenti è **0.8.4 r15** (ramo `main`). L'ultima release con eseguibile pronto è **0.8.4 r14**.
 
 ## Funzionalità
 
@@ -56,7 +56,7 @@ build.bat -NoPause -RunTests
 
 Il default è `x64-windows-static` con runtime `/MT`. La prima build compila anche le dipendenze. Opzioni e istruzioni CMake: [BUILDING.md](BUILDING.md).
 
-La r15 ha superato la compilazione/link nativi su Windows, 124 controlli di regressione e il test isolato del motore. Modalità di verifica e limiti sono nel [report della r15](https://github.com/Kyo89-sudo/SeedFlow/blob/maintenance/0.8.4-r15/VERIFICA.txt). Queste prove non equivalgono a un collaudo end-to-end su uno swarm pubblico.
+La r15 ha superato la compilazione/link nativi su Windows, 124 controlli di regressione e il test isolato del motore. Modalità di verifica e limiti sono nel [report della r15](VERIFICA.txt). Queste prove non equivalgono a un collaudo end-to-end su uno swarm pubblico.
 
 ## License
 
