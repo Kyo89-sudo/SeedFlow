@@ -49,6 +49,7 @@ I = {
  'cpu': ('purple', '<rect FILL x="6" y="6" width="12" height="12" rx="1.5"/><rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5" rx=".5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>'),
  'bandwidth': ('teal', '<path FILL d="M3 18l5-6 4 3 4-6 5 5v6H3z"/><path d="M3 18l5-6 4 3 4-6 5 5"/><path d="M3 21h18"/>'),
  'priority': ('orange', '<path FILL d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>'),
+ 'create': ('green', '<path FILL d="M5 3h8l5 5v6.5L12.5 20H5z"/><path d="M12 21H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h7l5 5v4"/><path d="M13 3v5h5"/><path d="M15 21l1-3.5 4.5-4.5a1.4 1.4 0 0 1 2 2L18 19.5z"/><path d="M8 12h5M8 16h3"/>'),
 }
 import os
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'svg')

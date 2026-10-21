@@ -41,6 +41,39 @@ static double gd(lt::bdecode_node const& d, char const* k, double def) {
     return static_cast<double>(d.dict_find_int_value(k, static_cast<std::int64_t>(def * 1000))) / 1000.0;
 }
 
+// Values that fit an int can still be meaningless (port 0, encryption 7, a negative
+// connection limit...): bring every persisted value back into the range the dialogs
+// accept, so a damaged or hand-edited settings.dat cannot reach libtorrent as is.
+static void sanitize(AppSettings& s) {
+    AppSettings const def;
+    auto in = [](int v, int lo, int hi) { return v >= lo && v <= hi; };
+    auto fix = [&](int& v, int lo, int hi, int fallback) { if (!in(v, lo, hi)) v = fallback; };
+    fix(s.port, 1024, 65535, def.port);
+    fix(s.encryption, 0, 2, def.encryption);
+    fix(s.down_kib, 0, 2000000, 0);
+    fix(s.up_kib, 0, 2000000, 0);
+    fix(s.connections, 10, 20000, def.connections);
+    if (s.upload_slots != -1) fix(s.upload_slots, 1, 2000, def.upload_slots);
+    fix(s.active_downloads, 1, 1000, def.active_downloads);
+    fix(s.active_seeds, 1, 1000, def.active_seeds);
+    fix(s.global_ratio_action, 0, 3, def.global_ratio_action);
+    fix(s.disk_io, 0, 3, def.disk_io);
+    fix(s.process_priority, 0, 2, def.process_priority);
+    fix(s.create_format, 0, 2, 0);
+    fix(s.create_piece, 0, 11, 0);
+    if (s.create_trackers.size() > 64 * 1024) s.create_trackers.clear();
+    fix(s.split_left, 60, 2000, def.split_left);
+    fix(s.split_bottom, 60, 4000, def.split_bottom);
+    fix(s.win_w, 0, 30000, 0);
+    fix(s.win_h, 0, 30000, 0);
+    if (!(s.global_ratio >= 0 && s.global_ratio <= 10000)) s.global_ratio = 0;
+    for (auto& [hash, m] : s.torrents) {
+        fix(m.ratio_mode, RatioGlobal, RatioCustom, RatioGlobal);
+        fix(m.ratio_action, -1, 3, -1);
+        if (!(m.ratio_limit > 0 && m.ratio_limit <= 10000)) m.ratio_limit = 2.0;
+    }
+}
+
 static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     lt::error_code ec;
     lt::bdecode_node d = lt::bdecode(buf, ec);
@@ -52,6 +85,12 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.trim_when_hidden = gi(d, "trim_when_hidden", 1) != 0;
     s.start_minimized = gi(d, "start_minimized", 1) != 0;
     s.process_priority = std::clamp(gint(d, "process_priority", 0), 0, 2);
+    s.create_format = gint(d, "create_format", 0);
+    s.create_piece = gint(d, "create_piece", 0);
+    s.create_trackers = gs(d, "create_trackers", "");
+    s.create_seed = gi(d, "create_seed", 1) != 0;
+    s.create_private = gi(d, "create_private", 0) != 0;
+    s.create_copy_magnet = gi(d, "create_copy_magnet", 0) != 0;
     s.start_paused = gi(d, "start_paused", 0) != 0;
     s.confirm_remove = gi(d, "confirm_remove", 1) != 0;
     s.user_agent = gs(d, "user_agent", def.user_agent);
@@ -117,6 +156,7 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
             m.added = gi(v, "added", 0);
             s.torrents[std::string(k)] = m;
         }
+    sanitize(s);
     return true;
 }
 
@@ -135,6 +175,8 @@ bool save_settings(AppSettings const& s, std::string& error) {
         e["close_to_tray"] = s.close_to_tray; e["minimize_to_tray"] = s.minimize_to_tray;
         e["trim_when_hidden"] = s.trim_when_hidden; e["start_paused"] = s.start_paused;
         e["start_minimized"] = s.start_minimized; e["process_priority"] = s.process_priority;
+        e["create_format"] = s.create_format; e["create_piece"] = s.create_piece; e["create_trackers"] = s.create_trackers;
+        e["create_seed"] = s.create_seed; e["create_private"] = s.create_private; e["create_copy_magnet"] = s.create_copy_magnet;
         e["confirm_remove"] = s.confirm_remove; e["user_agent"] = s.user_agent;
         e["send_client_name"] = s.send_client_name;
         e["peer_id_prefix"] = s.peer_id_prefix; e["client_name"] = s.client_name; e["anonymous_mode"] = s.anonymous_mode;

@@ -45,7 +45,8 @@ enum Id : int {
     IcCpu = 39,
     IcBandwidth = 40,
     IcPriority = 41,
-    IcCount = 42
+    IcCreate = 42,
+    IcCount = 43
 };
 inline constexpr int kStripSizes[] = {16, 20, 24, 28, 32, 40, 48};
 } // namespace sf::icons

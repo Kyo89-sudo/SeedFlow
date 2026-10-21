@@ -154,7 +154,7 @@ static void create_imagelists() {
     for (HIMAGELIST* il : {&g.il_toolbar, &g.il_states, &g.il_filters, &g.il_small}) if (*il) { ImageList_Destroy(*il); *il = nullptr; }
     // order = toolbar image indices
     Id tb[] = {IcAdd, IcMagnet, IcPlay, IcPause, IcRemove, IcDelete, IcUp, IcDown, IcSuperseed, IcRatio, IcWizard,
-               IcStats, IcDiagnostics, IcRefresh, IcCopy, IcDelete, IcPreferences};
+               IcStats, IcDiagnostics, IcRefresh, IcCopy, IcDelete, IcPreferences, IcCreate};
     g.il_toolbar = make_imagelist(tb, static_cast<int>(std::size(tb)), scale(16));
     Id st[SiCount] = {IcDownload, IcUpload, IcPause, IcQueue, IcChecking, IcMagnet, IcError, IcCheck, IcMoving};
     g.il_states = make_imagelist(st, SiCount, scale(16));
@@ -189,6 +189,7 @@ static void decorate_menu(HMENU m) {
     set_menu_icon(m, ID_FILE_OPEN, IcAdd);
     set_menu_icon(m, ID_FILE_MAGNET, IcMagnet);
     set_menu_icon(m, ID_FILE_PASTE, IcCopy);
+    set_menu_icon(m, ID_FILE_CREATE, IcCreate);
     set_menu_icon(m, ID_T_STARTALL, IcPlay);
     set_menu_icon(m, ID_T_PAUSEALL, IcPause);
     set_menu_icon(m, ID_FILE_EXIT, IcExit);
@@ -969,6 +970,17 @@ static void after_add(int id) {
     std::string hash = g.engine.hash_of(id);
     if (!hash.empty()) meta_for(hash);
 }
+int add_created_torrent(std::wstring const& torrent_file, std::wstring const& save_dir, std::string& error) {
+    AddResult r;
+    int id = g.engine.add_torrent_file(narrow(torrent_file), narrow(save_dir), false, error, &r, true);
+    if (id > 0) {
+        after_add(id);
+        log_line(L"In seeding: " + fs::path(torrent_file).filename().wstring());
+        persist();
+        refresh_now();
+    }
+    return id;
+}
 static void add_files(std::vector<std::wstring> const& files) {
     std::string folder = download_dir();
     std::error_code ec;
@@ -1203,6 +1215,7 @@ static void on_command(int cmd) {
         if (dlg_magnet(g.main, magnets, folder, paused)) add_magnets(magnets, folder, paused);
         break;
     }
+    case ID_FILE_CREATE: dlg_create_torrent(g.main); break;
     case ID_FILE_PASTE: {
         std::wstring clip = clipboard_text(g.main);
         std::vector<std::string> magnets;
@@ -1290,7 +1303,7 @@ static void on_command(int cmd) {
 // ------------------------------------------------------------------ creation / layout
 struct TbButton { int cmd; int image; wchar_t const* text; bool show_text; };
 static TbButton const kToolbar[] = {
-    {ID_FILE_OPEN, 0, L"Torrent", true}, {ID_FILE_MAGNET, 1, L"Magnet", true}, {0, -1, nullptr, false},
+    {ID_FILE_OPEN, 0, L"Torrent", true}, {ID_FILE_MAGNET, 1, L"Magnet", true}, {ID_FILE_CREATE, 17, L"Crea", true}, {0, -1, nullptr, false},
     {ID_T_START, 2, L"Avvia", true}, {ID_T_PAUSE, 3, L"Pausa", true}, {ID_T_REMOVE, 4, L"Rimuovi", true},
     {ID_T_DELETE, 5, L"Elimina", true}, {0, -1, nullptr, false},
     {ID_T_QUP, 6, L"Su nella coda", false}, {ID_T_QDOWN, 7, L"Giù nella coda", false}, {0, -1, nullptr, false},

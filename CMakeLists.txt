@@ -15,7 +15,7 @@ else()
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
-project(SeedFlow VERSION 0.8.4 LANGUAGES CXX RC)
+project(SeedFlow VERSION 0.8.5 LANGUAGES CXX RC)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -34,6 +34,7 @@ add_executable(SeedFlow WIN32
   src/icons.cpp
   src/speed_graph.cpp
   src/paint.cpp
+  src/creator.cpp
   src/util.cpp
   res/SeedFlow.rc
 )
@@ -70,7 +71,7 @@ option(SF_BUILD_TESTS "Build offline Windows regression tests" OFF)
 if(SF_BUILD_TESTS)
   enable_testing()
   add_executable(SeedFlowRegression tests/regression.cpp
-    src/dialogs.cpp src/engine.cpp src/netcheck.cpp src/icons.cpp src/paint.cpp src/speed_graph.cpp src/util.cpp)
+    src/dialogs.cpp src/engine.cpp src/netcheck.cpp src/icons.cpp src/paint.cpp src/speed_graph.cpp src/creator.cpp src/util.cpp)
   target_compile_definitions(SeedFlowRegression PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX _WIN32_WINNT=0x0A00)
   target_link_libraries(SeedFlowRegression PRIVATE LibtorrentRasterbar::torrent-rasterbar
     comctl32 shlwapi shell32 ole32 uuid uxtheme winhttp iphlpapi ws2_32 psapi)

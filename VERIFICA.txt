@@ -1,3 +1,40 @@
+VERIFICHE SeedFlow 0.8.5 r16 - 21/10/2026
+
+Base: 0.8.4 r15 (ramo main). Ambiente: Linux x64, nessun Windows disponibile.
+
+Eseguito realmente:
+- Compilazione e link per Windows x64 con llvm-mingw (clang 19), libtorrent
+  2.1.2 + OpenSSL 3.5.4 statici: SeedFlow.exe e SeedFlowRegression.exe senza
+  errori e senza warning nei sorgenti dell'applicazione.
+- clang --analyze su tutti i sorgenti: nessun avviso. clang-tidy (bugprone,
+  clang-analyzer): solo avvisi di stile (catch vuoti voluti verso handle
+  libtorrent non piu' validi, cast GetProcAddress), nessun difetto.
+- Motore SeedFlow (aggiunta, duplicati, tracker, limiti, fast resume,
+  ripristino, rimozione con cancellazione) con I/O pread e mmap sotto
+  AddressSanitizer + LeakSanitizer + UBSan: superato, 0 errori, 0 leak.
+- Creazione torrent sotto ASan/UBSan: tracker per tier e duplicati, URL non
+  validi rifiutati, web seed; cartella con nome Unicode in formato ibrido
+  (v1+v2), v1 (con flag privato) e v2, hash e tier verificati rileggendo il
+  file; file singolo con pezzi da 64 KiB; sorgente mancante, cartella vuota e
+  dimensione pezzi non valida rifiutate; annullamento durante l'hash e
+  riavvio; aggiunta al motore in seed mode: seeding immediato senza recheck.
+- Annullamento: libtorrent non ha un'API di interruzione, l'hash viene fermato
+  dalla callback (come qBittorrent). LeakSanitizer rileva circa 5 KB non
+  liberati dentro libtorrent per ogni annullamento: trascurabile, nessun
+  errore di memoria.
+- file_io: primo salvataggio, sostituzione con backup, nessun file temporaneo
+  residuo, lettura limitata prima dell'allocazione, file vuoti, destinazione
+  non sostituibile (percorso POSIX; il ramo Windows FlushFileBuffers /
+  MoveFileExW e' compilato ma non eseguito).
+- Nuove icone rigenerate con tools/make_icons.py (43 icone, 7 dimensioni).
+
+Non verificato in questa revisione:
+- Build MSVC con build.bat ed esecuzione della regressione Win32 su Windows
+  (aggiunti controlli per creazione torrent e valori fuori intervallo).
+- GUI interattiva della finestra Crea torrent su Windows reale.
+
+---
+
 VERIFICHE SeedFlow 0.8.4 r15 - 21/10/2026
 
 Base: sorgenti Win32 0.8.4 r14 pubblicati su GitHub, con documentazione GPL.

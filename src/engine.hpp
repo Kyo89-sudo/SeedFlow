@@ -100,7 +100,8 @@ public:
 
     // Adding torrents. folder is UTF-8. Returns new id (>0) or -1.
     int add_magnet(std::string const& uri, std::string const& folder, bool paused, std::string& error, AddResult* result = nullptr);
-    int add_torrent_file(std::string const& file_utf8, std::string const& folder, bool paused, std::string& error, AddResult* result = nullptr);
+    int add_torrent_file(std::string const& file_utf8, std::string const& folder, bool paused, std::string& error, AddResult* result = nullptr,
+                         bool seed_mode = false);   // seed_mode: data just hashed by the creator, skip the recheck
     int add_resume_file(std::filesystem::path const& file, std::string& error, AddResult* result = nullptr);
     int load_saved_torrents(std::filesystem::path const& dir, std::vector<std::string>& log);
 

@@ -5,6 +5,9 @@
 #include "resource.h"
 #include "util.hpp"
 #include "tuning.hpp"
+#include "creator.hpp"
+#include "file_io.hpp"
+#include "paint.hpp"
 #include <shobjidl.h>
 #include <shellapi.h>
 #include <uxtheme.h>
@@ -707,6 +710,241 @@ bool dlg_preferences(HWND owner, int page) {
     ctx.start = page;
     DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_PREFS), owner, prefs_proc, reinterpret_cast<LPARAM>(&ctx));
     return ctx.applied;
+}
+
+// ------------------------------------------------------------------ create torrent
+static bool pick_source_file(HWND owner, std::wstring& path) {
+    IFileOpenDialog* dlg = nullptr;
+    if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg)))) return false;
+    DWORD opts = 0;
+    dlg->GetOptions(&opts);
+    dlg->SetOptions(opts | FOS_FORCEFILESYSTEM | FOS_FILEMUSTEXIST);
+    dlg->SetTitle(L"File da condividere");
+    bool ok = false;
+    if (SUCCEEDED(dlg->Show(owner))) {
+        IShellItem* item = nullptr;
+        if (SUCCEEDED(dlg->GetResult(&item))) {
+            PWSTR p = nullptr;
+            if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &p))) { path = p; CoTaskMemFree(p); ok = true; }
+            item->Release();
+        }
+    }
+    dlg->Release();
+    return ok;
+}
+static bool pick_torrent_destination(HWND owner, std::wstring const& folder, std::wstring const& name, std::wstring& path) {
+    IFileSaveDialog* dlg = nullptr;
+    if (FAILED(CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg)))) return false;
+    COMDLG_FILTERSPEC filter[] = {{L"File torrent (*.torrent)", L"*.torrent"}};
+    dlg->SetFileTypes(1, filter);
+    dlg->SetDefaultExtension(L"torrent");
+    dlg->SetTitle(L"Salva il file .torrent");
+    dlg->SetFileName((name + L".torrent").c_str());
+    DWORD opts = 0;
+    dlg->GetOptions(&opts);
+    dlg->SetOptions(opts | FOS_FORCEFILESYSTEM | FOS_OVERWRITEPROMPT);
+    IShellItem* start = nullptr;
+    if (!folder.empty() && SUCCEEDED(SHCreateItemFromParsingName(folder.c_str(), nullptr, IID_PPV_ARGS(&start)))) {
+        dlg->SetFolder(start);
+        start->Release();
+    }
+    bool ok = false;
+    if (SUCCEEDED(dlg->Show(owner))) {
+        IShellItem* item = nullptr;
+        if (SUCCEEDED(dlg->GetResult(&item))) {
+            PWSTR p = nullptr;
+            if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &p))) { path = p; CoTaskMemFree(p); ok = true; }
+            item->Release();
+        }
+    }
+    dlg->Release();
+    return ok;
+}
+
+struct CreateCtx {
+    TorrentCreator creator;
+    std::wstring output, save_dir;
+    bool seed = false, copy_magnet = false, closing = false;
+    std::wstring status;
+    COLORREF status_color = paint::kText;
+};
+static void create_set_busy(HWND dlg, bool busy) {
+    for (int id : {IDC_C_SOURCE, IDC_C_FILE, IDC_C_FOLDER, IDC_C_TRACKERS, IDC_C_WEBSEEDS, IDC_C_COMMENT, IDC_C_PRIVATE,
+                   IDC_C_FORMAT, IDC_C_PIECE, IDC_C_SEED, IDC_C_MAGNET, IDOK})
+        EnableWindow(GetDlgItem(dlg, id), !busy);
+    set_text(dlg, IDCANCEL, busy ? L"Annulla" : L"Chiudi");
+    DragAcceptFiles(dlg, !busy);
+}
+static void create_status(HWND dlg, CreateCtx& c, std::wstring const& text, COLORREF color = paint::kText) {
+    c.status = text;
+    c.status_color = color;
+    set_text(dlg, IDC_C_STATUS, text);
+    InvalidateRect(GetDlgItem(dlg, IDC_C_STATUS), nullptr, TRUE);
+}
+static void create_store_choices(HWND dlg) {
+    auto& s = g.settings;
+    s.create_format = std::clamp(combo_get(dlg, IDC_C_FORMAT), 0, 2);
+    s.create_piece = std::clamp(combo_get(dlg, IDC_C_PIECE), 0, 11);
+    std::wstring trackers = get_text(dlg, IDC_C_TRACKERS);
+    trackers.erase(std::remove(trackers.begin(), trackers.end(), L'\r'), trackers.end());
+    s.create_trackers = narrow(trackers);
+    s.create_private = checked(dlg, IDC_C_PRIVATE);
+    s.create_seed = checked(dlg, IDC_C_SEED);
+    s.create_copy_magnet = checked(dlg, IDC_C_MAGNET);
+}
+static void create_begin(HWND dlg, CreateCtx& c) {
+    std::wstring source = get_text(dlg, IDC_C_SOURCE);
+    while (source.size() > 3 && (source.back() == L'\\' || source.back() == L'/')) source.pop_back();
+    std::error_code ec;
+    fs::path src(source);
+    if (source.empty() || !src.is_absolute() || !fs::exists(src, ec)) {
+        MessageBoxW(dlg, L"Scegli un file o una cartella esistente da condividere.", L"Crea torrent", MB_ICONWARNING);
+        return;
+    }
+    if (src.parent_path() == src) {
+        MessageBoxW(dlg, L"Non si può creare un torrent di un intero disco: scegli una cartella.", L"Crea torrent", MB_ICONWARNING);
+        return;
+    }
+    std::string error;
+    auto tiers = parse_tracker_tiers(narrow(get_text(dlg, IDC_C_TRACKERS)), error);
+    if (!error.empty()) { MessageBoxW(dlg, widen(error).c_str(), L"Crea torrent", MB_ICONWARNING); return; }
+    auto seeds = parse_web_seeds(narrow(get_text(dlg, IDC_C_WEBSEEDS)), error);
+    if (!error.empty()) { MessageBoxW(dlg, widen(error).c_str(), L"Crea torrent", MB_ICONWARNING); return; }
+    bool const priv = checked(dlg, IDC_C_PRIVATE);
+    if (priv && tiers.empty() &&
+        MessageBoxW(dlg, L"Un torrent privato senza tracker non può trovare peer (DHT, PeX e LSD sono disattivati). Continuare?",
+                    L"Crea torrent", MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2) != IDYES) return;
+    std::wstring output;
+    if (!pick_torrent_destination(dlg, src.parent_path().wstring(), src.filename().wstring(), output)) return;
+    create_store_choices(dlg);
+    persist();
+
+    CreateRequest req;
+    req.source = narrow(src.wstring());
+    req.tiers = std::move(tiers);
+    req.web_seeds = std::move(seeds);
+    req.comment = narrow(get_text(dlg, IDC_C_COMMENT));
+    req.creator = SF_CLIENT_NAME;
+    req.is_private = priv;
+    req.format = static_cast<TorrentFormat>(g.settings.create_format);
+    auto const sizes = piece_size_choices();
+    req.piece_size = g.settings.create_piece > 0 && g.settings.create_piece <= static_cast<int>(sizes.size())
+        ? sizes[static_cast<std::size_t>(g.settings.create_piece - 1)] : 0;
+    c.output = output;
+    c.save_dir = src.parent_path().wstring();
+    c.seed = g.settings.create_seed;
+    c.copy_magnet = g.settings.create_copy_magnet;
+    if (!c.creator.start(std::move(req))) { MessageBoxW(dlg, L"Impossibile avviare la creazione.", L"Crea torrent", MB_ICONERROR); return; }
+    create_set_busy(dlg, true);
+    create_status(dlg, c, L"Elenco dei file e calcolo degli hash…");
+    SetTimer(dlg, 1, 100, nullptr);
+}
+static void create_finish(HWND dlg, CreateCtx& c) {
+    KillTimer(dlg, 1);
+    CreateResult r = c.creator.take_result();
+    create_set_busy(dlg, false);
+    InvalidateRect(GetDlgItem(dlg, IDC_C_PROGRESS), nullptr, FALSE);
+    if (c.closing) { EndDialog(dlg, IDCANCEL); return; }
+    if (r.cancelled) { create_status(dlg, c, L"Creazione annullata.", paint::kGray); return; }
+    if (!r.ok) { create_status(dlg, c, L"Errore: " + widen(r.error), paint::kRed); return; }
+    std::string error;
+    if (!file_io::write_atomic(fs::path(c.output), r.torrent, error)) {
+        create_status(dlg, c, L"Salvataggio non riuscito: " + widen(error), paint::kRed);
+        return;
+    }
+    std::wstring summary = fs::path(c.output).filename().wstring() + L": " + std::to_wstring(r.num_files) +
+        (r.num_files == 1 ? L" file, " : L" file, ") + fmt_bytes(r.total_size) + L", " + std::to_wstring(r.num_pieces) +
+        L" pezzi da " + fmt_bytes(r.piece_size);
+    log_line(L"Torrent creato: " + summary);
+    std::wstring extra;
+    if (c.copy_magnet && copy_to_clipboard(g.main, widen(r.magnet))) extra += L"\nMagnet copiato negli appunti.";
+    if (c.seed) {
+        int id = add_created_torrent(c.output, c.save_dir, error);
+        extra += id > 0 ? L"\nSeeding avviato." : L"\nSeeding non avviato: " + widen(error);
+    }
+    MessageBoxW(dlg, (L"Torrent creato.\n\n" + summary + extra).c_str(), L"Crea torrent", MB_ICONINFORMATION);
+    EndDialog(dlg, IDOK);
+}
+static INT_PTR CALLBACK create_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
+    auto* c = reinterpret_cast<CreateCtx*>(GetWindowLongPtrW(dlg, DWLP_USER));
+    switch (msg) {
+    case WM_INITDIALOG: {
+        SetWindowLongPtrW(dlg, DWLP_USER, lp);
+        auto const& s = g.settings;
+        combo_add(dlg, IDC_C_FORMAT, L"Ibrido v1 + v2 (consigliato)");
+        combo_add(dlg, IDC_C_FORMAT, L"v1 (massima compatibilità)");
+        combo_add(dlg, IDC_C_FORMAT, L"v2 (solo client recenti)");
+        combo_sel(dlg, IDC_C_FORMAT, std::clamp(s.create_format, 0, 2));
+        combo_add(dlg, IDC_C_PIECE, L"Automatica (consigliata)");
+        for (int size : piece_size_choices()) combo_add(dlg, IDC_C_PIECE, fmt_bytes(size).c_str());
+        combo_sel(dlg, IDC_C_PIECE, std::clamp(s.create_piece, 0, 11));
+        set_text(dlg, IDC_C_TRACKERS, crlf(widen(s.create_trackers)));
+        check(dlg, IDC_C_PRIVATE, s.create_private);
+        check(dlg, IDC_C_SEED, s.create_seed);
+        check(dlg, IDC_C_MAGNET, s.create_copy_magnet);
+        set_text(dlg, IDC_C_INFO, L"Il seeding parte dalla cartella in cui si trovano i dati, senza ricontrollarli.");
+        DragAcceptFiles(dlg, TRUE);
+        return TRUE;
+    }
+    case WM_DROPFILES: {
+        auto drop = reinterpret_cast<HDROP>(wp);
+        wchar_t path[MAX_PATH * 4];
+        if (DragQueryFileW(drop, 0, path, static_cast<UINT>(std::size(path)))) set_text(dlg, IDC_C_SOURCE, path);
+        DragFinish(drop);
+        return TRUE;
+    }
+    case WM_CTLCOLORSTATIC:
+        if (c && reinterpret_cast<HWND>(lp) == GetDlgItem(dlg, IDC_C_STATUS)) {
+            SetTextColor(reinterpret_cast<HDC>(wp), c->status_color);
+            SetBkMode(reinterpret_cast<HDC>(wp), TRANSPARENT);
+            return reinterpret_cast<INT_PTR>(GetSysColorBrush(COLOR_BTNFACE));
+        }
+        break;
+    case WM_DRAWITEM: {
+        auto* di = reinterpret_cast<DRAWITEMSTRUCT*>(lp);
+        if (!c || di->CtlID != IDC_C_PROGRESS) break;
+        FillRect(di->hDC, &di->rcItem, GetSysColorBrush(COLOR_BTNFACE));
+        int total = c->creator.pieces_total(), done = std::min(c->creator.pieces_done(), total);
+        bool busy = c->creator.running();
+        double frac = total > 0 ? static_cast<double>(done) / total : 0.0;
+        std::wstring text = busy ? (total > 0 ? L"Hash " + fmt_double(frac * 100.0, 1) + L"%  (" + std::to_wstring(done) + L" / " +
+                                    std::to_wstring(total) + L" pezzi)" : L"Preparazione…") : L"";
+        paint::progress_bar(di->hDC, di->rcItem, busy ? frac : 0.0, paint::kOrange, busy ? paint::Bar::Striped : paint::Bar::Solid,
+                            g.anim_phase, text, g.font);
+        return TRUE;
+    }
+    case WM_TIMER:
+        if (!c) break;
+        ++g.anim_phase;
+        InvalidateRect(GetDlgItem(dlg, IDC_C_PROGRESS), nullptr, FALSE);
+        if (c->creator.finished() && !c->creator.running()) create_finish(dlg, *c);
+        return TRUE;
+    case WM_COMMAND:
+        if (!c) break;
+        switch (LOWORD(wp)) {
+        case IDC_C_FILE: { std::wstring p = get_text(dlg, IDC_C_SOURCE); if (pick_source_file(dlg, p)) set_text(dlg, IDC_C_SOURCE, p); return TRUE; }
+        case IDC_C_FOLDER: { std::wstring p = get_text(dlg, IDC_C_SOURCE); if (pick_folder(dlg, p)) set_text(dlg, IDC_C_SOURCE, p); return TRUE; }
+        case IDOK: if (!c->creator.running()) create_begin(dlg, *c); return TRUE;
+        case IDCANCEL:
+            if (c->creator.running()) { c->creator.cancel(); create_status(dlg, *c, L"Annullamento…", paint::kGray); return TRUE; }
+            create_store_choices(dlg);
+            EndDialog(dlg, IDCANCEL);
+            return TRUE;
+        }
+        break;
+    case WM_CLOSE:
+        if (c && c->creator.running()) { c->closing = true; c->creator.cancel(); return TRUE; }   // ends when the worker stops
+        break;
+    case WM_DESTROY:
+        if (c) { KillTimer(dlg, 1); c->creator.cancel(); c->creator.wait(); }
+        break;
+    }
+    return FALSE;
+}
+void dlg_create_torrent(HWND owner) {
+    CreateCtx ctx;
+    DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_CREATE), owner, create_proc, reinterpret_cast<LPARAM>(&ctx));
+    persist();
 }
 
 // ------------------------------------------------------------------ wizard
