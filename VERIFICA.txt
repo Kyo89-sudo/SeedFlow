@@ -22,6 +22,9 @@ Eseguito realmente:
 - Windows (utente): build MSVC 19.51 /MT riuscita; la prima esecuzione della
   regressione Win32 ha trovato il caso v2 con un solo file in cartella
   (nome del torrent = nome del file), corretto in questa revisione.
+- Windows (utente), dopo la correzione: build.bat -RunTests con MSVC 19.51
+  (VS 2026), /MT, triplet x64-windows-static: SeedFlow.exe 10,1 MB,
+  CTest 2/2 superati (superseed-flags, win32-regression).
 - Annullamento: libtorrent non ha un'API di interruzione, l'hash viene fermato
   dalla callback (come qBittorrent). LeakSanitizer rileva circa 5 KB non
   liberati dentro libtorrent per ogni annullamento: trascurabile, nessun
@@ -33,8 +36,6 @@ Eseguito realmente:
 - Nuove icone rigenerate con tools/make_icons.py (43 icone, 7 dimensioni).
 
 Non verificato in questa revisione:
-- Build MSVC con build.bat ed esecuzione della regressione Win32 su Windows
-  (aggiunti controlli per creazione torrent e valori fuori intervallo).
 - GUI interattiva della finestra Crea torrent su Windows reale.
 
 ---
