@@ -69,7 +69,17 @@ Verifiche
 - Corretto il rilascio delle bitmap dei menu.
 - Aggiunta la distribuzione statica Windows x64 con runtime MSVC /MT.
 
-Legacy
+Legacy — linea C#/WPF (0.2–0.7.1)
 
-Le versioni precedenti alla linea Win32 usavano una GUI C#/WPF con motore
-nativo. Lo storico di quelle bozze è stato escluso dal changelog corrente.
+Prime versioni con GUI C#/WPF e motore C++ basato su libtorrent.
+- 0.2: ripristino dell'elenco torrent e delle preferenze; tab File, Peer e Tracker.
+- 0.3: fast resume nativo e ripristino dello stato dei trasferimenti.
+- 0.4–0.5: identità client configurabile e impostazioni di rete per porta,
+  DHT, UPnP, NAT-PMP e Local Peer Discovery.
+- 0.6: priorità dei file, limiti globali/per torrent, queue management,
+  protocol encryption, preallocazione e diagnostica di rete.
+- 0.7.1: revisione degli script di build e del rilevamento dei tool Windows,
+  con log e controlli dei prerequisiti per Visual Studio.
+
+La linea 0.8.x ha sostituito la GUI WPF con Win32. Le verifiche della build
+corrente non si applicano retroattivamente alle versioni Legacy.

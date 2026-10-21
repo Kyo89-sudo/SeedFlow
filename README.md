@@ -32,10 +32,6 @@ La release pubblicata è **0.8.4 r14**. La **r15** è una revisione di manutenzi
 | Monitoraggio | Peer e tracker, health dello swarm, dati trasferiti, ratio e grafico download/upload |
 | Desktop e diagnostica | System tray, avvio con Windows, controllo della porta e diagnostica di rete |
 
-**Super-seeding:** disponibile per torrent completi. Riduce l'invio di piece duplicate nella fase di distribuzione iniziale; l'efficacia dipende dai peer e dal comportamento dello swarm.
-
-**NAT:** UPnP e NAT-PMP possono configurare il port mapping su router compatibili. Con CGNAT o doppio NAT può servire una configurazione aggiuntiva o un IP pubblico fornito dall'ISP.
-
 ## Screenshot
 
 <p align="center">
