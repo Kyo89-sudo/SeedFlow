@@ -21,12 +21,16 @@ La release pubblicata è **0.8.4 r14**. La **r15** è una revisione di manutenzi
 
 | Area | Supporto |
 | :--- | :--- |
-| Torrent e magnet | Aggiunta da file o magnet link, copia magnet, selezione e priorità dei file |
-| Download e seeding | Queue, limiti globali e per torrent, ratio target e Super-seeding |
+| Torrent e magnet | File .torrent e magnet link, copia magnet, selezione e priorità dei file |
+| Queue e bandwidth | Gestione della coda, limiti download/upload globali e per torrent, connessioni e upload slot |
+| Seeding | Ratio target e azioni automatiche al raggiungimento del limite |
+| Super-seeding | Modalità dedicata alla distribuzione iniziale di torrent completi |
+| NAT traversal | Port mapping automatico tramite UPnP e NAT-PMP su router compatibili |
+| Connessioni peer | IPv4/IPv6 e protocol encryption configurabile: consentita, preferita o obbligatoria |
 | Peer discovery | Tracker HTTP/UDP, DHT, PeX e Local Peer Discovery |
-| NAT e connessioni | Port mapping tramite UPnP e NAT-PMP, IPv4/IPv6 e diagnostica della porta |
+| Fast resume | Salvataggio e ripristino dello stato dei torrent, con verifica forzata dei file disponibile |
 | Monitoraggio | Peer e tracker, health dello swarm, dati trasferiti, ratio e grafico download/upload |
-| Desktop | System tray, avvio con Windows e ripristino dei trasferimenti tramite fast resume |
+| Desktop e diagnostica | System tray, avvio con Windows, controllo della porta e diagnostica di rete |
 
 **Super-seeding:** disponibile per torrent completi. Riduce l'invio di piece duplicate nella fase di distribuzione iniziale; l'efficacia dipende dai peer e dal comportamento dello swarm.
 
