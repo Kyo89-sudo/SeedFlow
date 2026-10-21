@@ -43,17 +43,11 @@ Chiudi prima eventuali altre istanze, anche nella tray. Lo stato viene conservat
 
 </details>
 
-## Schermate
+## Schermata del programma
 
-### Finestra principale
+[![SeedFlow 0.8.4 — finestra principale](docs/main-window.png)](docs/main-window.png)
 
-![Finestra principale di SeedFlow](docs/main-window.png)
-
-*Vista senza elementi; barra di stato esclusa dall'immagine.*
-
-### Preferenze
-
-<img src="docs/preferences.png" alt="Preferenze di SeedFlow" width="700">
+*Clicca sull’immagine per aprirla nelle dimensioni originali.*
 
 ## Compilazione e verifiche
 
