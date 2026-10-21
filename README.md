@@ -5,33 +5,33 @@
 **Client BitTorrent per Windows, scritto in C++ / Win32 e basato su libtorrent.**
 
 [![Download Windows x64](https://img.shields.io/badge/Download-Windows_x64-258b45?style=for-the-badge&logo=windows)](https://github.com/Kyo89-sudo/SeedFlow/releases)
+[![Release](https://img.shields.io/github/v/release/Kyo89-sudo/SeedFlow?style=for-the-badge&label=Release&color=2b4a6f)](https://github.com/Kyo89-sudo/SeedFlow/releases/latest)
 [![GPL v3](https://img.shields.io/badge/License-GPL_v3-1565c0?style=for-the-badge)](LICENSE)
 
 [Release](https://github.com/Kyo89-sudo/SeedFlow/releases) · [Changelog](CHANGELOG.txt) · [Build](BUILDING.md) · [Issue tracker](https://github.com/Kyo89-sudo/SeedFlow/issues)
 
 </div>
 
-## SeedFlow
+## Panoramica
 
-SeedFlow gestisce torrent e magnet con una GUI desktop nativa. Include priorità dei file, queue management, fast resume, statistiche e diagnostica di rete. La build statica contiene le librerie e il runtime MSVC: **un solo EXE, senza DLL aggiuntive o .NET**.
+SeedFlow è un client BitTorrent per Windows con interfaccia nativa Win32, basato su libtorrent 2.1. Scarica e condivide torrent e magnet, crea nuovi torrent nei formati v1, v2 e ibrido e offre strumenti di monitoraggio e diagnostica di rete.
 
-La revisione attuale dei sorgenti è **0.8.5 r16**. L'ultima release con eseguibile pronto è **0.8.4 r14**.
+La distribuzione è un **singolo eseguibile statico**: nessuna DLL da distribuire, nessun runtime .NET o Visual C++ da installare.
+
+> **Ultima release:** [0.8.5 r16](https://github.com/Kyo89-sudo/SeedFlow/releases/tag/v0.8.5-r16) — creazione di torrent v1/v2/ibridi e salvataggi più affidabili.
 
 ## Funzionalità
 
-| Area | Supporto |
+| Area | Dettagli |
 | :--- | :--- |
-| Torrent e magnet | File .torrent e magnet link, copia magnet, selezione e priorità dei file |
-| Creazione torrent | File .torrent ibridi v1+v2, v1 o v2 da file o cartella, con tracker, web seed e seeding immediato |
-| Queue e bandwidth | Gestione della coda, limiti download/upload globali e per torrent, connessioni e upload slot |
-| Seeding | Ratio target e azioni automatiche al raggiungimento del limite |
-| Super-seeding | Modalità dedicata alla distribuzione iniziale di torrent completi |
-| NAT traversal | Port mapping automatico tramite UPnP e NAT-PMP su router compatibili |
-| Connessioni peer | IPv4/IPv6 e protocol encryption configurabile: consentita, preferita o obbligatoria |
-| Peer discovery | Tracker HTTP/UDP, DHT, PeX e Local Peer Discovery |
-| Fast resume | Salvataggio e ripristino dello stato dei torrent, con verifica forzata dei file disponibile |
-| Monitoraggio | Peer e tracker, health dello swarm, dati trasferiti, ratio e grafico download/upload |
-| Desktop e diagnostica | System tray, avvio con Windows, controllo della porta e diagnostica di rete |
+| Download | File .torrent e magnet link, selezione e priorità dei singoli file, copia del magnet |
+| Creazione torrent | Formati ibrido v1+v2, v1 e v2 da file o cartella; tracker per livello, web seed, commento, flag privato, dimensione dei pezzi automatica o manuale; hashing in background e seeding immediato |
+| Code e banda | Coda automatica, limiti globali e per torrent, numero di connessioni e slot di upload |
+| Seeding | Obiettivi di ratio con azioni automatiche (pausa, super-seeding, rimozione) e super-seeding per la distribuzione iniziale |
+| Rete | IPv4/IPv6, UPnP e NAT-PMP, cifratura del protocollo configurabile, tracker HTTP/UDP, DHT, PeX e Local Peer Discovery |
+| Affidabilità | Fast resume, scrittura atomica dello stato su disco, verifica forzata dei file |
+| Monitoraggio | Peer, tracker, salute dello swarm, statistiche globali e grafico delle velocità |
+| Integrazione | Area di notifica, avvio con Windows, verifica della porta e diagnostica di rete |
 
 ## Screenshot
 
@@ -39,30 +39,35 @@ La revisione attuale dei sorgenti è **0.8.5 r16**. L'ultima release con eseguib
 <a href="docs/seedflow-0.8.4-main-window.png"><img src="docs/seedflow-preview.svg" alt="SeedFlow 0.8.4 — main window" width="640"></a>
 </p>
 
-*Click sull'immagine per aprire lo screenshot originale.*
+*Fai clic sull'immagine per lo screenshot a piena risoluzione.*
 
-## Download e avvio
+## Installazione
 
-Richiede **Windows 10/11 x64**. Scarica lo ZIP `win64-static` dalla [pagina delle release](https://github.com/Kyo89-sudo/SeedFlow/releases), estrailo e avvia `SeedFlow.exe`. Conserva le licenze incluse nel pacchetto.
+Requisiti: **Windows 10 o 11 a 64 bit**.
 
-Prima di aggiornare, chiudi la versione precedente con **File → Esci**, anche se è nella tray. Stato e impostazioni sono in `%LOCALAPPDATA%\SeedFlow\State`.
+1. Scarica `SeedFlow-<versione>-win64-static.zip` dalla [pagina delle release](https://github.com/Kyo89-sudo/SeedFlow/releases) e verifica l'archivio con il relativo file `.sha256`.
+2. Estrai l'archivio e avvia `SeedFlow.exe`.
 
-## Build
+Per aggiornare, chiudi la versione in uso con **File → Esci**, anche se è ridotta nell'area di notifica, e sostituisci l'eseguibile. Torrent e impostazioni restano in `%LOCALAPPDATA%\SeedFlow\State`.
 
-Servono Visual Studio 2026 o 2022, MSVC x64, Windows SDK, CMake e Git. Con VS 2026 è richiesto CMake 4.2 o successivo.
+## Compilazione
+
+Requisiti: Visual Studio 2026 o 2022 con MSVC x64 e Windows SDK, CMake (4.2 o successivo con VS 2026) e Git.
 
 ```bat
 build.bat -NoPause -RunTests
 ```
 
-Il default è `x64-windows-static` con runtime `/MT`. La prima build compila anche le dipendenze. Opzioni e istruzioni CMake: [BUILDING.md](BUILDING.md).
+La build predefinita usa il triplet vcpkg `x64-windows-static` e il runtime `/MT`; la prima esecuzione compila anche le dipendenze. Opzioni e configurazione CMake manuale sono descritte in [BUILDING.md](BUILDING.md).
 
-La r16 è stata compilata con MSVC (build.bat, runtime /MT) e ha superato CTest 2/2, compresa la regressione Win32 con la creazione torrent; motore, creazione torrent e salvataggi sono stati verificati anche con analisi statica e sanitizer. Modalità di verifica e limiti sono nel [report](VERIFICA.txt). Queste prove non equivalgono a un collaudo end-to-end su uno swarm pubblico.
+## Qualità
 
-## License
+Le revisioni vengono compilate con MSVC e verificate con la suite CTest, che comprende la regressione Win32 e il test isolato del motore. Le parti critiche (motore, creazione dei torrent, persistenza) sono inoltre analizzate con clang static analyzer, AddressSanitizer e UndefinedBehaviorSanitizer. Metodo, risultati e limiti di ciascuna revisione sono documentati in [VERIFICA.txt](VERIFICA.txt).
+
+## Licenza
 
 **GNU GPL v3** (`GPL-3.0-only`): [LICENSE](LICENSE). I componenti di terze parti mantengono le [rispettive licenze](licenses/README.md).
 
-## Bug report
+## Segnalazioni
 
-Apri una [issue](https://github.com/Kyo89-sudo/SeedFlow/issues) indicando versione di SeedFlow, versione di Windows, passaggi per riprodurre il problema e risultato atteso. Prima di allegare log o screenshot, rimuovi dati personali, indirizzi IP e tracker privati.
+Apri una [issue](https://github.com/Kyo89-sudo/SeedFlow/issues) indicando la versione di SeedFlow e di Windows, i passaggi per riprodurre il problema, il risultato atteso e quello ottenuto. Prima di allegare log o screenshot, rimuovi dati personali, indirizzi IP e tracker privati.
