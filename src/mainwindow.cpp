@@ -1050,7 +1050,7 @@ static void add_files(std::vector<std::wstring> const& files) {
             if (Engine::peek_torrent(narrow(f), name, size, count, err)) {
                 ++readable; total += size;
                 if (files.size() == 1)
-                    summary = widen(name) + L"\n" + fmt_bytes(size) + L" · " + std::to_wstring(count) + (count == 1 ? L" file" : L" file");
+                    summary = widen(name) + L"\n" + fmt_bytes(size) + L" · " + std::to_wstring(count) + L" file";
             }
         }
         if (files.size() > 1) summary = std::to_wstring(files.size()) + L" torrent · " + fmt_bytes(total) + L" in totale";

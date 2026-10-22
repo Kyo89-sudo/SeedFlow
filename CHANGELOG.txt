@@ -6,6 +6,8 @@ SeedFlow — Changelog
   .torrent (anche trascinato o aperto da Esplora risorse): nome e dimensione,
   cartelle recenti, aggiunta in pausa e opzione "Non chiedere più"
   (riattivabile in Preferenze › Generale).
+- Finestra dei magnet: stessa lista delle cartelle recenti; una cartella
+  che non esiste viene creata su richiesta.
 - Aggiunto "Sposta in un'altra cartella..." nel menu del tasto destro: sposta
   i file oppure aggiorna solo il percorso se i dati sono già stati spostati,
   con verifica automatica. Esito dello spostamento nel log.
