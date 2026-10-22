@@ -17,6 +17,7 @@ namespace sf {
 
 constexpr UINT WM_APP_TRAY = WM_APP + 1;
 constexpr UINT WM_APP_PORTCHECK = WM_APP + 2;   // notification only; result owned by PortCheckJob
+constexpr UINT WM_APP_FITCOLUMNS = WM_APP + 3;  // refit the Nome column after a header resize
 constexpr UINT_PTR TIMER_REFRESH = 1;
 constexpr UINT_PTR TIMER_ANIM = 2;          // progress bar animation (verifying / metadata / moving)
 

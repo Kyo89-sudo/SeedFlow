@@ -227,7 +227,7 @@ static void update_menu_checks(HMENU m) {
 // ------------------------------------------------------------------ list view setup
 struct ColDef { wchar_t const* title; int width; int fmt; };
 static ColDef const kCols[ColCount] = {
-    {L"Nome", 300, LVCFMT_LEFT}, {L"#", 34, LVCFMT_RIGHT}, {L"Dimensione", 78, LVCFMT_RIGHT},
+    {L"Nome", 300, LVCFMT_LEFT}, {L"#", 44, LVCFMT_RIGHT}, {L"Dimensione", 78, LVCFMT_RIGHT},
     {L"Completato", 96, LVCFMT_LEFT}, {L"Stato", 96, LVCFMT_LEFT}, {L"↓ Velocità", 82, LVCFMT_RIGHT},
     {L"↑ Velocità", 82, LVCFMT_RIGHT}, {L"Tempo", 64, LVCFMT_RIGHT}, {L"Seed", 66, LVCFMT_RIGHT},
     {L"Peer", 66, LVCFMT_RIGHT}, {L"Ratio", 56, LVCFMT_RIGHT}, {L"Obiettivo", 70, LVCFMT_LEFT},
@@ -272,8 +272,10 @@ static void load_column_widths() {
     while (pos < widths.size() && i < ColCount) {
         auto comma = widths.find(L',', pos);
         long long width;
-        if (parse_int(widths.substr(pos, comma - pos), width) && width > 0 && width <= 4096)
+        if (parse_int(widths.substr(pos, comma - pos), width) && width > 0 && width <= 4096) {
+            if (i == ColQueue) width = std::max<long long>(width, 44);   // room for "#" and the sort arrow
             ListView_SetColumnWidth(g.list, i, scale(static_cast<int>(width)));
+        }
         ++i;
         if (comma == std::wstring::npos) break;
         pos = comma + 1;
@@ -751,10 +753,14 @@ static void apply_ratio_rules() {
 
 // ------------------------------------------------------------------ status bar / tray
 static void tray_update_tip(std::int64_t down, std::int64_t up);
+static std::array<std::wstring, 6> status_texts;
+static std::array<int, 6> status_need{};
+static void fit_status_panes();
 static void update_status(std::int64_t down, std::int64_t up) {
     std::wstring dht = L"DHT: " + (g.settings.dht ? fmt_int(g.engine.counters().dht_nodes) + L" nodi" : std::wstring(L"disattivato"));
-    std::wstring d = L"Velocità download: " + fmt_speed0(down) + (g.settings.down_kib ? L" [max " + std::to_wstring(g.settings.down_kib) + L" KiB/s]" : L"");
-    std::wstring u = L"Velocità upload: " + fmt_speed0(up) + (g.settings.up_kib ? L" [max " + std::to_wstring(g.settings.up_kib) + L" KiB/s]" : L"");
+    auto limit = [](int kib) { return kib ? L" [max " + fmt_speed(static_cast<std::int64_t>(kib) * 1024) + L"]" : std::wstring(); };
+    std::wstring d = L"Velocità download: " + fmt_speed0(down) + limit(g.settings.down_kib);
+    std::wstring u = L"Velocità upload: " + fmt_speed0(up) + limit(g.settings.up_kib);
     std::wstring totals = L"Totale scaricati " + fmt_bytes(g.settings.stats.downloaded) + L"  caricati " + fmt_bytes(g.settings.stats.uploaded) +
         L"  ratio " + fmt_ratio(effective_ratio(g.settings.stats.downloaded, g.settings.stats.uploaded, 0), g.settings.stats.downloaded || g.settings.stats.uploaded);
     auto mem = memory_usage();
@@ -766,6 +772,8 @@ static void update_status(std::int64_t down, std::int64_t up) {
     SendMessageW(g.status, SB_SETTEXTW, 5, reinterpret_cast<LPARAM>(ram.c_str()));
     wchar_t const* tips[] = {dht.c_str(), d.c_str(), u.c_str(), totals.c_str(), ram.c_str()};
     for (int i = 0; i < 5; ++i) SendMessageW(g.status, SB_SETTIPTEXTW, i + 1, reinterpret_cast<LPARAM>(tips[i]));
+    status_texts = {g.net_text, dht, d, u, totals, ram};
+    fit_status_panes();
     tray_update_tip(down, up);
 }
 static void update_network_indicator() {
@@ -786,24 +794,54 @@ static void update_network_indicator() {
     g.net_tip = tip;
     SendMessageW(g.status, SB_SETTIPTEXTW, 0, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
 }
-static std::array<int, 6> status_part_edges(int width, UINT dpi) {
-    constexpr int base[] = {150, 120, 250, 250, 300, 110};
-    int const desired = MulDiv(1180, static_cast<int>(dpi ? dpi : 96), 96);
+// Status bar panes sized from the text they show (need[i] = text width + padding).
+// Panes 1..5 get what they need; the network pane (0) takes the rest. When the
+// window is too narrow, the totals pane shrinks first, then every pane proportionally.
+std::array<int, 6> status_part_edges(int width, std::array<int, 6> const& need) {
     int const available = std::max(0, width);
-    int cumulative = 0;
-    std::array<int, 6> edges{};
-    for (int i = 0; i < 5; ++i) {
-        cumulative += base[i];
-        edges[i] = available < desired ? MulDiv(cumulative, available, 1180)
-            : available - desired + MulDiv(cumulative, static_cast<int>(dpi ? dpi : 96), 96);
+    std::array<int, 6> w = need;
+    int total = 0;
+    for (int v : w) total += v;
+    if (total > available) {                                  // 1) totals pane down to half of its text
+        int const cut = std::min(total - available, w[4] / 2);
+        w[4] -= cut; total -= cut;
     }
+    if (total > available && total > 0) {                     // 2) everything proportionally
+        for (auto& v : w) v = MulDiv(v, available, total);
+        total = 0;
+        for (int v : w) total += v;
+    }
+    w[0] += std::max(0, available - total);                   // spare room to the network pane
+    std::array<int, 6> edges{};
+    int x = 0;
+    for (int i = 0; i < 5; ++i) { x += w[static_cast<std::size_t>(i)]; edges[static_cast<std::size_t>(i)] = std::min(x, available); }
     edges[5] = -1;
     return edges;
 }
 static void layout_status() {
     RECT rc; GetClientRect(g.main, &rc);
-    auto const edges = status_part_edges(rc.right, g.dpi);
+    if (status_need[1] == 0) status_need = {scale(150), scale(110), scale(220), scale(260), scale(320), scale(110)};
+    auto const edges = status_part_edges(rc.right, status_need);
     SendMessageW(g.status, SB_SETPARTS, edges.size(), reinterpret_cast<LPARAM>(edges.data()));
+}
+// Measures the pane texts with the status bar font; relayouts only when a pane needs
+// more room or could give back a noticeable amount (avoids flicker every second).
+static void fit_status_panes() {
+    if (!g.status) return;
+    HDC dc = GetDC(g.status);
+    HGDIOBJ old = SelectObject(dc, reinterpret_cast<HFONT>(SendMessageW(g.status, WM_GETFONT, 0, 0)));
+    std::array<int, 6> need{};
+    for (std::size_t i = 0; i < need.size(); ++i) {
+        SIZE sz{};
+        GetTextExtentPoint32W(dc, status_texts[i].c_str(), static_cast<int>(status_texts[i].size()), &sz);
+        need[i] = sz.cx + scale(14) + (i == 0 ? scale(22) : 0) + (i == 5 ? scale(18) : 0);   // icon / size grip
+    }
+    SelectObject(dc, old);
+    ReleaseDC(g.status, dc);
+    bool relayout = false;
+    for (std::size_t i = 0; i < need.size(); ++i)
+        if (need[i] > status_need[i] || status_need[i] - need[i] > scale(40)) relayout = true;
+    if (relayout) { status_need = need; layout_status(); }
 }
 
 static NOTIFYICONDATAW tray_data() {
@@ -1406,6 +1444,21 @@ static int toolbar_height(HWND tb) {
     return std::max<int>(r.bottom - r.top, scale(22)) + scale(4);
 }
 static RECT split_v_rect, split_h_rect;
+// The Nome column takes the width left by the other columns, so the list does not
+// scroll horizontally at the default widths (space for the vertical scrollbar is kept).
+static bool fitting_columns = false;
+static void fit_name_column() {
+    if (!g.list || fitting_columns) return;
+    RECT rc; GetWindowRect(g.list, &rc);
+    int const available = (rc.right - rc.left) - GetSystemMetricsForDpi(SM_CXVSCROLL, g.dpi) - GetSystemMetricsForDpi(SM_CXEDGE, g.dpi) * 2;
+    int others = 0;
+    for (int c = 0; c < ColCount; ++c) if (c != ColName) others += ListView_GetColumnWidth(g.list, c);
+    int const width = std::max(scale(160), available - others);
+    if (width == ListView_GetColumnWidth(g.list, ColName)) return;
+    fitting_columns = true;
+    ListView_SetColumnWidth(g.list, ColName, width);
+    fitting_columns = false;
+}
 static void layout() {
     RECT rc; GetClientRect(g.main, &rc);
     int tbh = toolbar_height(g.toolbar);
@@ -1423,6 +1476,7 @@ static void layout() {
     int x = left_w + sp, w = rc.right - x;
     int list_h = bottom - top - detail_h - sp;
     SetWindowPos(g.list, nullptr, x, top, w, list_h, SWP_NOZORDER);
+    fit_name_column();
     split_h_rect = {x, top + list_h, rc.right, top + list_h + sp};
     int ty = top + list_h + sp;
     SetWindowPos(g.tabs, nullptr, x, ty, w, detail_h, SWP_NOZORDER);
@@ -1566,6 +1620,10 @@ static LRESULT on_list_customdraw(NMLVCUSTOMDRAW* cd) {
     return CDRF_DODEFAULT;
 }
 static LRESULT on_notify(NMHDR* nm) {
+    if (nm->hwndFrom == ListView_GetHeader(g.list) && (nm->code == HDN_ENDTRACKW || nm->code == HDN_DIVIDERDBLCLICKW)) {
+        PostMessageW(g.main, WM_APP_FITCOLUMNS, 0, 0);   // the new width is applied after this notification
+        return 0;
+    }
     if (nm->hwndFrom == g.list) {
         switch (nm->code) {
         case LVN_GETDISPINFOW: {
@@ -1778,6 +1836,7 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         default: break;
         }
         return 0;
+    case WM_APP_FITCOLUMNS: fit_name_column(); return 0;
     case WM_APP_PORTCHECK:
         consume_port_check();
         return 0;

@@ -161,10 +161,16 @@ int wmain(int argc, wchar_t** argv) {
             "invalid diagnostic port rejected before network access");
 
         for (UINT dpi : {96u, 144u, 192u}) for (int width : {760, 1024, 1920}) {
-            auto edges = sf::status_part_edges(width, dpi);
-            check(edges[0] >= 0 && edges[4] < width && edges[5] == -1 &&
+            auto px = [dpi](int v) { return MulDiv(v, static_cast<int>(dpi), 96); };
+            std::array<int, 6> const need{px(110), px(90), px(230), px(330), px(360), px(100)};
+            auto edges = sf::status_part_edges(MulDiv(width, static_cast<int>(dpi), 96), need);
+            int const client = MulDiv(width, static_cast<int>(dpi), 96);
+            check(edges[0] >= 0 && edges[4] <= client && edges[5] == -1 &&
                 std::is_sorted(edges.begin(), edges.begin() + 5),
                 "status panes stay ordered and within resized client area at multiple DPI");
+            int total = 0; for (int v : need) total += v;
+            if (client >= total)
+                for (int i = 1; i < 5; ++i) check(edges[i] - edges[i - 1] >= need[i], "status pane wide enough for its text when there is room");
         }
 
         std::vector<int> order(sf::ColCount);

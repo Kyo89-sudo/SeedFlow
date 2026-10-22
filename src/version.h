@@ -5,11 +5,11 @@
 #define SF_VERSION_MAJOR 0
 #define SF_VERSION_MINOR 8
 #define SF_VERSION_PATCH 6
-#define SF_VERSION_BUILD 0       // maintenance build: 0.8.6.N (also the 4th digit of the peer ID)
-#define SF_VERSION_STRING "0.8.6"
-#define SF_VERSION_WSTRING L"0.8.6"
-#define SF_FILE_VERSION 0,8,6,0
-#define SF_FILE_VERSION_STRING "0.8.6.0"
+#define SF_VERSION_BUILD 1       // maintenance build: 0.8.6.N (also the 4th digit of the peer ID)
+#define SF_VERSION_STRING "0.8.6.1"
+#define SF_VERSION_WSTRING L"0.8.6.1"
+#define SF_FILE_VERSION 0,8,6,1
+#define SF_FILE_VERSION_STRING "0.8.6.1"
 #define SF_USER_AGENT "SeedFlow/" SF_VERSION_STRING
 #define SF_USER_AGENT_W L"SeedFlow/" SF_VERSION_WSTRING
 #define SF_CLIENT_NAME "SeedFlow " SF_VERSION_STRING

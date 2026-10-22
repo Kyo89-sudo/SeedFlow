@@ -1,5 +1,14 @@
 SeedFlow — Changelog
 
+0.8.6.1 — 2026-10-22
+
+- Barra di stato: larghezza dei pannelli calcolata dal testo, niente più testo
+  che sborda o tagliato; limite di velocità mostrato in forma compatta
+  ([max 107,3 MiB/s]).
+- Colonna # più larga, con spazio per la freccia di ordinamento.
+- La colonna Nome occupa lo spazio libero: niente barra di scorrimento
+  orizzontale con le larghezze predefinite.
+
 0.8.6 — 2026-10-22
 
 - Numerazione semplificata: x.y.z (FileVersion x.y.z.0), build di manutenzione
