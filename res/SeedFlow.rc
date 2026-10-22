@@ -107,6 +107,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Copia magnet", ID_T_COPYMAGNET
         MENUITEM "Apri cartella", ID_T_OPENFOLDER
+        MENUITEM "Sposta in un'altra cartella...", ID_T_MOVE
         MENUITEM SEPARATOR
         MENUITEM "Limite ratio...", ID_T_RATIO
         MENUITEM "Limiti di velocità...", ID_T_LIMITS
@@ -176,7 +177,7 @@ BEGIN
     LTEXT           "Incolla uno o più magnet link (uno per riga):", -1, 8, 8, 320, 9
     EDITTEXT        IDC_EDIT, 8, 20, 324, 76, ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Salva in:", -1, 8, 104, 40, 9
-    EDITTEXT        IDC_FOLDER, 8, 115, 276, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_FOLDER, 8, 115, 276, 120, CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Sfoglia...", IDC_BROWSE, 288, 114, 44, 15
     AUTOCHECKBOX    "Aggiungi in pausa", IDC_PAUSED, 8, 134, 120, 10
     DEFPUSHBUTTON   "Aggiungi", IDOK, 228, 148, 50, 14
@@ -209,8 +210,17 @@ BEGIN
     GROUPBOX        "Avvio", -1, 0, 70, 342, 50
     AUTOCHECKBOX    "Avvia SeedFlow all'accesso a Windows", IDC_AUTOSTART, 8, 84, 326, 10
     AUTOCHECKBOX    "Avvia ridotto nell'area di notifica", IDC_STARTMIN, 20, 98, 314, 10
-    GROUPBOX        "Nuovi torrent", -1, 0, 126, 342, 32
+    GROUPBOX        "Nuovi torrent", -1, 0, 126, 342, 46
     AUTOCHECKBOX    "Aggiungi i nuovi torrent in pausa", IDC_STARTPAUSED, 8, 140, 326, 10
+    AUTOCHECKBOX    "Chiedi dove salvare quando aggiungi un file .torrent", IDC_ASKPATH, 8, 154, 326, 10
+    GROUPBOX        "Barra di stato", -1, 0, 178, 342, 74
+    AUTOCHECKBOX    "Stato della rete e porta", IDC_SB_NET, 8, 192, 160, 10
+    AUTOCHECKBOX    "Nodi DHT", IDC_SB_DHT, 8, 206, 160, 10
+    AUTOCHECKBOX    "Velocità di download", IDC_SB_DOWN, 8, 220, 160, 10
+    AUTOCHECKBOX    "Velocità di upload", IDC_SB_UP, 176, 192, 158, 10
+    AUTOCHECKBOX    "Totali scaricati/caricati e ratio", IDC_SB_TOTALS, 176, 206, 158, 10
+    AUTOCHECKBOX    "Memoria usata (RAM)", IDC_SB_RAM, 176, 220, 158, 10
+    LTEXT           "Togliendo tutte le voci la barra di stato viene nascosta.", -1, 8, 236, 326, 9
 END
 
 IDD_PG_FOLDERS DIALOGEX 0, 0, 342, 272
@@ -427,6 +437,22 @@ BEGIN
     PUSHBUTTON      "Copia info di sistema", IDC_COPY, 10, 208, 86, 15
     PUSHBUTTON      "Cartella dati", IDC_DATAFOLDER, 100, 208, 60, 15
     DEFPUSHBUTTON   "OK", IDOK, 260, 208, 50, 15
+END
+
+IDD_ADDTORRENT DIALOGEX 0, 0, 340, 126
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Aggiungi torrent"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT           "", IDC_A_INFO, 8, 8, 324, 20
+    LTEXT           "Salva in:", -1, 8, 32, 324, 9
+    COMBOBOX        IDC_A_FOLDER, 8, 43, 276, 120, CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Sfoglia...", IDC_BROWSE, 288, 42, 44, 15
+    AUTOCHECKBOX    "Aggiungi in pausa", IDC_PAUSED, 8, 63, 324, 10
+    AUTOCHECKBOX    "Non chiedere più: usa sempre la cartella predefinita", IDC_A_NOASK, 8, 77, 324, 10
+    LTEXT           "Puoi riattivare la richiesta in Preferenze › Generale.", -1, 20, 89, 312, 9
+    DEFPUSHBUTTON   "Aggiungi", IDOK, 228, 106, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 282, 106, 50, 14
 END
 
 IDD_CREATE DIALOGEX 0, 0, 360, 300

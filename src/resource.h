@@ -46,6 +46,7 @@
 #define ID_T_SELECTALL          1116
 #define ID_T_STARTALL           1117
 #define ID_T_PAUSEALL           1118
+#define ID_T_MOVE               1119
 
 #define ID_TR_ADD               1200
 #define ID_TR_REMOVE            1201
@@ -78,6 +79,7 @@
 #define IDD_PG_SYSTEM           220
 #define IDD_PG_PERFORMANCE      221
 #define IDD_CREATE              222
+#define IDD_ADDTORRENT          223
 
 // Common controls
 #define IDC_EDIT                300
@@ -171,3 +173,13 @@
 #define IDC_C_PROGRESS          471
 #define IDC_C_STATUS            472
 #define IDC_C_INFO              473
+#define IDC_A_INFO              480
+#define IDC_A_FOLDER            481
+#define IDC_A_NOASK             482
+#define IDC_ASKPATH             483
+#define IDC_SB_NET              484   // status bar panes, in pane order
+#define IDC_SB_DHT              485
+#define IDC_SB_DOWN             486
+#define IDC_SB_UP               487
+#define IDC_SB_TOTALS           488
+#define IDC_SB_RAM              489

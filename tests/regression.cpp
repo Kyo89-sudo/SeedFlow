@@ -88,6 +88,23 @@ int wmain(int argc, wchar_t** argv) {
         check(sf::parse_settings(encoded, settings) && settings.user_agent == "qBittorrent/5.3.0" && settings.peer_id_prefix == "-qB5300-",
               "previous client preset follows the updated one");
         e["user_agent"] = "Custom/1.0"; e["peer_id_prefix"] = ""; e["client_name"] = "";
+        {
+            sf::g.settings.recent_dirs.clear();
+            for (int i = 0; i < 10; ++i) sf::remember_dir("C:\\Dati\\" + std::to_string(i));
+            sf::remember_dir("c:\\dati\\3");
+            check(sf::g.settings.recent_dirs.size() == 8 && sf::g.settings.recent_dirs.front() == "c:\\dati\\3" &&
+                  std::count_if(sf::g.settings.recent_dirs.begin(), sf::g.settings.recent_dirs.end(),
+                      [](std::string const& d) { return _stricmp(d.c_str(), "C:\\Dati\\3") == 0; }) == 1,
+                  "recent save folders: newest first, no duplicates, at most 8");
+            libtorrent::entry dirs(libtorrent::entry::dictionary_t);
+            dirs["ask_save_path"] = 0;
+            dirs["recent_dirs"] = libtorrent::entry::list_type{libtorrent::entry("D:\\Uno"), libtorrent::entry("D:\\Due")};
+            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), dirs);
+            sf::AppSettings loaded;
+            check(sf::parse_settings(buf, loaded) && !loaded.ask_save_path && loaded.recent_dirs.size() == 2 && loaded.recent_dirs[1] == "D:\\Due",
+                  "save-path question and recent folders persisted");
+            sf::g.settings.recent_dirs.clear();
+        }
 
         // Corrupt persisted integers must not wrap into apparently valid settings.
         e["port"] = std::int64_t{4294979641LL}; // low 32 bits equal a different valid port
@@ -161,10 +178,33 @@ int wmain(int argc, wchar_t** argv) {
             "invalid diagnostic port rejected before network access");
 
         for (UINT dpi : {96u, 144u, 192u}) for (int width : {760, 1024, 1920}) {
-            auto edges = sf::status_part_edges(width, dpi);
-            check(edges[0] >= 0 && edges[4] < width && edges[5] == -1 &&
+            auto px = [dpi](int v) { return MulDiv(v, static_cast<int>(dpi), 96); };
+            std::vector<int> const need{px(110), px(90), px(230), px(330), px(360), px(100)};
+            auto edges = sf::status_part_edges(MulDiv(width, static_cast<int>(dpi), 96), need, 0, 4);
+            int const client = MulDiv(width, static_cast<int>(dpi), 96);
+            check(edges.size() == 6 && edges[0] >= 0 && edges[4] <= client && edges[5] == -1 &&
                 std::is_sorted(edges.begin(), edges.begin() + 5),
                 "status panes stay ordered and within resized client area at multiple DPI");
+            int total = 0; for (int v : need) total += v;
+            if (client >= total)
+                for (int i = 1; i < 5; ++i) check(edges[i] - edges[i - 1] >= need[i], "status pane wide enough for its text when there is room");
+            // only some panes shown (network hidden): the last part takes the spare room
+            std::vector<int> const some{px(230), px(330), px(100)};
+            auto e3 = sf::status_part_edges(client, some, 2, -1);
+            check(e3.size() == 3 && e3[0] == std::min(client, px(230)) && e3[1] <= client && e3[2] == -1,
+                "status bar with hidden panes keeps the visible ones at their text width");
+        }
+        check(sf::status_part_edges(800, {}, 0, -1).empty() && sf::status_part_edges(800, {120}, 0, -1) == std::vector<int>{-1},
+            "status bar edges for no parts or a single part");
+        {
+            libtorrent::entry pane_settings(libtorrent::entry::dictionary_t);
+            pane_settings["status_panes"] = 0x24;
+            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), pane_settings);
+            sf::AppSettings loaded;
+            check(sf::parse_settings(buf, loaded) && loaded.status_panes == 0x24, "visible status bar panes persisted");
+            pane_settings["status_panes"] = 0x1FF;
+            buf.clear(); libtorrent::bencode(std::back_inserter(buf), pane_settings);
+            check(sf::parse_settings(buf, loaded) && loaded.status_panes == 0x3F, "unknown status bar pane bits dropped");
         }
 
         std::vector<int> order(sf::ColCount);

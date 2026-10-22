@@ -204,6 +204,7 @@ static void decorate_menu(HMENU m) {
     set_menu_icon(m, ID_T_PAUSE, IcPause);
     set_menu_icon(m, ID_T_COPYMAGNET, IcCopy);
     set_menu_icon(m, ID_T_OPENFOLDER, IcFolder);
+    set_menu_icon(m, ID_T_MOVE, IcMoving);
     set_menu_icon(m, ID_T_RATIO, IcRatio);
     set_menu_icon(m, ID_T_LIMITS, IcSpeed);
     set_menu_icon(m, ID_T_SUPERSEED, IcSuperseed);
@@ -227,7 +228,7 @@ static void update_menu_checks(HMENU m) {
 // ------------------------------------------------------------------ list view setup
 struct ColDef { wchar_t const* title; int width; int fmt; };
 static ColDef const kCols[ColCount] = {
-    {L"Nome", 300, LVCFMT_LEFT}, {L"#", 34, LVCFMT_RIGHT}, {L"Dimensione", 78, LVCFMT_RIGHT},
+    {L"Nome", 300, LVCFMT_LEFT}, {L"#", 44, LVCFMT_RIGHT}, {L"Dimensione", 78, LVCFMT_RIGHT},
     {L"Completato", 96, LVCFMT_LEFT}, {L"Stato", 96, LVCFMT_LEFT}, {L"↓ Velocità", 82, LVCFMT_RIGHT},
     {L"↑ Velocità", 82, LVCFMT_RIGHT}, {L"Tempo", 64, LVCFMT_RIGHT}, {L"Seed", 66, LVCFMT_RIGHT},
     {L"Peer", 66, LVCFMT_RIGHT}, {L"Ratio", 56, LVCFMT_RIGHT}, {L"Obiettivo", 70, LVCFMT_LEFT},
@@ -272,8 +273,10 @@ static void load_column_widths() {
     while (pos < widths.size() && i < ColCount) {
         auto comma = widths.find(L',', pos);
         long long width;
-        if (parse_int(widths.substr(pos, comma - pos), width) && width > 0 && width <= 4096)
+        if (parse_int(widths.substr(pos, comma - pos), width) && width > 0 && width <= 4096) {
+            if (i == ColQueue) width = std::max<long long>(width, 44);   // room for "#" and the sort arrow
             ListView_SetColumnWidth(g.list, i, scale(static_cast<int>(width)));
+        }
         ++i;
         if (comma == std::wstring::npos) break;
         pos = comma + 1;
@@ -291,7 +294,7 @@ static void load_column_widths() {
         if (comma == std::wstring::npos) break;
         pos = comma + 1;
     }
-    if (ord.size() == ColCount - 1) {   // settings from r12: show the new Salute column after Peer
+    if (ord.size() == ColCount - 1) {   // older settings without the Salute column: insert it after Peer
         auto it = std::find(ord.begin(), ord.end(), static_cast<int>(ColPeers));
         ord.insert(it == ord.end() ? ord.end() : it + 1, ColHealth);
     }
@@ -750,23 +753,60 @@ static void apply_ratio_rules() {
 }
 
 // ------------------------------------------------------------------ status bar / tray
+// Panes: 0 network, 1 DHT, 2 download speed, 3 upload speed, 4 totals, 5 RAM.
+// Each can be hidden from Preferences > General (settings.status_panes, one bit per pane);
+// the status bar parts are the visible panes in this order.
 static void tray_update_tip(std::int64_t down, std::int64_t up);
+static std::array<std::wstring, 6> status_texts;   // per pane
+static std::vector<int> status_need;                // per visible part
+static int status_mask = -1;                        // panes currently laid out
+static void fit_status_panes();
+static void layout();
+static bool pane_shown(int pane) { return (g.settings.status_panes >> pane) & 1; }
+static int pane_count(int mask) { int n = 0; for (int p = 0; p < 6; ++p) n += (mask >> p) & 1; return n; }
+static int status_part(int pane) {                 // part index of a pane, -1 when hidden
+    if (pane < 0 || pane > 5 || !pane_shown(pane)) return -1;
+    int part = 0;
+    for (int p = 0; p < pane; ++p) part += pane_shown(p);
+    return part;
+}
+static int status_pane_at(int part) {
+    for (int p = 0; p < 6; ++p) if (pane_shown(p) && part-- == 0) return p;
+    return -1;
+}
+static int status_height() {
+    // the style bit, not IsWindowVisible: the main window may be hidden in the tray
+    if (!g.status || !(GetWindowLongW(g.status, GWL_STYLE) & WS_VISIBLE)) return 0;
+    RECT sr; GetWindowRect(g.status, &sr);
+    return sr.bottom - sr.top;
+}
+static void set_pane_text(int pane, std::wstring const& text, std::wstring const* tip = nullptr) {
+    int const part = status_part(pane);
+    if (part < 0) return;
+    SendMessageW(g.status, SB_SETTEXTW, part, reinterpret_cast<LPARAM>(text.c_str()));
+    if (tip) SendMessageW(g.status, SB_SETTIPTEXTW, part, reinterpret_cast<LPARAM>(tip->c_str()));
+}
 static void update_status(std::int64_t down, std::int64_t up) {
     std::wstring dht = L"DHT: " + (g.settings.dht ? fmt_int(g.engine.counters().dht_nodes) + L" nodi" : std::wstring(L"disattivato"));
-    std::wstring d = L"Velocità download: " + fmt_speed0(down) + (g.settings.down_kib ? L" [max " + std::to_wstring(g.settings.down_kib) + L" KiB/s]" : L"");
-    std::wstring u = L"Velocità upload: " + fmt_speed0(up) + (g.settings.up_kib ? L" [max " + std::to_wstring(g.settings.up_kib) + L" KiB/s]" : L"");
+    auto limit = [](int kib) { return kib ? L" [max " + fmt_speed(static_cast<std::int64_t>(kib) * 1024) + L"]" : std::wstring(); };
+    std::wstring d = L"Velocità download: " + fmt_speed0(down) + limit(g.settings.down_kib);
+    std::wstring u = L"Velocità upload: " + fmt_speed0(up) + limit(g.settings.up_kib);
     std::wstring totals = L"Totale scaricati " + fmt_bytes(g.settings.stats.downloaded) + L"  caricati " + fmt_bytes(g.settings.stats.uploaded) +
         L"  ratio " + fmt_ratio(effective_ratio(g.settings.stats.downloaded, g.settings.stats.uploaded, 0), g.settings.stats.downloaded || g.settings.stats.uploaded);
     auto mem = memory_usage();
     std::wstring ram = L"RAM " + fmt_bytes(static_cast<std::int64_t>(mem.working_set));
-    SendMessageW(g.status, SB_SETTEXTW, 1, reinterpret_cast<LPARAM>(dht.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 2, reinterpret_cast<LPARAM>(d.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 3, reinterpret_cast<LPARAM>(u.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 4, reinterpret_cast<LPARAM>(totals.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 5, reinterpret_cast<LPARAM>(ram.c_str()));
-    wchar_t const* tips[] = {dht.c_str(), d.c_str(), u.c_str(), totals.c_str(), ram.c_str()};
-    for (int i = 0; i < 5; ++i) SendMessageW(g.status, SB_SETTIPTEXTW, i + 1, reinterpret_cast<LPARAM>(tips[i]));
+    status_texts = {g.net_text, dht, d, u, totals, ram};
+    fit_status_panes();   // applies a change of the visible panes first
+    for (int pane = 1; pane < 6; ++pane) set_pane_text(pane, status_texts[pane], &status_texts[pane]);
     tray_update_tip(down, up);
+}
+// Network pane text, icon and tooltip (also re-applied after the visible panes change).
+static void show_network_pane() {
+    int const part = status_part(0);
+    if (part < 0) return;
+    SendMessageW(g.status, SB_SETICON, part, reinterpret_cast<LPARAM>(g.net_icon));
+    SendMessageW(g.status, SB_SETTEXTW, part, reinterpret_cast<LPARAM>(g.net_text.c_str()));
+    SendMessageW(g.status, SB_SETTIPTEXTW, part, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
 }
 static void update_network_indicator() {
     auto n = g.engine.network();
@@ -777,33 +817,88 @@ static void update_network_indicator() {
                        : st == NetState::Starting ? RGB(120, 144, 156) : RGB(198, 40, 40);
         HICON old = g.net_icon;
         g.net_icon = icons::make_icon(icons::IcGlobe, scale(16), color);
-        SendMessageW(g.status, SB_SETICON, 0, reinterpret_cast<LPARAM>(g.net_icon));
-        if (old) DestroyIcon(old);
         g.net_state = st;
         g.net_text = text;
-        SendMessageW(g.status, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(text.c_str()));
+        g.net_tip = tip;
+        show_network_pane();
+        if (old) DestroyIcon(old);
+    } else if (tip != g.net_tip) {
+        g.net_tip = tip;
+        int const part = status_part(0);
+        if (part >= 0) SendMessageW(g.status, SB_SETTIPTEXTW, part, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
     }
-    g.net_tip = tip;
-    SendMessageW(g.status, SB_SETTIPTEXTW, 0, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
 }
-static std::array<int, 6> status_part_edges(int width, UINT dpi) {
-    constexpr int base[] = {150, 120, 250, 250, 300, 110};
-    int const desired = MulDiv(1180, static_cast<int>(dpi ? dpi : 96), 96);
+// Status bar parts sized from the text they show (need[i] = text width + padding).
+// Every part gets what it needs; `flex` takes the spare room. When the window is too
+// narrow, `shrink_first` gives up to half of its width first, then all parts shrink
+// proportionally. Returns the right edges for SB_SETPARTS (the last one is -1).
+std::vector<int> status_part_edges(int width, std::vector<int> const& need, int flex, int shrink_first) {
     int const available = std::max(0, width);
-    int cumulative = 0;
-    std::array<int, 6> edges{};
-    for (int i = 0; i < 5; ++i) {
-        cumulative += base[i];
-        edges[i] = available < desired ? MulDiv(cumulative, available, 1180)
-            : available - desired + MulDiv(cumulative, static_cast<int>(dpi ? dpi : 96), 96);
+    std::vector<int> w = need;
+    int const n = static_cast<int>(w.size());
+    if (n == 0) return {};
+    int total = 0;
+    for (int v : w) total += v;
+    if (total > available && shrink_first >= 0 && shrink_first < n) {
+        int const cut = std::min(total - available, w[static_cast<std::size_t>(shrink_first)] / 2);
+        w[static_cast<std::size_t>(shrink_first)] -= cut; total -= cut;
     }
-    edges[5] = -1;
+    if (total > available && total > 0) {
+        for (auto& v : w) v = MulDiv(v, available, total);
+        total = 0;
+        for (int v : w) total += v;
+    }
+    if (flex >= 0 && flex < n) w[static_cast<std::size_t>(flex)] += std::max(0, available - total);
+    std::vector<int> edges(w.size());
+    int x = 0;
+    for (int i = 0; i + 1 < n; ++i) { x += w[static_cast<std::size_t>(i)]; edges[static_cast<std::size_t>(i)] = std::min(x, available); }
+    edges.back() = -1;
     return edges;
 }
 static void layout_status() {
+    if (!g.status || status_need.empty()) return;
     RECT rc; GetClientRect(g.main, &rc);
-    auto const edges = status_part_edges(rc.right, g.dpi);
+    int const net = status_part(0), totals = status_part(4);
+    auto const edges = status_part_edges(rc.right, status_need, net >= 0 ? net : static_cast<int>(status_need.size()) - 1, totals);
     SendMessageW(g.status, SB_SETPARTS, edges.size(), reinterpret_cast<LPARAM>(edges.data()));
+}
+// Measures the pane texts with the status bar font; relayouts only when a part needs
+// more room or could give back a noticeable amount (avoids flicker every second).
+static void fit_status_panes() {
+    if (!g.status) return;
+    int const mask = g.settings.status_panes & 0x3F;
+    if (mask != status_mask) {                       // panes shown or hidden from the preferences
+        bool const was_visible = status_mask != 0;
+        status_mask = mask;
+        status_need.clear();
+        for (int i = 0; i < 6; ++i) SendMessageW(g.status, SB_SETICON, i, 0);
+        ShowWindow(g.status, mask ? SW_SHOWNA : SW_HIDE);
+        if (mask) {
+            int const parts = pane_count(mask);
+            std::vector<int> edges(static_cast<std::size_t>(parts), -1);
+            SendMessageW(g.status, SB_SETPARTS, edges.size(), reinterpret_cast<LPARAM>(edges.data()));
+            show_network_pane();
+        }
+        if (was_visible != (mask != 0) && g.main) layout();
+    }
+    if (!mask) return;
+    HDC dc = GetDC(g.status);
+    HGDIOBJ old = SelectObject(dc, reinterpret_cast<HFONT>(SendMessageW(g.status, WM_GETFONT, 0, 0)));
+    std::vector<int> need;
+    int const last = status_pane_at(pane_count(mask) - 1);
+    for (int pane = 0; pane < 6; ++pane) {
+        if (!pane_shown(pane)) continue;
+        SIZE sz{};
+        auto const& text = status_texts[static_cast<std::size_t>(pane)];
+        GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &sz);
+        need.push_back(sz.cx + scale(14) + (pane == 0 ? scale(22) : 0) + (pane == last ? scale(18) : 0));   // icon / size grip
+    }
+    SelectObject(dc, old);
+    ReleaseDC(g.status, dc);
+    bool relayout = need.size() != status_need.size();
+    for (std::size_t i = 0; !relayout && i < need.size(); ++i)
+        if (need[i] > status_need[i] || status_need[i] - need[i] > scale(40)) relayout = true;
+    if (relayout) { status_need = need; layout_status(); }
 }
 
 static NOTIFYICONDATAW tray_data() {
@@ -1000,17 +1095,87 @@ int add_created_torrent(std::wstring const& torrent_file, std::wstring const& sa
 }
 static void add_files(std::vector<std::wstring> const& files) {
     std::string folder = download_dir();
+    bool paused = g.settings.start_paused;
+    if (g.settings.ask_save_path) {
+        // Summary for the save-path dialog: name and size of one torrent, or count and total.
+        std::wstring summary;
+        std::int64_t total = 0;
+        int readable = 0;
+        for (auto const& f : files) {
+            std::string name, err; std::int64_t size = 0; int count = 0;
+            if (Engine::peek_torrent(narrow(f), name, size, count, err)) {
+                ++readable; total += size;
+                if (files.size() == 1)
+                    summary = widen(name) + L"\n" + fmt_bytes(size) + L" · " + std::to_wstring(count) + L" file";
+            }
+        }
+        if (files.size() > 1) summary = std::to_wstring(files.size()) + L" torrent · " + fmt_bytes(total) + L" in totale";
+        else if (!readable) summary = fs::path(files.front()).filename().wstring();
+        bool dont_ask = false;
+        if (!dlg_add_torrent(g.main, summary, folder, paused, dont_ask)) return;
+        if (dont_ask) { g.settings.ask_save_path = false; log_line(L"Cartella di salvataggio: non verrà più chiesta (Preferenze › Generale per riattivare)."); }
+        remember_dir(folder);
+    }
     std::error_code ec;
     fs::create_directories(fs::path(widen(folder)), ec);
     for (auto const& f : files) {
         std::string err;
         AddResult r;
-        int id = g.engine.add_torrent_file(narrow(f), folder, g.settings.start_paused, err, &r);
+        int id = g.engine.add_torrent_file(narrow(f), folder, paused, err, &r);
         if (id > 0) { after_add(id); log_line(L"Aggiunto: " + fs::path(f).filename().wstring()); }
         else log_line(L"Non aggiunto (" + fs::path(f).filename().wstring() + L"): " + widen(err));
         if (id <= 0 && r != AddResult::Duplicate && files.size() == 1)
             MessageBoxW(g.main, widen(err).c_str(), L"SeedFlow", MB_ICONWARNING);
     }
+    persist();
+    refresh_now();
+}
+// "Sposta in un'altra cartella": choose the folder, then either move the data there or
+// only point the torrents at it (data already moved by hand, followed by a recheck).
+static void move_selected() {
+    auto ids = selected_ids();
+    if (ids.empty()) return;
+    Row const* first = row_by_id(ids[0]);
+    std::wstring folder = first ? widen(first->v.save_path) : widen(download_dir());
+    if (!pick_folder(g.main, folder)) return;
+    TASKDIALOG_BUTTON buttons[] = {
+        {1001, L"Sposta i file nella nuova cartella\nSeedFlow copia i dati e poi li elimina dalla posizione attuale."},
+        {1002, L"I file sono già nella nuova cartella\nAggiorna solo il percorso ed esegue una verifica dei dati."},
+    };
+    std::wstring const content = (ids.size() == 1 && first ? L"«" + widen(first->v.name) + L"»" : std::to_wstring(ids.size()) + L" torrent") +
+                                 L"\nNuova cartella: " + folder;
+    TASKDIALOGCONFIG tc{};
+    tc.cbSize = sizeof(tc);
+    tc.hwndParent = g.main;
+    tc.dwFlags = TDF_USE_COMMAND_LINKS | TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW;
+    tc.pszWindowTitle = L"Sposta in un'altra cartella";
+    tc.pszMainIcon = TD_INFORMATION_ICON;
+    tc.pszMainInstruction = L"Come vuoi cambiare il percorso?";
+    tc.pszContent = content.c_str();
+    tc.cButtons = 2;
+    tc.pButtons = buttons;
+    tc.dwCommonButtons = TDCBF_CANCEL_BUTTON;
+    int choice = 0;
+    // TaskDialogIndirect exists only in Common Controls 6 (enabled by the manifest): resolve it at
+    // run time so binaries without that manifest (the regression test) still load.
+    using TaskDialogFn = HRESULT(WINAPI*)(TASKDIALOGCONFIG const*, int*, int*, BOOL*);
+    auto task_dialog = reinterpret_cast<TaskDialogFn>(reinterpret_cast<void*>(GetProcAddress(GetModuleHandleW(L"comctl32.dll"), "TaskDialogIndirect")));
+    if (!task_dialog || FAILED(task_dialog(&tc, &choice, nullptr, nullptr))) {
+        int const r = MessageBoxW(g.main, (content + L"\n\nSì: sposta i file nella nuova cartella.\nNo: i file sono già lì, aggiorna solo il percorso e verifica.").c_str(),
+                                  L"Sposta in un'altra cartella", MB_ICONQUESTION | MB_YESNOCANCEL);
+        choice = r == IDYES ? 1001 : r == IDNO ? 1002 : 0;
+    }
+    if (choice != 1001 && choice != 1002) return;
+    bool const move_files = choice == 1001;
+    std::error_code ec;
+    fs::create_directories(fs::path(folder), ec);
+    for (int id : ids) {
+        std::string err;
+        if (!g.engine.move_storage(id, narrow(folder), move_files, err)) { log_line(L"Spostamento non avviato: " + widen(err)); continue; }
+        if (!move_files) g.engine.recheck(id);
+    }
+    remember_dir(narrow(folder));
+    log_line(move_files ? L"Spostamento dei file avviato verso " + folder : L"Percorso aggiornato a " + folder + L": verifica dei dati avviata.");
     persist();
     refresh_now();
 }
@@ -1189,7 +1354,7 @@ static void copy_magnet() {
         if (g.engine.magnet_uri(id, m)) { if (!all.empty()) all += L"\r\n"; all += widen(m); }
     }
     if (all.empty()) { MessageBoxW(g.main, L"Magnet non disponibile.", L"SeedFlow", MB_ICONWARNING); return; }
-    if (copy_to_clipboard(g.main, all)) SendMessageW(g.status, SB_SETTEXTW, 4, reinterpret_cast<LPARAM>(L"Magnet copiato negli appunti"));
+    if (copy_to_clipboard(g.main, all)) set_pane_text(pane_shown(4) ? 4 : status_pane_at(pane_count(g.settings.status_panes) - 1), L"Magnet copiato negli appunti");
 }
 static void open_selected_folder() {
     auto ids = selected_ids();
@@ -1271,7 +1436,7 @@ static void on_command(int cmd) {
         std::vector<std::string> magnets;
         std::string folder = download_dir();
         bool paused = g.settings.start_paused;
-        if (dlg_magnet(g.main, magnets, folder, paused)) add_magnets(magnets, folder, paused);
+        if (dlg_magnet(g.main, magnets, folder, paused)) { remember_dir(folder); add_magnets(magnets, folder, paused); }
         break;
     }
     case ID_FILE_CREATE: dlg_create_torrent(g.main); break;
@@ -1306,6 +1471,7 @@ static void on_command(int cmd) {
     case ID_T_DELETE: remove_selected(true); break;
     case ID_T_COPYMAGNET: copy_magnet(); break;
     case ID_T_OPENFOLDER: open_selected_folder(); break;
+    case ID_T_MOVE: move_selected(); break;
     case ID_T_RATIO: {
         // With torrents selected: their own limit. Without a selection the button used to
         // do nothing at all: open the global ratio settings instead.
@@ -1406,13 +1572,29 @@ static int toolbar_height(HWND tb) {
     return std::max<int>(r.bottom - r.top, scale(22)) + scale(4);
 }
 static RECT split_v_rect, split_h_rect;
+// The Nome column takes the width left by the other columns, so the list does not
+// scroll horizontally at the default widths (space for the vertical scrollbar is kept).
+// A width the user gives Nome by hand is a minimum: it only grows to fill free space.
+static bool fitting_columns = false;
+static int name_user_width = 0;
+static void fit_name_column() {
+    if (!g.list || fitting_columns) return;
+    RECT rc; GetWindowRect(g.list, &rc);
+    int const available = (rc.right - rc.left) - GetSystemMetricsForDpi(SM_CXVSCROLL, g.dpi) - GetSystemMetricsForDpi(SM_CXEDGE, g.dpi) * 2;
+    int others = 0;
+    for (int c = 0; c < ColCount; ++c) if (c != ColName) others += ListView_GetColumnWidth(g.list, c);
+    int const width = std::max({scale(160), name_user_width, available - others});
+    if (width == ListView_GetColumnWidth(g.list, ColName)) return;
+    fitting_columns = true;
+    ListView_SetColumnWidth(g.list, ColName, width);
+    fitting_columns = false;
+}
 static void layout() {
     RECT rc; GetClientRect(g.main, &rc);
     int tbh = toolbar_height(g.toolbar);
     SetWindowPos(g.toolbar, nullptr, scale(2), scale(1), rc.right - scale(4), tbh, SWP_NOZORDER);
     SendMessageW(g.status, WM_SIZE, 0, 0);
-    RECT sr; GetWindowRect(g.status, &sr);
-    int sbh = sr.bottom - sr.top;
+    int sbh = status_height();
     layout_status();
     int top = tbh + scale(2), bottom = rc.bottom - sbh;
     int left_w = std::clamp(scale(g.split_left), scale(90), std::max(scale(90), static_cast<int>(rc.right) / 2));
@@ -1423,6 +1605,7 @@ static void layout() {
     int x = left_w + sp, w = rc.right - x;
     int list_h = bottom - top - detail_h - sp;
     SetWindowPos(g.list, nullptr, x, top, w, list_h, SWP_NOZORDER);
+    fit_name_column();
     split_h_rect = {x, top + list_h, rc.right, top + list_h + sp};
     int ty = top + list_h + sp;
     SetWindowPos(g.tabs, nullptr, x, ty, w, detail_h, SWP_NOZORDER);
@@ -1566,6 +1749,17 @@ static LRESULT on_list_customdraw(NMLVCUSTOMDRAW* cd) {
     return CDRF_DODEFAULT;
 }
 static LRESULT on_notify(NMHDR* nm) {
+    if (nm->hwndFrom == ListView_GetHeader(g.list) && (nm->code == HDN_ENDTRACKW || nm->code == HDN_DIVIDERDBLCLICKW)) {
+        auto const* hd = reinterpret_cast<NMHEADERW const*>(nm);
+        if (hd->iItem == ColName) {
+            // Resizing Nome itself: keep what the user chose (wider means horizontal scrolling).
+            if (nm->code == HDN_ENDTRACKW && hd->pitem && (hd->pitem->mask & HDI_WIDTH)) name_user_width = hd->pitem->cxy;
+            else PostMessageW(g.main, WM_APP_FITCOLUMNS, 1, 0);
+            return 0;
+        }
+        PostMessageW(g.main, WM_APP_FITCOLUMNS, 0, 0);   // the new width is applied after this notification
+        return 0;
+    }
     if (nm->hwndFrom == g.list) {
         switch (nm->code) {
         case LVN_GETDISPINFOW: {
@@ -1600,7 +1794,7 @@ static LRESULT on_notify(NMHDR* nm) {
     } else if (nm->hwndFrom == g.tabs && nm->code == TCN_SELCHANGE) {
         show_tab(current_tab());
     } else if (nm->hwndFrom == g.status && nm->code == NM_CLICK) {
-        if (reinterpret_cast<NMMOUSE*>(nm)->dwItemSpec == 0) dlg_diagnostics(g.main);
+        if (status_pane_at(static_cast<int>(reinterpret_cast<NMMOUSE*>(nm)->dwItemSpec)) == 0) dlg_diagnostics(g.main);
     } else if (nm->hwndFrom == g.trackers && nm->code == NM_DBLCLK) {
         on_command(ID_TR_ADD);
     } else if (nm->hwndFrom == g.files && nm->code == NM_DBLCLK) {
@@ -1698,10 +1892,10 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_MOUSEMOVE:
         if (drag && (wp & MK_LBUTTON)) {
             RECT rc; GetClientRect(hwnd, &rc);
-            RECT sr; GetWindowRect(g.status, &sr);
+            int const sbh = status_height();
             int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);
             if (drag == 1) g.split_left = MulDiv(std::clamp(x, scale(90), std::max(scale(90), static_cast<int>(rc.right) / 2)), 96, static_cast<int>(g.dpi));
-            else g.split_bottom = MulDiv(std::max(scale(80), static_cast<int>(rc.bottom - (sr.bottom - sr.top)) - y), 96, static_cast<int>(g.dpi));
+            else g.split_bottom = MulDiv(std::max(scale(80), static_cast<int>(rc.bottom - sbh) - y), 96, static_cast<int>(g.dpi));
             layout();
         }
         return 0;
@@ -1777,6 +1971,10 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         }
         default: break;
         }
+        return 0;
+    case WM_APP_FITCOLUMNS:
+        if (wp == 1) name_user_width = ListView_GetColumnWidth(g.list, ColName);   // after a double click on the Nome divider
+        fit_name_column();
         return 0;
     case WM_APP_PORTCHECK:
         consume_port_check();

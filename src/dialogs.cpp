@@ -80,6 +80,47 @@ static std::wstring crlf(std::wstring const& s) {
     return out;
 }
 
+// ------------------------------------------------------------------ save folder (shared by the magnet and torrent dialogs)
+void remember_dir(std::string const& folder) {
+    if (folder.empty()) return;
+    auto& dirs = g.settings.recent_dirs;
+    std::wstring const wanted = widen(folder);
+    dirs.erase(std::remove_if(dirs.begin(), dirs.end(), [&](std::string const& d) {
+        return _wcsicmp(widen(d).c_str(), wanted.c_str()) == 0; }), dirs.end());
+    dirs.insert(dirs.begin(), folder);
+    if (dirs.size() > 8) dirs.resize(8);
+}
+// Destination combo: the proposed folder first, then the recent ones.
+static void fill_folder_combo(HWND dlg, int id, std::string const& current) {
+    std::vector<std::wstring> items{widen(current)};
+    for (auto const& d : g.settings.recent_dirs) {
+        std::wstring w = widen(d);
+        bool dup = false;
+        for (auto const& x : items) dup = dup || _wcsicmp(x.c_str(), w.c_str()) == 0;
+        if (!dup) items.push_back(w);
+    }
+    for (auto const& w : items) combo_add(dlg, id, w.c_str());
+    set_text(dlg, id, items.front());
+}
+// Reads the folder from the dialog; it must be absolute, and is created on request.
+static bool take_folder(HWND dlg, int id, std::string& out) {
+    std::wstring f = get_text(dlg, id);
+    while (f.size() > 3 && (f.back() == L'\\' || f.back() == L'/')) f.pop_back();
+    std::error_code ec;
+    if (f.empty() || !fs::path(f).is_absolute()) {
+        MessageBoxW(dlg, L"Indica un percorso completo (es. D:\\Download).", L"SeedFlow", MB_ICONWARNING);
+        return false;
+    }
+    if (!fs::is_directory(fs::path(f), ec)) {
+        if (MessageBoxW(dlg, (L"La cartella «" + f + L"» non esiste. Crearla?").c_str(), L"SeedFlow", MB_ICONQUESTION | MB_YESNO) != IDYES) return false;
+        if (!fs::create_directories(fs::path(f), ec) && !fs::is_directory(fs::path(f), ec)) {
+            MessageBoxW(dlg, L"Impossibile creare la cartella.", L"SeedFlow", MB_ICONWARNING);
+            return false;
+        }
+    }
+    out = narrow(f);
+    return true;
+}
 // ------------------------------------------------------------------ magnet
 struct MagnetCtx { std::vector<std::string>* magnets; std::string* folder; bool* paused; };
 static INT_PTR CALLBACK magnet_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
@@ -88,7 +129,7 @@ static INT_PTR CALLBACK magnet_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_INITDIALOG: {
         SetWindowLongPtrW(dlg, DWLP_USER, lp);
         ctx = reinterpret_cast<MagnetCtx*>(lp);
-        set_text(dlg, IDC_FOLDER, widen(*ctx->folder));
+        fill_folder_combo(dlg, IDC_FOLDER, *ctx->folder);
         check(dlg, IDC_PAUSED, *ctx->paused);
         std::wstring clip = clipboard_text(dlg);
         if (clip.find(L"magnet:?") != std::wstring::npos) set_text(dlg, IDC_EDIT, crlf(clip));
@@ -113,9 +154,7 @@ static INT_PTR CALLBACK magnet_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
             for (wchar_t c : text) { if (c == L'\n') take(); else if (c != L'\r') line += c; }
             take();
             if (ctx->magnets->empty()) { MessageBoxW(dlg, L"Nessun magnet link valido (deve iniziare con magnet:?).", L"SeedFlow", MB_ICONWARNING); return TRUE; }
-            std::wstring folder = get_text(dlg, IDC_FOLDER);
-            if (folder.empty()) { MessageBoxW(dlg, L"Indica la cartella di destinazione.", L"SeedFlow", MB_ICONWARNING); return TRUE; }
-            *ctx->folder = narrow(folder);
+            if (!take_folder(dlg, IDC_FOLDER, *ctx->folder)) return TRUE;
             *ctx->paused = checked(dlg, IDC_PAUSED);
             EndDialog(dlg, IDOK);
             return TRUE;
@@ -126,6 +165,42 @@ static INT_PTR CALLBACK magnet_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
     }
     return FALSE;
 }
+// ------------------------------------------------------------------ add torrent (save path)
+struct AddCtx { std::wstring summary; std::string* folder; bool* paused; bool* dont_ask; };
+static INT_PTR CALLBACK add_torrent_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
+    auto* ctx = reinterpret_cast<AddCtx*>(GetWindowLongPtrW(dlg, DWLP_USER));
+    switch (msg) {
+    case WM_INITDIALOG: {
+        SetWindowLongPtrW(dlg, DWLP_USER, lp);
+        ctx = reinterpret_cast<AddCtx*>(lp);
+        set_text(dlg, IDC_A_INFO, ctx->summary);
+        fill_folder_combo(dlg, IDC_A_FOLDER, *ctx->folder);
+        check(dlg, IDC_PAUSED, *ctx->paused);
+        check(dlg, IDC_A_NOASK, false);
+        return TRUE;
+    }
+    case WM_COMMAND:
+        if (!ctx) break;
+        switch (LOWORD(wp)) {
+        case IDC_BROWSE: { std::wstring f = get_text(dlg, IDC_A_FOLDER); if (pick_folder(dlg, f)) set_text(dlg, IDC_A_FOLDER, f); return TRUE; }
+        case IDOK: {
+            if (!take_folder(dlg, IDC_A_FOLDER, *ctx->folder)) return TRUE;
+            *ctx->paused = checked(dlg, IDC_PAUSED);
+            *ctx->dont_ask = checked(dlg, IDC_A_NOASK);
+            EndDialog(dlg, IDOK);
+            return TRUE;
+        }
+        case IDCANCEL: EndDialog(dlg, IDCANCEL); return TRUE;
+        }
+        break;
+    }
+    return FALSE;
+}
+bool dlg_add_torrent(HWND owner, std::wstring const& summary, std::string& folder, bool& paused, bool& dont_ask) {
+    AddCtx ctx{summary, &folder, &paused, &dont_ask};
+    return DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_ADDTORRENT), owner, add_torrent_proc, reinterpret_cast<LPARAM>(&ctx)) == IDOK;
+}
+
 bool dlg_magnet(HWND owner, std::vector<std::string>& magnets, std::string& folder, bool& paused) {
     MagnetCtx ctx{&magnets, &folder, &paused};
     return DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_MAGNET), owner, magnet_proc, reinterpret_cast<LPARAM>(&ctx)) == IDOK;
@@ -291,6 +366,8 @@ static INT_PTR CALLBACK pg_general(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
     case WM_INITDIALOG:
         check(dlg, IDC_CLOSETRAY, s.close_to_tray); check(dlg, IDC_MINTRAY, s.minimize_to_tray);
         check(dlg, IDC_CONFIRMREMOVE, s.confirm_remove); check(dlg, IDC_STARTPAUSED, s.start_paused);
+        check(dlg, IDC_ASKPATH, s.ask_save_path);
+        for (int i = 0; i < 6; ++i) check(dlg, IDC_SB_NET + i, (s.status_panes >> i) & 1);
         check(dlg, IDC_AUTOSTART, autostart_enabled()); check(dlg, IDC_STARTMIN, s.start_minimized);
         EnableWindow(GetDlgItem(dlg, IDC_STARTMIN), checked(dlg, IDC_AUTOSTART));
         return TRUE;
@@ -300,6 +377,9 @@ static INT_PTR CALLBACK pg_general(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
     case WM_PAGE_APPLY: {
         s.close_to_tray = checked(dlg, IDC_CLOSETRAY); s.minimize_to_tray = checked(dlg, IDC_MINTRAY);
         s.confirm_remove = checked(dlg, IDC_CONFIRMREMOVE); s.start_paused = checked(dlg, IDC_STARTPAUSED);
+        s.ask_save_path = checked(dlg, IDC_ASKPATH);
+        s.status_panes = 0;
+        for (int i = 0; i < 6; ++i) if (checked(dlg, IDC_SB_NET + i)) s.status_panes |= 1 << i;
         s.start_minimized = checked(dlg, IDC_STARTMIN);
         pref_autostart = checked(dlg, IDC_AUTOSTART);
         return page_result(dlg, true);
@@ -1315,7 +1395,7 @@ static std::wstring about_text() {
     line(L"  • libtorrent-rasterbar — Arvid Norberg e collaboratori, licenza BSD 3-clause");
     line(L"  • Boost C++ Libraries — Boost Software License 1.0");
     line(L"  • OpenSSL (se incluso nella build) — Apache License 2.0");
-    line(L"  • Icone: set SeedFlow originale (stile duotone), sorgenti SVG in res/icons");
+    line(L"  • Icone: disegni SVG SeedFlow, sorgenti in res/icons");
     return t;
 }
 static INT_PTR CALLBACK about_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {

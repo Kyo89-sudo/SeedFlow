@@ -4,19 +4,26 @@
 <path d="M-60 270 Q240 150 600 285 T1260 240" fill="none" stroke="#3FA9F5" stroke-opacity=".16" stroke-width="2"/>
 <path d="M-60 295 Q280 185 620 310 T1260 265" fill="none" stroke="#5BC236" stroke-opacity=".2" stroke-width="2"/>
 <svg x="544" y="30" width="112" height="112" viewBox="0 0 256 256">
- <defs>
-  <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5BC236"/><stop offset="1" stop-color="#1E8E3E"/></linearGradient>
-  <linearGradient id="wa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FA9F5"/><stop offset="1" stop-color="#1565C0"/></linearGradient>
-  <clipPath id="ca"><circle cx="128" cy="128" r="120"/></clipPath>
- </defs>
- <circle cx="128" cy="128" r="120" fill="url(#ga)"/>
- <g clip-path="url(#ca)">
-  <path d="M0 150 C50 125 95 128 140 150 S220 175 256 150 V256 H0Z" fill="url(#wa)"/>
-  <path d="M0 184 C50 160 95 163 140 184 S220 208 256 184" fill="none" stroke="#BFE3FF" stroke-width="10" stroke-linecap="round" opacity=".85"/>
- </g>
- <path d="M118 158 C92 130 96 80 132 58 C150 47 172 42 190 40 C192 62 188 92 172 118 C156 144 136 156 118 158Z" fill="#fff"/>
- <path d="M120 156 C130 122 148 92 176 62" fill="none" stroke="#2E9B45" stroke-width="7" stroke-linecap="round"/>
- <circle cx="128" cy="128" r="118" fill="none" stroke="#0B5D2A" stroke-opacity=".35" stroke-width="4"/>
+<title>SeedFlow — Classic, refined</title>
+<defs>
+ <radialGradient id="green" cx=".30" cy=".18" r=".94"><stop stop-color="#91C85F"/><stop offset=".48" stop-color="#5BA33D"/><stop offset="1" stop-color="#2D7835"/></radialGradient>
+ <linearGradient id="water" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#54B2DF"/><stop offset="1" stop-color="#216AA5"/></linearGradient>
+ <linearGradient id="leaf" x1="0" y1="0" x2=".6" y2="1"><stop stop-color="#FFFFFF"/><stop offset=".65" stop-color="#F3F8ED"/><stop offset="1" stop-color="#DCECCF"/></linearGradient>
+ <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4A8135"/><stop offset="1" stop-color="#215C83"/></linearGradient>
+ <clipPath id="disc"><circle cx="128" cy="128" r="117"/></clipPath>
+</defs>
+<circle cx="128" cy="128" r="119" fill="url(#green)" stroke="url(#edge)" stroke-width="2.5"/>
+<g clip-path="url(#disc)">
+ <path d="M0 150C48 127 86 126 137 148S215 178 256 151V256H0Z" fill="url(#water)"/>
+ <path d="M8 148C55 129 87 130 137 151S216 180 250 156" fill="none" stroke="#9BD6E9" stroke-opacity=".60" stroke-width="2.5"/>
+ <path d="M3 184C51 161 92 161 140 181S218 207 253 183" fill="none" stroke="#C3E8F5" stroke-width="7"/>
+</g>
+<path d="M120 161C91 136 97 91 129 66C146 52 169 46 192 43C192 69 187 95 173 120C159 143 139 157 120 161Z" fill="#2B713A" opacity=".24" transform="translate(1.5 2.5)"/>
+<path d="M119 158C91 133 97 88 129 63C146 49 169 43 191 40C191 66 186 92 172 117C158 140 138 154 119 158Z" fill="url(#leaf)" stroke="#F9FFF2" stroke-width="1.5" stroke-linejoin="round"/>
+<path d="M191 40C191 66 186 92 172 117C158 140 138 154 119 158C140 123 161 84 191 40Z" fill="#BDD7A7" opacity=".24"/>
+<path d="M120 154C134 120 152 91 177 62" fill="none" stroke="#438E3B" stroke-width="6.5" stroke-linecap="round"/>
+<circle cx="128" cy="128" r="115.5" fill="none" stroke="#EBF6DD" stroke-opacity=".28" stroke-width="1.8"/>
+
 </svg>
 
 <text x="600" y="207" text-anchor="middle" fill="#ffffff" font-family="Segoe UI,Arial,sans-serif" font-size="58" font-weight="700" letter-spacing="-1">SeedFlow</text>

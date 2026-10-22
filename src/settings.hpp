@@ -51,6 +51,11 @@ struct AppSettings {
     int create_piece = 0;           // 0 automatic, else index into piece_size_choices() + 1
     std::string create_trackers;    // UTF-8, one per line, blank line = new tier
     bool create_seed = true, create_private = false, create_copy_magnet = false;
+    // adding torrents
+    bool ask_save_path = true;            // ask where to save each added .torrent
+    std::vector<std::string> recent_dirs; // UTF-8, most recent first (max 8)
+    // status bar: bit i shows pane i (StatusPane); 0 hides the bar
+    int status_panes = 0x3F;
     int process_priority = 0;       // 0 normal, 1 below normal, 2 idle (applied at start and on change)
     // network
     int port = 51413;

@@ -8,6 +8,7 @@
 #include <libtorrent/torrent_info.hpp>
 #include <libtorrent/torrent_status.hpp>
 #include <libtorrent/torrent_flags.hpp>
+#include <libtorrent/load_torrent.hpp>
 #include <libtorrent/settings_pack.hpp>
 #include <libtorrent/error_code.hpp>
 #include <libtorrent/file_storage.hpp>
@@ -31,10 +32,7 @@
 #define SF_HAS_PREAD 0
 #endif
 #include <algorithm>
-#include <fstream>
-#include <iterator>
 #include <sstream>
-#include <thread>
 #include <set>
 
 // comment()/creator()/files()/make_magnet_uri(handle) are deprecated in 2.1 but
@@ -74,10 +72,8 @@ static fs::path u8path(std::string const& s) {
 #endif
 }
 static bool read_file(fs::path const& p, std::vector<char>& out) {
-    std::ifstream in(p, std::ios::binary);
-    if (!in) return false;
-    out.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-    return !out.empty();
+    // .torrent, fast resume and session state: sized before reading, capped like libtorrent's own loader.
+    return file_io::read_bounded(p, out, 64u * 1024u * 1024u) && !out.empty();
 }
 
 bool Engine::start(EngineConfig const& cfg, std::string& error) {
@@ -187,7 +183,7 @@ static std::string add_error(lt::error_code const& ec, AddResult* r) {
     if (r) *r = AddResult::Error;
     return ec.message();
 }
-// FIX r10: without duplicate_is_error libtorrent 2.x silently returns the existing
+// Without duplicate_is_error libtorrent 2.x silently returns the existing
 // handle, and the same torrent was registered twice.
 static void prepare(lt::add_torrent_params& p, bool paused, bool preallocate) {
     p.flags |= lt::torrent_flags::duplicate_is_error;
@@ -338,6 +334,28 @@ bool Engine::pause(int id, bool p) {
         return true;
     } catch (...) { return false; }
 }
+bool Engine::move_storage(int id, std::string const& folder, bool move_files, std::string& error) {
+    auto const* h = find(id);
+    if (!h) { error = "Torrent non trovato"; return false; }
+    try {
+        h->move_storage(folder, move_files ? lt::move_flags_t::dont_replace : lt::move_flags_t::reset_save_path);
+        return true;
+    } catch (std::exception const& e) { error = e.what(); return false; }
+}
+bool Engine::peek_torrent(std::string const& file, std::string& name, std::int64_t& size, int& files, std::string& error) {
+    try {
+        std::vector<char> buf;
+        if (!read_file(u8path(file), buf)) { error = "File .torrent non leggibile"; return false; }
+        lt::add_torrent_params const atp = lt::load_torrent_buffer(lt::span<char const>(buf.data(), static_cast<std::ptrdiff_t>(buf.size())));
+        if (!atp.ti) { error = "File .torrent non valido"; return false; }
+        name = atp.ti->name();
+        size = atp.ti->total_size();
+        files = 0;
+        auto const& fs = atp.ti->files();
+        for (auto const i : fs.file_range()) if (!(fs.file_flags(i) & lt::file_storage::flag_pad_file)) ++files;
+        return true;
+    } catch (std::exception const& e) { error = std::string("File .torrent non valido: ") + e.what(); return false; }
+}
 bool Engine::force_start(int id) {
     auto const* h = find(id);
     if (!h) return false;
@@ -405,15 +423,15 @@ bool Engine::magnet_uri(int id, std::string& out) const {
     try { out = lt::make_magnet_uri(*h); return !out.empty(); } catch (...) { return false; }
 }
 
-// FIX r10: announce_entry::tier is a uint8_t; the old JSON writer streamed it as a
+// announce_entry::tier is a uint8_t; the old JSON writer streamed it as a
 // character (tier 0 = NUL) which truncated the output and left the list empty.
 // libtorrent 2.x keeps one announce endpoint per local listen address (every
 // network adapter, IPv4 and IPv6) and per protocol (v1/v2). On Windows a PC
 // typically has extra adapters (Hyper-V/WSL vEthernet, VPN, VirtualBox, IPv6
 // without global connectivity) whose announces always time out; those endpoints
 // then walk through the backup tiers, so EVERY tracker collected a "timed out"
-// error and the working one looked like "updating" forever (bug of r10/r11).
-// FIX r12: endpoints of local addresses that never got a successful reply from
+// error and the working one looked like "updating" forever.
+// Endpoints of local addresses that never got a successful reply from
 // any tracker are ignored while at least one address works, and a tracker that
 // the working addresses did not need is shown as a backup instead of an error.
 std::vector<TrackerView> Engine::trackers(int id) const {
@@ -796,6 +814,12 @@ void Engine::process_alerts() {
                 if (fin->handle.is_valid()) { fin->handle.save_resume_data(lt::torrent_handle::save_info_dict); ++outstanding_resume_; }
             } else if (auto* mr = lt::alert_cast<lt::metadata_received_alert>(a)) {
                 if (mr->handle.is_valid()) { mr->handle.save_resume_data(lt::torrent_handle::save_info_dict); ++outstanding_resume_; }
+            } else if (auto* sm = lt::alert_cast<lt::storage_moved_alert>(a)) {
+                push_event("Percorso aggiornato: " + std::string(sm->torrent_name()) + " -> " + sm->storage_path());
+                if (sm->handle.is_valid()) { sm->handle.save_resume_data(lt::torrent_handle::save_info_dict); ++outstanding_resume_; }
+            } else if (auto* smf = lt::alert_cast<lt::storage_moved_failed_alert>(a)) {
+                push_event("Spostamento NON riuscito (" + std::string(smf->torrent_name()) + "): " + smf->error.message() +
+                           (smf->file_path() && *smf->file_path() ? std::string(" - ") + smf->file_path() : std::string()));
             } else if (lt::alert_cast<lt::torrent_deleted_alert>(a)) {
                 push_event("File eliminati dal disco: " + std::string(static_cast<lt::torrent_alert*>(a)->torrent_name()));
             } else if (auto* df = lt::alert_cast<lt::torrent_delete_failed_alert>(a)) {

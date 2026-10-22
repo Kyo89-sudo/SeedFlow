@@ -17,6 +17,7 @@ namespace sf {
 
 constexpr UINT WM_APP_TRAY = WM_APP + 1;
 constexpr UINT WM_APP_PORTCHECK = WM_APP + 2;   // notification only; result owned by PortCheckJob
+constexpr UINT WM_APP_FITCOLUMNS = WM_APP + 3;  // refit the Nome column after a header resize
 constexpr UINT_PTR TIMER_REFRESH = 1;
 constexpr UINT_PTR TIMER_ANIM = 2;          // progress bar animation (verifying / metadata / moving)
 
@@ -112,6 +113,9 @@ bool dlg_magnet(HWND owner, std::vector<std::string>& magnets, std::string& fold
 enum PrefPage { PrefGeneral, PrefFolders, PrefConnection, PrefBandwidth, PrefBitTorrent, PrefQueue, PrefIdentity, PrefAdvanced, PrefPerformance };
 bool dlg_preferences(HWND owner, int page = PrefGeneral);   // true if anything was applied
 void dlg_create_torrent(HWND owner);
+// "Aggiungi torrent": save folder (with recent folders), paused, "don't ask again". false = cancelled.
+bool dlg_add_torrent(HWND owner, std::wstring const& summary, std::string& folder, bool& paused, bool& dont_ask);
+void remember_dir(std::string const& folder_utf8);   // most recent first, max 8 (settings.recent_dirs)
 std::wstring about_version_line();     // "Versione x.y.z (Win32 nativa) — x64"
 // mainwindow.cpp: adds a just-created .torrent for seeding (seed mode, no recheck); id or -1
 int add_created_torrent(std::wstring const& torrent_file, std::wstring const& save_dir, std::string& error);

@@ -1,5 +1,32 @@
 SeedFlow — Changelog
 
+0.8.6.1 — 2026-10-22
+
+- Nuovo set di 43 icone Classic: forme piene, colori riconoscibili e rilievo
+  leggero. La barra mantiene testi e disposizione. Disegni SVG originali SeedFlow.
+- Rifinita anche l'icona del programma: foglia e onde, bordo discreto e colori
+  coerenti con i comandi. ICO con nove dimensioni da 16 a 256 px.
+- Eliminato il warning C4456 nel test delle preferenze della barra di stato.
+- Aggiunta la scelta della cartella di salvataggio quando si aggiunge un file
+  .torrent (anche trascinato o aperto da Esplora risorse): nome e dimensione,
+  cartelle recenti, aggiunta in pausa e opzione "Non chiedere più"
+  (riattivabile in Preferenze › Generale).
+- Finestra dei magnet: stessa lista delle cartelle recenti; una cartella
+  che non esiste viene creata su richiesta.
+- Aggiunto "Sposta in un'altra cartella..." nel menu del tasto destro: sposta
+  i file oppure aggiorna solo il percorso se i dati sono già stati spostati,
+  con verifica automatica. Esito dello spostamento nel log.
+- Barra di stato configurabile da Preferenze › Generale: rete, DHT,
+  velocità, totali e RAM si possono nascondere una per una; togliendole
+  tutte la barra sparisce.
+- Barra di stato: larghezza dei pannelli calcolata dal testo, niente più testo
+  che sborda o tagliato; limite di velocità mostrato in forma compatta
+  ([max 107,3 MiB/s]).
+- Colonna # più larga, con spazio per la freccia di ordinamento.
+- La colonna Nome occupa lo spazio libero: niente barra di scorrimento
+  orizzontale con le larghezze predefinite. Se la allarghi a mano mantiene
+  la larghezza scelta.
+
 0.8.6 — 2026-10-22
 
 - Numerazione semplificata: x.y.z (FileVersion x.y.z.0), build di manutenzione
