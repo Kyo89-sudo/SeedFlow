@@ -294,7 +294,7 @@ static void load_column_widths() {
         if (comma == std::wstring::npos) break;
         pos = comma + 1;
     }
-    if (ord.size() == ColCount - 1) {   // settings from r12: show the new Salute column after Peer
+    if (ord.size() == ColCount - 1) {   // older settings without the Salute column: insert it after Peer
         auto it = std::find(ord.begin(), ord.end(), static_cast<int>(ColPeers));
         ord.insert(it == ord.end() ? ord.end() : it + 1, ColHealth);
     }

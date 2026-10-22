@@ -32,10 +32,7 @@
 #define SF_HAS_PREAD 0
 #endif
 #include <algorithm>
-#include <fstream>
-#include <iterator>
 #include <sstream>
-#include <thread>
 #include <set>
 
 // comment()/creator()/files()/make_magnet_uri(handle) are deprecated in 2.1 but
@@ -75,10 +72,8 @@ static fs::path u8path(std::string const& s) {
 #endif
 }
 static bool read_file(fs::path const& p, std::vector<char>& out) {
-    std::ifstream in(p, std::ios::binary);
-    if (!in) return false;
-    out.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-    return !out.empty();
+    // .torrent, fast resume and session state: sized before reading, capped like libtorrent's own loader.
+    return file_io::read_bounded(p, out, 64u * 1024u * 1024u) && !out.empty();
 }
 
 bool Engine::start(EngineConfig const& cfg, std::string& error) {
@@ -188,7 +183,7 @@ static std::string add_error(lt::error_code const& ec, AddResult* r) {
     if (r) *r = AddResult::Error;
     return ec.message();
 }
-// FIX r10: without duplicate_is_error libtorrent 2.x silently returns the existing
+// Without duplicate_is_error libtorrent 2.x silently returns the existing
 // handle, and the same torrent was registered twice.
 static void prepare(lt::add_torrent_params& p, bool paused, bool preallocate) {
     p.flags |= lt::torrent_flags::duplicate_is_error;
@@ -428,15 +423,15 @@ bool Engine::magnet_uri(int id, std::string& out) const {
     try { out = lt::make_magnet_uri(*h); return !out.empty(); } catch (...) { return false; }
 }
 
-// FIX r10: announce_entry::tier is a uint8_t; the old JSON writer streamed it as a
+// announce_entry::tier is a uint8_t; the old JSON writer streamed it as a
 // character (tier 0 = NUL) which truncated the output and left the list empty.
 // libtorrent 2.x keeps one announce endpoint per local listen address (every
 // network adapter, IPv4 and IPv6) and per protocol (v1/v2). On Windows a PC
 // typically has extra adapters (Hyper-V/WSL vEthernet, VPN, VirtualBox, IPv6
 // without global connectivity) whose announces always time out; those endpoints
 // then walk through the backup tiers, so EVERY tracker collected a "timed out"
-// error and the working one looked like "updating" forever (bug of r10/r11).
-// FIX r12: endpoints of local addresses that never got a successful reply from
+// error and the working one looked like "updating" forever.
+// Endpoints of local addresses that never got a successful reply from
 // any tracker are ignored while at least one address works, and a tracker that
 // the working addresses did not need is shown as a backup instead of an error.
 std::vector<TrackerView> Engine::trackers(int id) const {
