@@ -1395,7 +1395,7 @@ static std::wstring about_text() {
     line(L"  • libtorrent-rasterbar — Arvid Norberg e collaboratori, licenza BSD 3-clause");
     line(L"  • Boost C++ Libraries — Boost Software License 1.0");
     line(L"  • OpenSSL (se incluso nella build) — Apache License 2.0");
-    line(L"  • Icone: set SeedFlow originale (stile duotone), sorgenti SVG in res/icons");
+    line(L"  • Icone: disegni SVG SeedFlow, sorgenti in res/icons");
     return t;
 }
 static INT_PTR CALLBACK about_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {

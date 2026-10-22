@@ -1,3 +1,13 @@
+VERIFICHE artwork Classic 0.8.6.1 - 22/10/2026
+
+- Verificate 43 icone in 7 dimensioni (301 celle PNG non vuote, RGBA).
+- ICO del programma con 9 dimensioni distinte da 16 a 256 px; trasparenza verificata.
+- Compilazione risorse SeedFlow.rc con Windows SDK 10.0.28000.0: superata.
+- Controllo visivo delle icone e confronto del logo su fondo chiaro e scuro.
+- Build completa tentata con CMake/MSBuild, rimasta su "Checking File Globs"
+  senza avanzamenti; interrotta. Nessun nuovo EXE o esito CTest dichiarato.
+- Corretta la variabile che causava C4456 nel test; da ricompilare con i test.
+
 VERIFICHE SeedFlow 0.8.6 - 22/10/2026
 
 Base: 0.8.5 r16 (ramo main).

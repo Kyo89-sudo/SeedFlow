@@ -2,6 +2,11 @@ SeedFlow — Changelog
 
 0.8.6.1 — 2026-10-22
 
+- Nuovo set di 43 icone Classic: forme piene, colori riconoscibili e rilievo
+  leggero. La barra mantiene testi e disposizione. Disegni SVG originali SeedFlow.
+- Rifinita anche l'icona del programma: foglia e onde, bordo discreto e colori
+  coerenti con i comandi. ICO con nove dimensioni da 16 a 256 px.
+- Eliminato il warning C4456 nel test delle preferenze della barra di stato.
 - Aggiunta la scelta della cartella di salvataggio quando si aggiunge un file
   .torrent (anche trascinato o aperto da Esplora risorse): nome e dimensione,
   cartelle recenti, aggiunta in pausa e opzione "Non chiedere più"

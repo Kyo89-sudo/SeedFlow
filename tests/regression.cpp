@@ -197,13 +197,13 @@ int wmain(int argc, wchar_t** argv) {
         check(sf::status_part_edges(800, {}, 0, -1).empty() && sf::status_part_edges(800, {120}, 0, -1) == std::vector<int>{-1},
             "status bar edges for no parts or a single part");
         {
-            libtorrent::entry e(libtorrent::entry::dictionary_t);
-            e["status_panes"] = 0x24;
-            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), e);
+            libtorrent::entry pane_settings(libtorrent::entry::dictionary_t);
+            pane_settings["status_panes"] = 0x24;
+            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), pane_settings);
             sf::AppSettings loaded;
             check(sf::parse_settings(buf, loaded) && loaded.status_panes == 0x24, "visible status bar panes persisted");
-            e["status_panes"] = 0x1FF;
-            buf.clear(); libtorrent::bencode(std::back_inserter(buf), e);
+            pane_settings["status_panes"] = 0x1FF;
+            buf.clear(); libtorrent::bencode(std::back_inserter(buf), pane_settings);
             check(sf::parse_settings(buf, loaded) && loaded.status_panes == 0x3F, "unknown status bar pane bits dropped");
         }
 
