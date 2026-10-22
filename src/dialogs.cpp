@@ -126,6 +126,73 @@ static INT_PTR CALLBACK magnet_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
     }
     return FALSE;
 }
+// ------------------------------------------------------------------ add torrent (save path)
+void remember_dir(std::string const& folder) {
+    if (folder.empty()) return;
+    auto& dirs = g.settings.recent_dirs;
+    std::wstring const wanted = widen(folder);
+    dirs.erase(std::remove_if(dirs.begin(), dirs.end(), [&](std::string const& d) {
+        return _wcsicmp(widen(d).c_str(), wanted.c_str()) == 0; }), dirs.end());
+    dirs.insert(dirs.begin(), folder);
+    if (dirs.size() > 8) dirs.resize(8);
+}
+struct AddCtx { std::wstring summary; std::string* folder; bool* paused; bool* dont_ask; };
+static INT_PTR CALLBACK add_torrent_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
+    auto* ctx = reinterpret_cast<AddCtx*>(GetWindowLongPtrW(dlg, DWLP_USER));
+    switch (msg) {
+    case WM_INITDIALOG: {
+        SetWindowLongPtrW(dlg, DWLP_USER, lp);
+        ctx = reinterpret_cast<AddCtx*>(lp);
+        set_text(dlg, IDC_A_INFO, ctx->summary);
+        std::vector<std::wstring> items{widen(*ctx->folder)};
+        for (auto const& d : g.settings.recent_dirs) {
+            std::wstring w = widen(d);
+            bool dup = false;
+            for (auto const& x : items) dup = dup || _wcsicmp(x.c_str(), w.c_str()) == 0;
+            if (!dup) items.push_back(w);
+        }
+        for (auto const& w : items) combo_add(dlg, IDC_A_FOLDER, w.c_str());
+        set_text(dlg, IDC_A_FOLDER, items.front());
+        check(dlg, IDC_PAUSED, *ctx->paused);
+        check(dlg, IDC_A_NOASK, false);
+        return TRUE;
+    }
+    case WM_COMMAND:
+        if (!ctx) break;
+        switch (LOWORD(wp)) {
+        case IDC_BROWSE: { std::wstring f = get_text(dlg, IDC_A_FOLDER); if (pick_folder(dlg, f)) set_text(dlg, IDC_A_FOLDER, f); return TRUE; }
+        case IDOK: {
+            std::wstring f = get_text(dlg, IDC_A_FOLDER);
+            while (f.size() > 3 && (f.back() == L'\\' || f.back() == L'/')) f.pop_back();
+            std::error_code ec;
+            if (f.empty() || !fs::path(f).is_absolute()) {
+                MessageBoxW(dlg, L"Indica un percorso completo (es. D:\\Download).", L"SeedFlow", MB_ICONWARNING);
+                return TRUE;
+            }
+            if (!fs::is_directory(fs::path(f), ec)) {
+                if (MessageBoxW(dlg, (L"La cartella «" + f + L"» non esiste. Crearla?").c_str(), L"SeedFlow", MB_ICONQUESTION | MB_YESNO) != IDYES) return TRUE;
+                if (!fs::create_directories(fs::path(f), ec) && !fs::is_directory(fs::path(f), ec)) {
+                    MessageBoxW(dlg, L"Impossibile creare la cartella.", L"SeedFlow", MB_ICONWARNING);
+                    return TRUE;
+                }
+            }
+            *ctx->folder = narrow(f);
+            *ctx->paused = checked(dlg, IDC_PAUSED);
+            *ctx->dont_ask = checked(dlg, IDC_A_NOASK);
+            EndDialog(dlg, IDOK);
+            return TRUE;
+        }
+        case IDCANCEL: EndDialog(dlg, IDCANCEL); return TRUE;
+        }
+        break;
+    }
+    return FALSE;
+}
+bool dlg_add_torrent(HWND owner, std::wstring const& summary, std::string& folder, bool& paused, bool& dont_ask) {
+    AddCtx ctx{summary, &folder, &paused, &dont_ask};
+    return DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_ADDTORRENT), owner, add_torrent_proc, reinterpret_cast<LPARAM>(&ctx)) == IDOK;
+}
+
 bool dlg_magnet(HWND owner, std::vector<std::string>& magnets, std::string& folder, bool& paused) {
     MagnetCtx ctx{&magnets, &folder, &paused};
     return DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_MAGNET), owner, magnet_proc, reinterpret_cast<LPARAM>(&ctx)) == IDOK;
@@ -291,6 +358,7 @@ static INT_PTR CALLBACK pg_general(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
     case WM_INITDIALOG:
         check(dlg, IDC_CLOSETRAY, s.close_to_tray); check(dlg, IDC_MINTRAY, s.minimize_to_tray);
         check(dlg, IDC_CONFIRMREMOVE, s.confirm_remove); check(dlg, IDC_STARTPAUSED, s.start_paused);
+        check(dlg, IDC_ASKPATH, s.ask_save_path);
         check(dlg, IDC_AUTOSTART, autostart_enabled()); check(dlg, IDC_STARTMIN, s.start_minimized);
         EnableWindow(GetDlgItem(dlg, IDC_STARTMIN), checked(dlg, IDC_AUTOSTART));
         return TRUE;
@@ -300,6 +368,7 @@ static INT_PTR CALLBACK pg_general(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
     case WM_PAGE_APPLY: {
         s.close_to_tray = checked(dlg, IDC_CLOSETRAY); s.minimize_to_tray = checked(dlg, IDC_MINTRAY);
         s.confirm_remove = checked(dlg, IDC_CONFIRMREMOVE); s.start_paused = checked(dlg, IDC_STARTPAUSED);
+        s.ask_save_path = checked(dlg, IDC_ASKPATH);
         s.start_minimized = checked(dlg, IDC_STARTMIN);
         pref_autostart = checked(dlg, IDC_AUTOSTART);
         return page_result(dlg, true);

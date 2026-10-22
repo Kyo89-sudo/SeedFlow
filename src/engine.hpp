@@ -112,6 +112,11 @@ public:
 
     bool pause(int id, bool pause);
     bool force_start(int id);
+    // move_files: move the data to folder (existing files are kept); otherwise only point the
+    // torrent at folder (data already there, the caller should recheck).
+    bool move_storage(int id, std::string const& folder_utf8, bool move_files, std::string& error);
+    // Reads a .torrent without adding it (name, total size, number of files).
+    static bool peek_torrent(std::string const& file_utf8, std::string& name, std::int64_t& size, int& files, std::string& error);
     bool remove(int id, bool delete_files);
     bool recheck(int id);
     bool reannounce(int id);

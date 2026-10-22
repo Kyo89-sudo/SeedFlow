@@ -8,6 +8,7 @@
 #include <libtorrent/torrent_info.hpp>
 #include <libtorrent/torrent_status.hpp>
 #include <libtorrent/torrent_flags.hpp>
+#include <libtorrent/load_torrent.hpp>
 #include <libtorrent/settings_pack.hpp>
 #include <libtorrent/error_code.hpp>
 #include <libtorrent/file_storage.hpp>
@@ -337,6 +338,28 @@ bool Engine::pause(int id, bool p) {
         else { h->set_flags(lt::torrent_flags::auto_managed); h->resume(); }
         return true;
     } catch (...) { return false; }
+}
+bool Engine::move_storage(int id, std::string const& folder, bool move_files, std::string& error) {
+    auto const* h = find(id);
+    if (!h) { error = "Torrent non trovato"; return false; }
+    try {
+        h->move_storage(folder, move_files ? lt::move_flags_t::dont_replace : lt::move_flags_t::reset_save_path);
+        return true;
+    } catch (std::exception const& e) { error = e.what(); return false; }
+}
+bool Engine::peek_torrent(std::string const& file, std::string& name, std::int64_t& size, int& files, std::string& error) {
+    try {
+        std::vector<char> buf;
+        if (!read_file(u8path(file), buf)) { error = "File .torrent non leggibile"; return false; }
+        lt::add_torrent_params const atp = lt::load_torrent_buffer(lt::span<char const>(buf.data(), static_cast<std::ptrdiff_t>(buf.size())));
+        if (!atp.ti) { error = "File .torrent non valido"; return false; }
+        name = atp.ti->name();
+        size = atp.ti->total_size();
+        files = 0;
+        auto const& fs = atp.ti->files();
+        for (auto const i : fs.file_range()) if (!(fs.file_flags(i) & lt::file_storage::flag_pad_file)) ++files;
+        return true;
+    } catch (std::exception const& e) { error = std::string("File .torrent non valido: ") + e.what(); return false; }
 }
 bool Engine::force_start(int id) {
     auto const* h = find(id);
@@ -796,6 +819,12 @@ void Engine::process_alerts() {
                 if (fin->handle.is_valid()) { fin->handle.save_resume_data(lt::torrent_handle::save_info_dict); ++outstanding_resume_; }
             } else if (auto* mr = lt::alert_cast<lt::metadata_received_alert>(a)) {
                 if (mr->handle.is_valid()) { mr->handle.save_resume_data(lt::torrent_handle::save_info_dict); ++outstanding_resume_; }
+            } else if (auto* sm = lt::alert_cast<lt::storage_moved_alert>(a)) {
+                push_event("Percorso aggiornato: " + std::string(sm->torrent_name()) + " -> " + sm->storage_path());
+                if (sm->handle.is_valid()) { sm->handle.save_resume_data(lt::torrent_handle::save_info_dict); ++outstanding_resume_; }
+            } else if (auto* smf = lt::alert_cast<lt::storage_moved_failed_alert>(a)) {
+                push_event("Spostamento NON riuscito (" + std::string(smf->torrent_name()) + "): " + smf->error.message() +
+                           (smf->file_path() && *smf->file_path() ? std::string(" - ") + smf->file_path() : std::string()));
             } else if (lt::alert_cast<lt::torrent_deleted_alert>(a)) {
                 push_event("File eliminati dal disco: " + std::string(static_cast<lt::torrent_alert*>(a)->torrent_name()));
             } else if (auto* df = lt::alert_cast<lt::torrent_delete_failed_alert>(a)) {

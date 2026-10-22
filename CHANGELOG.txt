@@ -2,6 +2,13 @@ SeedFlow — Changelog
 
 0.8.6.1 — 2026-10-22
 
+- Aggiunta la scelta della cartella di salvataggio quando si aggiunge un file
+  .torrent (anche trascinato o aperto da Esplora risorse): nome e dimensione,
+  cartelle recenti, aggiunta in pausa e opzione "Non chiedere più"
+  (riattivabile in Preferenze › Generale).
+- Aggiunto "Sposta in un'altra cartella..." nel menu del tasto destro: sposta
+  i file oppure aggiorna solo il percorso se i dati sono già stati spostati,
+  con verifica automatica. Esito dello spostamento nel log.
 - Barra di stato: larghezza dei pannelli calcolata dal testo, niente più testo
   che sborda o tagliato; limite di velocità mostrato in forma compatta
   ([max 107,3 MiB/s]).

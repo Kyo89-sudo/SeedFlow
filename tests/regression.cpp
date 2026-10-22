@@ -88,6 +88,23 @@ int wmain(int argc, wchar_t** argv) {
         check(sf::parse_settings(encoded, settings) && settings.user_agent == "qBittorrent/5.3.0" && settings.peer_id_prefix == "-qB5300-",
               "previous client preset follows the updated one");
         e["user_agent"] = "Custom/1.0"; e["peer_id_prefix"] = ""; e["client_name"] = "";
+        {
+            sf::g.settings.recent_dirs.clear();
+            for (int i = 0; i < 10; ++i) sf::remember_dir("C:\\Dati\\" + std::to_string(i));
+            sf::remember_dir("c:\\dati\\3");
+            check(sf::g.settings.recent_dirs.size() == 8 && sf::g.settings.recent_dirs.front() == "c:\\dati\\3" &&
+                  std::count_if(sf::g.settings.recent_dirs.begin(), sf::g.settings.recent_dirs.end(),
+                      [](std::string const& d) { return _stricmp(d.c_str(), "C:\\Dati\\3") == 0; }) == 1,
+                  "recent save folders: newest first, no duplicates, at most 8");
+            libtorrent::entry dirs(libtorrent::entry::dictionary_t);
+            dirs["ask_save_path"] = 0;
+            dirs["recent_dirs"] = libtorrent::entry::list_type{libtorrent::entry("D:\\Uno"), libtorrent::entry("D:\\Due")};
+            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), dirs);
+            sf::AppSettings loaded;
+            check(sf::parse_settings(buf, loaded) && !loaded.ask_save_path && loaded.recent_dirs.size() == 2 && loaded.recent_dirs[1] == "D:\\Due",
+                  "save-path question and recent folders persisted");
+            sf::g.settings.recent_dirs.clear();
+        }
 
         // Corrupt persisted integers must not wrap into apparently valid settings.
         e["port"] = std::int64_t{4294979641LL}; // low 32 bits equal a different valid port

@@ -91,6 +91,12 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.create_seed = gi(d, "create_seed", 1) != 0;
     s.create_private = gi(d, "create_private", 0) != 0;
     s.create_copy_magnet = gi(d, "create_copy_magnet", 0) != 0;
+    s.ask_save_path = gi(d, "ask_save_path", 1) != 0;
+    s.recent_dirs.clear();
+    if (auto rd = d.dict_find_list("recent_dirs"))
+        for (int i = 0; i < rd.list_size() && s.recent_dirs.size() < 8; ++i)
+            if (rd.list_at(i).type() == lt::bdecode_node::string_t && !rd.list_at(i).string_value().empty())
+                s.recent_dirs.emplace_back(rd.list_at(i).string_value());
     s.start_paused = gi(d, "start_paused", 0) != 0;
     s.confirm_remove = gi(d, "confirm_remove", 1) != 0;
     s.user_agent = gs(d, "user_agent", def.user_agent);
@@ -188,6 +194,8 @@ bool save_settings(AppSettings const& s, std::string& error) {
         e["start_minimized"] = s.start_minimized; e["process_priority"] = s.process_priority;
         e["create_format"] = s.create_format; e["create_piece"] = s.create_piece; e["create_trackers"] = s.create_trackers;
         e["create_seed"] = s.create_seed; e["create_private"] = s.create_private; e["create_copy_magnet"] = s.create_copy_magnet;
+        e["ask_save_path"] = s.ask_save_path;
+        { lt::entry::list_type dirs; for (auto const& d2 : s.recent_dirs) dirs.emplace_back(d2); e["recent_dirs"] = dirs; }
         e["confirm_remove"] = s.confirm_remove; e["user_agent"] = s.user_agent;
         e["send_client_name"] = s.send_client_name;
         e["peer_id_prefix"] = s.peer_id_prefix; e["client_name"] = s.client_name; e["anonymous_mode"] = s.anonymous_mode;

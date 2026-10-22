@@ -204,6 +204,7 @@ static void decorate_menu(HMENU m) {
     set_menu_icon(m, ID_T_PAUSE, IcPause);
     set_menu_icon(m, ID_T_COPYMAGNET, IcCopy);
     set_menu_icon(m, ID_T_OPENFOLDER, IcFolder);
+    set_menu_icon(m, ID_T_MOVE, IcMoving);
     set_menu_icon(m, ID_T_RATIO, IcRatio);
     set_menu_icon(m, ID_T_LIMITS, IcSpeed);
     set_menu_icon(m, ID_T_SUPERSEED, IcSuperseed);
@@ -1038,17 +1039,87 @@ int add_created_torrent(std::wstring const& torrent_file, std::wstring const& sa
 }
 static void add_files(std::vector<std::wstring> const& files) {
     std::string folder = download_dir();
+    bool paused = g.settings.start_paused;
+    if (g.settings.ask_save_path) {
+        // Summary for the save-path dialog: name and size of one torrent, or count and total.
+        std::wstring summary;
+        std::int64_t total = 0;
+        int readable = 0;
+        for (auto const& f : files) {
+            std::string name, err; std::int64_t size = 0; int count = 0;
+            if (Engine::peek_torrent(narrow(f), name, size, count, err)) {
+                ++readable; total += size;
+                if (files.size() == 1)
+                    summary = widen(name) + L"\n" + fmt_bytes(size) + L" · " + std::to_wstring(count) + (count == 1 ? L" file" : L" file");
+            }
+        }
+        if (files.size() > 1) summary = std::to_wstring(files.size()) + L" torrent · " + fmt_bytes(total) + L" in totale";
+        else if (!readable) summary = fs::path(files.front()).filename().wstring();
+        bool dont_ask = false;
+        if (!dlg_add_torrent(g.main, summary, folder, paused, dont_ask)) return;
+        if (dont_ask) { g.settings.ask_save_path = false; log_line(L"Cartella di salvataggio: non verrà più chiesta (Preferenze › Generale per riattivare)."); }
+        remember_dir(folder);
+    }
     std::error_code ec;
     fs::create_directories(fs::path(widen(folder)), ec);
     for (auto const& f : files) {
         std::string err;
         AddResult r;
-        int id = g.engine.add_torrent_file(narrow(f), folder, g.settings.start_paused, err, &r);
+        int id = g.engine.add_torrent_file(narrow(f), folder, paused, err, &r);
         if (id > 0) { after_add(id); log_line(L"Aggiunto: " + fs::path(f).filename().wstring()); }
         else log_line(L"Non aggiunto (" + fs::path(f).filename().wstring() + L"): " + widen(err));
         if (id <= 0 && r != AddResult::Duplicate && files.size() == 1)
             MessageBoxW(g.main, widen(err).c_str(), L"SeedFlow", MB_ICONWARNING);
     }
+    persist();
+    refresh_now();
+}
+// "Sposta in un'altra cartella": choose the folder, then either move the data there or
+// only point the torrents at it (data already moved by hand, followed by a recheck).
+static void move_selected() {
+    auto ids = selected_ids();
+    if (ids.empty()) return;
+    Row const* first = row_by_id(ids[0]);
+    std::wstring folder = first ? widen(first->v.save_path) : widen(download_dir());
+    if (!pick_folder(g.main, folder)) return;
+    TASKDIALOG_BUTTON buttons[] = {
+        {1001, L"Sposta i file nella nuova cartella\nSeedFlow copia i dati e poi li elimina dalla posizione attuale."},
+        {1002, L"I file sono già nella nuova cartella\nAggiorna solo il percorso ed esegue una verifica dei dati."},
+    };
+    std::wstring const content = (ids.size() == 1 && first ? L"«" + widen(first->v.name) + L"»" : std::to_wstring(ids.size()) + L" torrent") +
+                                 L"\nNuova cartella: " + folder;
+    TASKDIALOGCONFIG tc{};
+    tc.cbSize = sizeof(tc);
+    tc.hwndParent = g.main;
+    tc.dwFlags = TDF_USE_COMMAND_LINKS | TDF_ALLOW_DIALOG_CANCELLATION | TDF_POSITION_RELATIVE_TO_WINDOW;
+    tc.pszWindowTitle = L"Sposta in un'altra cartella";
+    tc.pszMainIcon = TD_INFORMATION_ICON;
+    tc.pszMainInstruction = L"Come vuoi cambiare il percorso?";
+    tc.pszContent = content.c_str();
+    tc.cButtons = 2;
+    tc.pButtons = buttons;
+    tc.dwCommonButtons = TDCBF_CANCEL_BUTTON;
+    int choice = 0;
+    // TaskDialogIndirect exists only in Common Controls 6 (enabled by the manifest): resolve it at
+    // run time so binaries without that manifest (the regression test) still load.
+    using TaskDialogFn = HRESULT(WINAPI*)(TASKDIALOGCONFIG const*, int*, int*, BOOL*);
+    auto task_dialog = reinterpret_cast<TaskDialogFn>(reinterpret_cast<void*>(GetProcAddress(GetModuleHandleW(L"comctl32.dll"), "TaskDialogIndirect")));
+    if (!task_dialog || FAILED(task_dialog(&tc, &choice, nullptr, nullptr))) {
+        int const r = MessageBoxW(g.main, (content + L"\n\nSì: sposta i file nella nuova cartella.\nNo: i file sono già lì, aggiorna solo il percorso e verifica.").c_str(),
+                                  L"Sposta in un'altra cartella", MB_ICONQUESTION | MB_YESNOCANCEL);
+        choice = r == IDYES ? 1001 : r == IDNO ? 1002 : 0;
+    }
+    if (choice != 1001 && choice != 1002) return;
+    bool const move_files = choice == 1001;
+    std::error_code ec;
+    fs::create_directories(fs::path(folder), ec);
+    for (int id : ids) {
+        std::string err;
+        if (!g.engine.move_storage(id, narrow(folder), move_files, err)) { log_line(L"Spostamento non avviato: " + widen(err)); continue; }
+        if (!move_files) g.engine.recheck(id);
+    }
+    remember_dir(narrow(folder));
+    log_line(move_files ? L"Spostamento dei file avviato verso " + folder : L"Percorso aggiornato a " + folder + L": verifica dei dati avviata.");
     persist();
     refresh_now();
 }
@@ -1309,7 +1380,7 @@ static void on_command(int cmd) {
         std::vector<std::string> magnets;
         std::string folder = download_dir();
         bool paused = g.settings.start_paused;
-        if (dlg_magnet(g.main, magnets, folder, paused)) add_magnets(magnets, folder, paused);
+        if (dlg_magnet(g.main, magnets, folder, paused)) { remember_dir(folder); add_magnets(magnets, folder, paused); }
         break;
     }
     case ID_FILE_CREATE: dlg_create_torrent(g.main); break;
@@ -1344,6 +1415,7 @@ static void on_command(int cmd) {
     case ID_T_DELETE: remove_selected(true); break;
     case ID_T_COPYMAGNET: copy_magnet(); break;
     case ID_T_OPENFOLDER: open_selected_folder(); break;
+    case ID_T_MOVE: move_selected(); break;
     case ID_T_RATIO: {
         // With torrents selected: their own limit. Without a selection the button used to
         // do nothing at all: open the global ratio settings instead.
