@@ -25,6 +25,12 @@ if(SF_STATIC_RUNTIME AND SF_TORRENT_DEFINITIONS MATCHES "TORRENT_LINKING_SHARED"
   message(FATAL_ERROR "Static build requested, but libtorrent is shared. Use x64-windows-static or SF_STATIC_RUNTIME=OFF.")
 endif()
 
+# The resource script embeds these files: rebuild it when they change
+# (MSBuild tracks them itself; Makefile/Ninja need the explicit list).
+file(GLOB SF_RC_INPUTS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/res/*.manifest"
+  "${CMAKE_CURRENT_SOURCE_DIR}/res/*.ico" "${CMAKE_CURRENT_SOURCE_DIR}/res/icons/*.png")
+set_property(SOURCE res/SeedFlow.rc APPEND PROPERTY OBJECT_DEPENDS ${SF_RC_INPUTS} "${CMAKE_CURRENT_SOURCE_DIR}/src/version.h")
+
 add_executable(SeedFlow WIN32
   src/mainwindow.cpp
   src/dialogs.cpp
