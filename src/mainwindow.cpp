@@ -753,10 +753,39 @@ static void apply_ratio_rules() {
 }
 
 // ------------------------------------------------------------------ status bar / tray
+// Panes: 0 network, 1 DHT, 2 download speed, 3 upload speed, 4 totals, 5 RAM.
+// Each can be hidden from Preferences > General (settings.status_panes, one bit per pane);
+// the status bar parts are the visible panes in this order.
 static void tray_update_tip(std::int64_t down, std::int64_t up);
-static std::array<std::wstring, 6> status_texts;
-static std::array<int, 6> status_need{};
+static std::array<std::wstring, 6> status_texts;   // per pane
+static std::vector<int> status_need;                // per visible part
+static int status_mask = -1;                        // panes currently laid out
 static void fit_status_panes();
+static void layout();
+static bool pane_shown(int pane) { return (g.settings.status_panes >> pane) & 1; }
+static int pane_count(int mask) { int n = 0; for (int p = 0; p < 6; ++p) n += (mask >> p) & 1; return n; }
+static int status_part(int pane) {                 // part index of a pane, -1 when hidden
+    if (pane < 0 || pane > 5 || !pane_shown(pane)) return -1;
+    int part = 0;
+    for (int p = 0; p < pane; ++p) part += pane_shown(p);
+    return part;
+}
+static int status_pane_at(int part) {
+    for (int p = 0; p < 6; ++p) if (pane_shown(p) && part-- == 0) return p;
+    return -1;
+}
+static int status_height() {
+    // the style bit, not IsWindowVisible: the main window may be hidden in the tray
+    if (!g.status || !(GetWindowLongW(g.status, GWL_STYLE) & WS_VISIBLE)) return 0;
+    RECT sr; GetWindowRect(g.status, &sr);
+    return sr.bottom - sr.top;
+}
+static void set_pane_text(int pane, std::wstring const& text, std::wstring const* tip = nullptr) {
+    int const part = status_part(pane);
+    if (part < 0) return;
+    SendMessageW(g.status, SB_SETTEXTW, part, reinterpret_cast<LPARAM>(text.c_str()));
+    if (tip) SendMessageW(g.status, SB_SETTIPTEXTW, part, reinterpret_cast<LPARAM>(tip->c_str()));
+}
 static void update_status(std::int64_t down, std::int64_t up) {
     std::wstring dht = L"DHT: " + (g.settings.dht ? fmt_int(g.engine.counters().dht_nodes) + L" nodi" : std::wstring(L"disattivato"));
     auto limit = [](int kib) { return kib ? L" [max " + fmt_speed(static_cast<std::int64_t>(kib) * 1024) + L"]" : std::wstring(); };
@@ -766,16 +795,18 @@ static void update_status(std::int64_t down, std::int64_t up) {
         L"  ratio " + fmt_ratio(effective_ratio(g.settings.stats.downloaded, g.settings.stats.uploaded, 0), g.settings.stats.downloaded || g.settings.stats.uploaded);
     auto mem = memory_usage();
     std::wstring ram = L"RAM " + fmt_bytes(static_cast<std::int64_t>(mem.working_set));
-    SendMessageW(g.status, SB_SETTEXTW, 1, reinterpret_cast<LPARAM>(dht.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 2, reinterpret_cast<LPARAM>(d.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 3, reinterpret_cast<LPARAM>(u.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 4, reinterpret_cast<LPARAM>(totals.c_str()));
-    SendMessageW(g.status, SB_SETTEXTW, 5, reinterpret_cast<LPARAM>(ram.c_str()));
-    wchar_t const* tips[] = {dht.c_str(), d.c_str(), u.c_str(), totals.c_str(), ram.c_str()};
-    for (int i = 0; i < 5; ++i) SendMessageW(g.status, SB_SETTIPTEXTW, i + 1, reinterpret_cast<LPARAM>(tips[i]));
     status_texts = {g.net_text, dht, d, u, totals, ram};
-    fit_status_panes();
+    fit_status_panes();   // applies a change of the visible panes first
+    for (int pane = 1; pane < 6; ++pane) set_pane_text(pane, status_texts[pane], &status_texts[pane]);
     tray_update_tip(down, up);
+}
+// Network pane text, icon and tooltip (also re-applied after the visible panes change).
+static void show_network_pane() {
+    int const part = status_part(0);
+    if (part < 0) return;
+    SendMessageW(g.status, SB_SETICON, part, reinterpret_cast<LPARAM>(g.net_icon));
+    SendMessageW(g.status, SB_SETTEXTW, part, reinterpret_cast<LPARAM>(g.net_text.c_str()));
+    SendMessageW(g.status, SB_SETTIPTEXTW, part, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
 }
 static void update_network_indicator() {
     auto n = g.engine.network();
@@ -786,61 +817,86 @@ static void update_network_indicator() {
                        : st == NetState::Starting ? RGB(120, 144, 156) : RGB(198, 40, 40);
         HICON old = g.net_icon;
         g.net_icon = icons::make_icon(icons::IcGlobe, scale(16), color);
-        SendMessageW(g.status, SB_SETICON, 0, reinterpret_cast<LPARAM>(g.net_icon));
-        if (old) DestroyIcon(old);
         g.net_state = st;
         g.net_text = text;
-        SendMessageW(g.status, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(text.c_str()));
+        g.net_tip = tip;
+        show_network_pane();
+        if (old) DestroyIcon(old);
+    } else if (tip != g.net_tip) {
+        g.net_tip = tip;
+        int const part = status_part(0);
+        if (part >= 0) SendMessageW(g.status, SB_SETTIPTEXTW, part, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
     }
-    g.net_tip = tip;
-    SendMessageW(g.status, SB_SETTIPTEXTW, 0, reinterpret_cast<LPARAM>(g.net_tip.c_str()));
 }
-// Status bar panes sized from the text they show (need[i] = text width + padding).
-// Panes 1..5 get what they need; the network pane (0) takes the rest. When the
-// window is too narrow, the totals pane shrinks first, then every pane proportionally.
-std::array<int, 6> status_part_edges(int width, std::array<int, 6> const& need) {
+// Status bar parts sized from the text they show (need[i] = text width + padding).
+// Every part gets what it needs; `flex` takes the spare room. When the window is too
+// narrow, `shrink_first` gives up to half of its width first, then all parts shrink
+// proportionally. Returns the right edges for SB_SETPARTS (the last one is -1).
+std::vector<int> status_part_edges(int width, std::vector<int> const& need, int flex, int shrink_first) {
     int const available = std::max(0, width);
-    std::array<int, 6> w = need;
+    std::vector<int> w = need;
+    int const n = static_cast<int>(w.size());
+    if (n == 0) return {};
     int total = 0;
     for (int v : w) total += v;
-    if (total > available) {                                  // 1) totals pane down to half of its text
-        int const cut = std::min(total - available, w[4] / 2);
-        w[4] -= cut; total -= cut;
+    if (total > available && shrink_first >= 0 && shrink_first < n) {
+        int const cut = std::min(total - available, w[static_cast<std::size_t>(shrink_first)] / 2);
+        w[static_cast<std::size_t>(shrink_first)] -= cut; total -= cut;
     }
-    if (total > available && total > 0) {                     // 2) everything proportionally
+    if (total > available && total > 0) {
         for (auto& v : w) v = MulDiv(v, available, total);
         total = 0;
         for (int v : w) total += v;
     }
-    w[0] += std::max(0, available - total);                   // spare room to the network pane
-    std::array<int, 6> edges{};
+    if (flex >= 0 && flex < n) w[static_cast<std::size_t>(flex)] += std::max(0, available - total);
+    std::vector<int> edges(w.size());
     int x = 0;
-    for (int i = 0; i < 5; ++i) { x += w[static_cast<std::size_t>(i)]; edges[static_cast<std::size_t>(i)] = std::min(x, available); }
-    edges[5] = -1;
+    for (int i = 0; i + 1 < n; ++i) { x += w[static_cast<std::size_t>(i)]; edges[static_cast<std::size_t>(i)] = std::min(x, available); }
+    edges.back() = -1;
     return edges;
 }
 static void layout_status() {
+    if (!g.status || status_need.empty()) return;
     RECT rc; GetClientRect(g.main, &rc);
-    if (status_need[1] == 0) status_need = {scale(150), scale(110), scale(220), scale(260), scale(320), scale(110)};
-    auto const edges = status_part_edges(rc.right, status_need);
+    int const net = status_part(0), totals = status_part(4);
+    auto const edges = status_part_edges(rc.right, status_need, net >= 0 ? net : static_cast<int>(status_need.size()) - 1, totals);
     SendMessageW(g.status, SB_SETPARTS, edges.size(), reinterpret_cast<LPARAM>(edges.data()));
 }
-// Measures the pane texts with the status bar font; relayouts only when a pane needs
+// Measures the pane texts with the status bar font; relayouts only when a part needs
 // more room or could give back a noticeable amount (avoids flicker every second).
 static void fit_status_panes() {
     if (!g.status) return;
+    int const mask = g.settings.status_panes & 0x3F;
+    if (mask != status_mask) {                       // panes shown or hidden from the preferences
+        bool const was_visible = status_mask != 0;
+        status_mask = mask;
+        status_need.clear();
+        for (int i = 0; i < 6; ++i) SendMessageW(g.status, SB_SETICON, i, 0);
+        ShowWindow(g.status, mask ? SW_SHOWNA : SW_HIDE);
+        if (mask) {
+            int const parts = pane_count(mask);
+            std::vector<int> edges(static_cast<std::size_t>(parts), -1);
+            SendMessageW(g.status, SB_SETPARTS, edges.size(), reinterpret_cast<LPARAM>(edges.data()));
+            show_network_pane();
+        }
+        if (was_visible != (mask != 0) && g.main) layout();
+    }
+    if (!mask) return;
     HDC dc = GetDC(g.status);
     HGDIOBJ old = SelectObject(dc, reinterpret_cast<HFONT>(SendMessageW(g.status, WM_GETFONT, 0, 0)));
-    std::array<int, 6> need{};
-    for (std::size_t i = 0; i < need.size(); ++i) {
+    std::vector<int> need;
+    int const last = status_pane_at(pane_count(mask) - 1);
+    for (int pane = 0; pane < 6; ++pane) {
+        if (!pane_shown(pane)) continue;
         SIZE sz{};
-        GetTextExtentPoint32W(dc, status_texts[i].c_str(), static_cast<int>(status_texts[i].size()), &sz);
-        need[i] = sz.cx + scale(14) + (i == 0 ? scale(22) : 0) + (i == 5 ? scale(18) : 0);   // icon / size grip
+        auto const& text = status_texts[static_cast<std::size_t>(pane)];
+        GetTextExtentPoint32W(dc, text.c_str(), static_cast<int>(text.size()), &sz);
+        need.push_back(sz.cx + scale(14) + (pane == 0 ? scale(22) : 0) + (pane == last ? scale(18) : 0));   // icon / size grip
     }
     SelectObject(dc, old);
     ReleaseDC(g.status, dc);
-    bool relayout = false;
-    for (std::size_t i = 0; i < need.size(); ++i)
+    bool relayout = need.size() != status_need.size();
+    for (std::size_t i = 0; !relayout && i < need.size(); ++i)
         if (need[i] > status_need[i] || status_need[i] - need[i] > scale(40)) relayout = true;
     if (relayout) { status_need = need; layout_status(); }
 }
@@ -1298,7 +1354,7 @@ static void copy_magnet() {
         if (g.engine.magnet_uri(id, m)) { if (!all.empty()) all += L"\r\n"; all += widen(m); }
     }
     if (all.empty()) { MessageBoxW(g.main, L"Magnet non disponibile.", L"SeedFlow", MB_ICONWARNING); return; }
-    if (copy_to_clipboard(g.main, all)) SendMessageW(g.status, SB_SETTEXTW, 4, reinterpret_cast<LPARAM>(L"Magnet copiato negli appunti"));
+    if (copy_to_clipboard(g.main, all)) set_pane_text(pane_shown(4) ? 4 : status_pane_at(pane_count(g.settings.status_panes) - 1), L"Magnet copiato negli appunti");
 }
 static void open_selected_folder() {
     auto ids = selected_ids();
@@ -1538,8 +1594,7 @@ static void layout() {
     int tbh = toolbar_height(g.toolbar);
     SetWindowPos(g.toolbar, nullptr, scale(2), scale(1), rc.right - scale(4), tbh, SWP_NOZORDER);
     SendMessageW(g.status, WM_SIZE, 0, 0);
-    RECT sr; GetWindowRect(g.status, &sr);
-    int sbh = sr.bottom - sr.top;
+    int sbh = status_height();
     layout_status();
     int top = tbh + scale(2), bottom = rc.bottom - sbh;
     int left_w = std::clamp(scale(g.split_left), scale(90), std::max(scale(90), static_cast<int>(rc.right) / 2));
@@ -1739,7 +1794,7 @@ static LRESULT on_notify(NMHDR* nm) {
     } else if (nm->hwndFrom == g.tabs && nm->code == TCN_SELCHANGE) {
         show_tab(current_tab());
     } else if (nm->hwndFrom == g.status && nm->code == NM_CLICK) {
-        if (reinterpret_cast<NMMOUSE*>(nm)->dwItemSpec == 0) dlg_diagnostics(g.main);
+        if (status_pane_at(static_cast<int>(reinterpret_cast<NMMOUSE*>(nm)->dwItemSpec)) == 0) dlg_diagnostics(g.main);
     } else if (nm->hwndFrom == g.trackers && nm->code == NM_DBLCLK) {
         on_command(ID_TR_ADD);
     } else if (nm->hwndFrom == g.files && nm->code == NM_DBLCLK) {
@@ -1837,10 +1892,10 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_MOUSEMOVE:
         if (drag && (wp & MK_LBUTTON)) {
             RECT rc; GetClientRect(hwnd, &rc);
-            RECT sr; GetWindowRect(g.status, &sr);
+            int const sbh = status_height();
             int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);
             if (drag == 1) g.split_left = MulDiv(std::clamp(x, scale(90), std::max(scale(90), static_cast<int>(rc.right) / 2)), 96, static_cast<int>(g.dpi));
-            else g.split_bottom = MulDiv(std::max(scale(80), static_cast<int>(rc.bottom - (sr.bottom - sr.top)) - y), 96, static_cast<int>(g.dpi));
+            else g.split_bottom = MulDiv(std::max(scale(80), static_cast<int>(rc.bottom - sbh) - y), 96, static_cast<int>(g.dpi));
             layout();
         }
         return 0;

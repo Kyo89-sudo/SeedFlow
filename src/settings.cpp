@@ -49,6 +49,7 @@ static void sanitize(AppSettings& s) {
     auto in = [](int v, int lo, int hi) { return v >= lo && v <= hi; };
     auto fix = [&](int& v, int lo, int hi, int fallback) { if (!in(v, lo, hi)) v = fallback; };
     fix(s.port, 1024, 65535, def.port);
+    fix(s.status_panes, 0, 0x3F, def.status_panes);
     fix(s.encryption, 0, 2, def.encryption);
     fix(s.down_kib, 0, 2000000, 0);
     fix(s.up_kib, 0, 2000000, 0);
@@ -92,6 +93,7 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.create_private = gi(d, "create_private", 0) != 0;
     s.create_copy_magnet = gi(d, "create_copy_magnet", 0) != 0;
     s.ask_save_path = gi(d, "ask_save_path", 1) != 0;
+    s.status_panes = gint(d, "status_panes", 0x3F) & 0x3F;
     s.recent_dirs.clear();
     if (auto rd = d.dict_find_list("recent_dirs"))
         for (int i = 0; i < rd.list_size() && s.recent_dirs.size() < 8; ++i)
@@ -194,7 +196,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         e["start_minimized"] = s.start_minimized; e["process_priority"] = s.process_priority;
         e["create_format"] = s.create_format; e["create_piece"] = s.create_piece; e["create_trackers"] = s.create_trackers;
         e["create_seed"] = s.create_seed; e["create_private"] = s.create_private; e["create_copy_magnet"] = s.create_copy_magnet;
-        e["ask_save_path"] = s.ask_save_path;
+        e["ask_save_path"] = s.ask_save_path; e["status_panes"] = s.status_panes;
         { lt::entry::list_type dirs; for (auto const& d2 : s.recent_dirs) dirs.emplace_back(d2); e["recent_dirs"] = dirs; }
         e["confirm_remove"] = s.confirm_remove; e["user_agent"] = s.user_agent;
         e["send_client_name"] = s.send_client_name;

@@ -213,6 +213,14 @@ BEGIN
     GROUPBOX        "Nuovi torrent", -1, 0, 126, 342, 46
     AUTOCHECKBOX    "Aggiungi i nuovi torrent in pausa", IDC_STARTPAUSED, 8, 140, 326, 10
     AUTOCHECKBOX    "Chiedi dove salvare quando aggiungi un file .torrent", IDC_ASKPATH, 8, 154, 326, 10
+    GROUPBOX        "Barra di stato", -1, 0, 178, 342, 74
+    AUTOCHECKBOX    "Stato della rete e porta", IDC_SB_NET, 8, 192, 160, 10
+    AUTOCHECKBOX    "Nodi DHT", IDC_SB_DHT, 8, 206, 160, 10
+    AUTOCHECKBOX    "Velocità di download", IDC_SB_DOWN, 8, 220, 160, 10
+    AUTOCHECKBOX    "Velocità di upload", IDC_SB_UP, 176, 192, 158, 10
+    AUTOCHECKBOX    "Totali scaricati/caricati e ratio", IDC_SB_TOTALS, 176, 206, 158, 10
+    AUTOCHECKBOX    "Memoria usata (RAM)", IDC_SB_RAM, 176, 220, 158, 10
+    LTEXT           "Togliendo tutte le voci la barra di stato viene nascosta.", -1, 8, 236, 326, 9
 END
 
 IDD_PG_FOLDERS DIALOGEX 0, 0, 342, 272

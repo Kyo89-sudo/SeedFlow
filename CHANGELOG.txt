@@ -11,6 +11,9 @@ SeedFlow — Changelog
 - Aggiunto "Sposta in un'altra cartella..." nel menu del tasto destro: sposta
   i file oppure aggiorna solo il percorso se i dati sono già stati spostati,
   con verifica automatica. Esito dello spostamento nel log.
+- Barra di stato configurabile da Preferenze › Generale: rete, DHT,
+  velocità, totali e RAM si possono nascondere una per una; togliendole
+  tutte la barra sparisce.
 - Barra di stato: larghezza dei pannelli calcolata dal testo, niente più testo
   che sborda o tagliato; limite di velocità mostrato in forma compatta
   ([max 107,3 MiB/s]).
