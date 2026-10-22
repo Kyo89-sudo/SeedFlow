@@ -83,6 +83,11 @@ int wmain(int argc, wchar_t** argv) {
         e["user_agent"] = "Custom/1.0";
         encoded.clear(); libtorrent::bencode(std::back_inserter(encoded), e);
         check(sf::parse_settings(encoded, settings) && settings.user_agent == "Custom/1.0", "custom user agent preserved");
+        e["user_agent"] = "qBittorrent/5.1.4"; e["peer_id_prefix"] = "-qB5140-"; e["client_name"] = "qBittorrent/5.1.4";
+        encoded.clear(); libtorrent::bencode(std::back_inserter(encoded), e);
+        check(sf::parse_settings(encoded, settings) && settings.user_agent == "qBittorrent/5.3.0" && settings.peer_id_prefix == "-qB5300-",
+              "previous client preset follows the updated one");
+        e["user_agent"] = "Custom/1.0"; e["peer_id_prefix"] = ""; e["client_name"] = "";
 
         // Corrupt persisted integers must not wrap into apparently valid settings.
         e["port"] = std::int64_t{4294979641LL}; // low 32 bits equal a different valid port
@@ -297,8 +302,7 @@ int wmain(int argc, wchar_t** argv) {
         check(user_agent.find(L"Modalità anonima") != std::wstring::npos, "compiled dialog accent intact");
         check(user_agent.find(L"Campi vuoti = identità SeedFlow.") != std::wstring::npos, "long dialog label not truncated");
         check(resource_text(module, IDD_LIMITS).find(L"Limiti di velocità del torrent") != std::wstring::npos, "compiled dialog title accent intact");
-        check(sf::about_version_line().find(L"revisione " + std::to_wstring(SF_REVISION)) != std::wstring::npos &&
-              sf::about_version_line().find(SF_VERSION_WSTRING) != std::wstring::npos, "About shows the current version and revision");
+        check(sf::about_version_line().find(L"Versione " SF_VERSION_WSTRING L" ") != std::wstring::npos, "About shows the current version");
         {
             HRSRC manifest = FindResourceW(module, MAKEINTRESOURCEW(1), MAKEINTRESOURCEW(24));
             check(manifest != nullptr, "embedded manifest present");

@@ -241,12 +241,12 @@ bool dlg_trackers(HWND owner, std::wstring& text) {
 
 // ------------------------------------------------------------------ user agent / identity
 struct UaPreset { wchar_t const* name; char const* agent; char const* peer; char const* client; };
-// Versions checked October 2026 (qBittorrent 5.1.4, Transmission 4.1.1).
+// Versions checked 22 October 2026: qBittorrent 5.3.0, Transmission 4.1.3, Deluge 2.2.0 (release tags on GitHub).
 // peer = peer ID prefix.
 static UaPreset const kUaPresets[] = {
     {L"SeedFlow " SF_VERSION_WSTRING L" (predefinito)", SF_USER_AGENT, "", ""},
-    {L"qBittorrent 5.1.4", "qBittorrent/5.1.4", "-qB5140-", "qBittorrent/5.1.4"},
-    {L"Transmission 4.1.1", "Transmission/4.1.1", "-TR4110-", "Transmission 4.1.1"},
+    {L"qBittorrent 5.3.0", "qBittorrent/5.3.0", "-qB5300-", "qBittorrent/5.3.0"},
+    {L"Transmission 4.1.3", "Transmission/4.1.3", "-TR4130-", "Transmission 4.1.3"},
     {L"Deluge 2.2.0", "Deluge/2.2.0 libtorrent/2.0.11.0", "-DE220s-", "Deluge 2.2.0"},
     {L"libtorrent 2.1.2", "libtorrent/2.1.2.0", "-LT2120-", "libtorrent/2.1.2.0"},
     {L"Personalizzato", nullptr, nullptr, nullptr},
@@ -1286,7 +1286,7 @@ static std::wstring windows_version() {
 }
 // Version line of the About box, always built from src/version.h.
 std::wstring about_version_line() {
-    return L"Versione " SF_VERSION_WSTRING L" (revisione " + std::to_wstring(SF_REVISION) + L", Win32 nativa) — x64";
+    return L"Versione " SF_VERSION_WSTRING L" (Win32 nativa) — x64";
 }
 static std::wstring about_text() {
     std::wstring t;
