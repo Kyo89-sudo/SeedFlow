@@ -297,6 +297,15 @@ int wmain(int argc, wchar_t** argv) {
         check(user_agent.find(L"Modalità anonima") != std::wstring::npos, "compiled dialog accent intact");
         check(user_agent.find(L"Campi vuoti = identità SeedFlow.") != std::wstring::npos, "long dialog label not truncated");
         check(resource_text(module, IDD_LIMITS).find(L"Limiti di velocità del torrent") != std::wstring::npos, "compiled dialog title accent intact");
+        check(sf::about_version_line().find(L"revisione " + std::to_wstring(SF_REVISION)) != std::wstring::npos &&
+              sf::about_version_line().find(SF_VERSION_WSTRING) != std::wstring::npos, "About shows the current version and revision");
+        {
+            HRSRC manifest = FindResourceW(module, MAKEINTRESOURCEW(1), MAKEINTRESOURCEW(24));
+            check(manifest != nullptr, "embedded manifest present");
+            std::string xml(static_cast<char const*>(LockResource(LoadResource(module, manifest))), SizeofResource(module, manifest));
+            check(xml.find(std::string("name=\"SeedFlow\" version=\"") + SF_FILE_VERSION_STRING + "\"") != std::string::npos,
+                  "manifest version matches FileVersion");
+        }
 
         // Warm the font cache before counting live GDI handles.
         DWORD const handles_before = GetGuiResources(GetCurrentProcess(), GR_GDIOBJECTS);

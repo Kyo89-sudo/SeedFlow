@@ -886,7 +886,8 @@ void refresh_now() {
     }
     g.current_down = down; g.current_up = up;
     // # column: queued torrents keep their libtorrent position; torrents outside the
-    // queue (seeding / finished) are numbered after them in the order they were added.
+    // queue (seeding / finished) follow, in SeedFlow's own order (moved with the arrows,
+    // date added for new ones). The order is renumbered 1..n and saved with the settings.
     {
         int queued = 0;
         std::vector<Row*> rest;
@@ -895,8 +896,12 @@ void refresh_now() {
             else rest.push_back(&r);
         }
         std::sort(rest.begin(), rest.end(), [](Row const* a, Row const* b) {
+            int const oa = meta_for(a->v.hash).order, ob = meta_for(b->v.hash).order;
+            if ((oa > 0) != (ob > 0)) return oa > 0;            // ordered ones first, new ones after
+            if (oa != ob) return oa < ob;
             return a->v.added != b->v.added ? a->v.added < b->v.added : a->v.id < b->v.id; });
-        for (Row* r : rest) r->number = ++queued;
+        int index = 0;
+        for (Row* r : rest) { r->number = ++queued; meta_for(r->v.hash).order = ++index; }
     }
     apply_ratio_rules();
 
@@ -1123,21 +1128,37 @@ static std::vector<std::pair<int, int>> selected_queued() {   // (queue position
     return out;
 }
 static void update_queue_buttons() {
-    bool const any = !selected_queued().empty();
+    bool const any = !selected_ids().empty();
     for (int cmd : {ID_T_QUP, ID_T_QDOWN})
         SendMessageW(g.toolbar, TB_ENABLEBUTTON, static_cast<WPARAM>(cmd), MAKELPARAM(any ? TRUE : FALSE, 0));
 }
+// Moves the selected torrents outside the libtorrent queue within SeedFlow's own order.
+static void move_unqueued(int action) {
+    std::vector<Row const*> list;
+    for (auto const& r : g.rows) if (r.v.queue_position < 0) list.push_back(&r);
+    std::sort(list.begin(), list.end(), [](Row const* a, Row const* b) { return a->number < b->number; });
+    auto const sel = selected_ids();
+    auto selected = [&](Row const* r) { return std::find(sel.begin(), sel.end(), r->v.id) != sel.end(); };
+    if (action == 0) {
+        for (std::size_t i = 1; i < list.size(); ++i)
+            if (selected(list[i]) && !selected(list[i - 1])) std::swap(list[i], list[i - 1]);
+    } else if (action == 1) {
+        for (std::size_t i = list.size(); i-- > 1;)
+            if (selected(list[i - 1]) && !selected(list[i])) std::swap(list[i], list[i - 1]);
+    } else {
+        std::stable_partition(list.begin(), list.end(), [&](Row const* r) { return action == 2 ? selected(r) : !selected(r); });
+    }
+    int index = 0;
+    for (Row const* r : list) meta_for(r->v.hash).order = ++index;
+}
 static void queue_selected(int action) {   // 0 up, 1 down, 2 top, 3 bottom
     auto items = selected_queued();
-    if (items.empty()) {
-        if (!selected_ids().empty())
-            log_line(L"Coda: i torrent selezionati sono completati o in seeding e non hanno una posizione in coda.");
-        return;
-    }
-    // Move in an order that keeps the relative order of a multiple selection.
+    // Download queue (libtorrent): move in an order that keeps a multiple selection together.
     std::sort(items.begin(), items.end());
     if (action == 1 || action == 2) std::reverse(items.begin(), items.end());
     for (auto const& [pos, id] : items) g.engine.queue(id, action);
+    // Seeding / finished torrents: SeedFlow's own order (libtorrent has no queue for them).
+    if (items.size() < selected_ids().size()) { move_unqueued(action); persist(); }
     refresh_now();
 }
 static void for_selected(void (*fn)(int)) {
@@ -1344,7 +1365,7 @@ static TbButton const kToolbar[] = {
     {ID_FILE_OPEN, 0, L"Torrent", true}, {ID_FILE_MAGNET, 1, L"Magnet", true}, {ID_FILE_CREATE, 17, L"Crea", true}, {0, -1, nullptr, false},
     {ID_T_START, 2, L"Avvia", true}, {ID_T_PAUSE, 3, L"Pausa", true}, {ID_T_REMOVE, 4, L"Rimuovi", true},
     {ID_T_DELETE, 5, L"Elimina", true}, {0, -1, nullptr, false},
-    {ID_T_QUP, 6, L"Su nella coda (torrent in download)", false}, {ID_T_QDOWN, 7, L"Giù nella coda (torrent in download)", false}, {0, -1, nullptr, false},
+    {ID_T_QUP, 6, L"Sposta su", false}, {ID_T_QDOWN, 7, L"Sposta giù", false}, {0, -1, nullptr, false},
     {ID_T_SUPERSEED, 8, L"Super-seed", true}, {ID_T_RATIO, 9, L"Ratio", true}, {0, -1, nullptr, false},
     {ID_TOOLS_WIZARD, 10, L"Ottimizza", true}, {ID_TOOLS_STATS, 11, L"Statistiche", true}, {ID_TOOLS_DIAG, 12, L"Diagnostica", true},
     {0, -1, nullptr, false}, {ID_OPT_PREFS, 16, L"Preferenze", true},
@@ -1616,8 +1637,6 @@ static void show_context(HWND target, POINT pt) {
     if (res == IDR_CTX_TORRENT) {
         Row const* r = row_by_id(selected_ids()[0]);
         if (r) CheckMenuItem(popup, ID_T_SUPERSEED, r->v.super_seeding ? MF_CHECKED : MF_UNCHECKED);
-        UINT const queue_state = selected_queued().empty() ? MF_GRAYED : MF_ENABLED;
-        for (UINT cmd : {ID_T_QTOP, ID_T_QUP, ID_T_QDOWN, ID_T_QBOTTOM}) EnableMenuItem(popup, cmd, MF_BYCOMMAND | queue_state);
     }
     TrackPopupMenu(popup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, g.main, nullptr);
     DestroyMenu(menu);

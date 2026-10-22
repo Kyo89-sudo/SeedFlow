@@ -112,6 +112,7 @@ bool dlg_magnet(HWND owner, std::vector<std::string>& magnets, std::string& fold
 enum PrefPage { PrefGeneral, PrefFolders, PrefConnection, PrefBandwidth, PrefBitTorrent, PrefQueue, PrefIdentity, PrefAdvanced, PrefPerformance };
 bool dlg_preferences(HWND owner, int page = PrefGeneral);   // true if anything was applied
 void dlg_create_torrent(HWND owner);
+std::wstring about_version_line();     // "Versione x.y.z (revisione N, Win32 nativa) — x64"
 // mainwindow.cpp: adds a just-created .torrent for seeding (seed mode, no recheck); id or -1
 int add_created_torrent(std::wstring const& torrent_file, std::wstring const& save_dir, std::string& error);
 bool dlg_wizard(HWND owner);

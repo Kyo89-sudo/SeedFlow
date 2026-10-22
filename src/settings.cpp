@@ -154,6 +154,7 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
             m.ratio_action = gint(v, "ratio_action", -1);
             m.ratio_done = gi(v, "ratio_done", 0) != 0;
             m.added = gi(v, "added", 0);
+            m.order = std::max(0, gint(v, "order", 0));
             s.torrents[std::string(k)] = m;
         }
     sanitize(s);
@@ -203,7 +204,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         for (auto const& [k, m] : s.torrents) {
             auto& t = ts[k];
             t["ratio_mode"] = m.ratio_mode; t["ratio_limit"] = ms(m.ratio_limit);
-            t["ratio_action"] = m.ratio_action; t["ratio_done"] = m.ratio_done; t["added"] = m.added;
+            t["ratio_action"] = m.ratio_action; t["ratio_done"] = m.ratio_done; t["added"] = m.added; t["order"] = m.order;
         }
         std::vector<char> out;
         lt::bencode(std::back_inserter(out), e);

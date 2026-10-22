@@ -22,6 +22,7 @@ struct TorrentMeta {
     int ratio_action = -1;      // -1 = use global action
     bool ratio_done = false;    // action already executed for the current limit
     std::int64_t added = 0;     // unix time
+    int order = 0;              // position among torrents outside the libtorrent queue (seeding/finished); 0 = by date added
 };
 
 struct GlobalStats {

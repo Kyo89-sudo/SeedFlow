@@ -1,13 +1,16 @@
 SeedFlow — Changelog
 
-0.8.5 r17 — 2026-10-21
+0.8.5 r17 — 2026-10-22
 
-- Corretti i pulsanti Su/Giù nella coda: con più torrent selezionati l'ordine
-  relativo viene mantenuto.
-- Pulsanti e voci del menu Coda disattivati per i torrent completati o in
-  seeding, che non hanno una posizione in coda.
+- Corretti i pulsanti Su/Giù e il menu Coda: funzionano per tutti i torrent.
+  Quelli in download usano la coda di libtorrent, quelli completati o in
+  seeding un ordine proprio di SeedFlow salvato nelle impostazioni.
+- Con più torrent selezionati l'ordine relativo viene mantenuto.
 - Colonna # numerata per tutti i torrent: prima la coda di download, poi
-  quelli completati o in seeding in ordine di aggiunta.
+  quelli completati o in seeding.
+- Corretta la versione mostrata in Aiuto › Informazioni (era ferma alla
+  revisione 11) e la versione nel manifest; aggiornato il testo con la
+  creazione di torrent, la licenza GPL v3 e il set di icone.
 
 0.8.5 r16 — 2026-10-21
 
