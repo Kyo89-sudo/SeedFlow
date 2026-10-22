@@ -1,5 +1,24 @@
 SeedFlow — Changelog
 
+0.8.6 — 2026-10-22
+
+- Numerazione semplificata: x.y.z (FileVersion x.y.z.0), build di manutenzione
+  x.y.z.N; non si usa più l'etichetta di revisione "rN".
+- Corretti i pulsanti Su/Giù e il menu Coda: funzionano per tutti i torrent.
+  Quelli in download usano la coda di libtorrent, quelli completati o in
+  seeding un ordine proprio di SeedFlow salvato nelle impostazioni.
+- Con più torrent selezionati l'ordine relativo viene mantenuto.
+- Colonna # numerata per tutti i torrent: prima la coda di download, poi
+  quelli completati o in seeding.
+- Corretta la versione mostrata in Aiuto › Informazioni (era ferma alla
+  revisione 11) e la versione nel manifest; aggiornato il testo con la
+  creazione di torrent, la licenza GPL v3 e il set di icone.
+- User-Agent e peer ID SeedFlow allineati alla versione (SeedFlow/0.8.6,
+  -SF0860-); preset aggiornati a qBittorrent 5.3.0 e Transmission 4.1.3, con
+  migrazione automatica dei preset precedenti.
+- Test del motore aggiornato all'API non deprecata di create_torrent;
+  build MSVC x64 /MT con CTest 2/2.
+
 0.8.5 r16 — 2026-10-21
 
 - Aggiunta la creazione di torrent v1, v2 e hybrid da file o cartella

@@ -1,3 +1,22 @@
+VERIFICHE SeedFlow 0.8.6 - 22/10/2026
+
+Base: 0.8.5 r16 (ramo main).
+
+Eseguito realmente:
+- Windows (utente): build.bat -RunTests con MSVC 19.51 (VS 2026), /MT,
+  triplet x64-windows-static: SeedFlow.exe 10,1 MB, CTest 2/2 superati
+  (superseed-flags, win32-regression). Unico avviso: C4996 nel test
+  superseed per il costruttore deprecato di create_torrent, corretto dopo
+  la build (stesso test eseguito su Linux con l'API nuova: superato).
+- Compilazione per Windows x64 con llvm-mingw: nessun warning.
+- Regressione estesa: versione mostrata in Informazioni, versione del
+  manifest uguale a FileVersion, migrazione dei preset User-Agent.
+
+Non verificato:
+- Uso interattivo del riordino dei torrent (frecce e menu Coda) su Windows.
+
+---
+
 VERIFICHE SeedFlow 0.8.5 r16 - 21/10/2026
 
 Base: 0.8.4 r15 (ramo main). Ambiente: Linux x64, nessun Windows disponibile.

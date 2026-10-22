@@ -3,7 +3,6 @@
 #include "../src/engine.hpp"
 #include <libtorrent/create_torrent.hpp>
 #include <libtorrent/bencode.hpp>
-#include <libtorrent/file_storage.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -29,9 +28,10 @@ int main(int argc, char** argv) {
         std::filesystem::create_directories(folder);
         std::string const name = "Seme_\xc3\xa8.txt";
         { std::ofstream data(folder / std::filesystem::u8path(name), std::ios::binary); data << std::string(16384, 's'); }
-        libtorrent::file_storage storage;
-        storage.add_file(name, 16384);
-        libtorrent::create_torrent torrent(storage, 16384, libtorrent::create_torrent::v1_only);
+        // create_file_entry list: the file_storage constructor is deprecated in libtorrent 2.1.
+        std::vector<libtorrent::create_file_entry> files;
+        files.emplace_back(name, 16384);
+        libtorrent::create_torrent torrent(std::move(files), 16384, libtorrent::create_torrent::v1_only);
         libtorrent::error_code ec;
         libtorrent::set_piece_hashes(torrent, folder.u8string(), ec);
         check(!ec, "hash local completed fixture");

@@ -241,12 +241,12 @@ bool dlg_trackers(HWND owner, std::wstring& text) {
 
 // ------------------------------------------------------------------ user agent / identity
 struct UaPreset { wchar_t const* name; char const* agent; char const* peer; char const* client; };
-// Versions checked October 2026 (qBittorrent 5.1.4, Transmission 4.1.1).
+// Versions checked 22 October 2026: qBittorrent 5.3.0, Transmission 4.1.3, Deluge 2.2.0 (release tags on GitHub).
 // peer = peer ID prefix.
 static UaPreset const kUaPresets[] = {
     {L"SeedFlow " SF_VERSION_WSTRING L" (predefinito)", SF_USER_AGENT, "", ""},
-    {L"qBittorrent 5.1.4", "qBittorrent/5.1.4", "-qB5140-", "qBittorrent/5.1.4"},
-    {L"Transmission 4.1.1", "Transmission/4.1.1", "-TR4110-", "Transmission 4.1.1"},
+    {L"qBittorrent 5.3.0", "qBittorrent/5.3.0", "-qB5300-", "qBittorrent/5.3.0"},
+    {L"Transmission 4.1.3", "Transmission/4.1.3", "-TR4130-", "Transmission 4.1.3"},
     {L"Deluge 2.2.0", "Deluge/2.2.0 libtorrent/2.0.11.0", "-DE220s-", "Deluge 2.2.0"},
     {L"libtorrent 2.1.2", "libtorrent/2.1.2.0", "-LT2120-", "libtorrent/2.1.2.0"},
     {L"Personalizzato", nullptr, nullptr, nullptr},
@@ -1284,6 +1284,10 @@ static std::wstring windows_version() {
     std::wstring name = v.dwBuildNumber >= 22000 ? L"Windows 11" : L"Windows 10";
     return name + L" (build " + std::to_wstring(v.dwBuildNumber) + L")";
 }
+// Version line of the About box, always built from src/version.h.
+std::wstring about_version_line() {
+    return L"Versione " SF_VERSION_WSTRING L" (Win32 nativa) — x64";
+}
 static std::wstring about_text() {
     std::wstring t;
     auto line = [&](std::wstring const& s) { t += s + L"\r\n"; };
@@ -1298,18 +1302,20 @@ static std::wstring about_text() {
 #endif
     line(L"Sistema: " + windows_version());
     line(L"");
-    line(L"Funzioni: torrent e magnet v1/v2, DHT, PeX, LSD, UPnP/NAT-PMP, cifratura, code automatiche, Super-seeding, "
-         L"limiti di velocità e di ratio per torrent o globali, gestione tracker, priorità dei file, fast resume, "
-         L"diagnostica di rete con verifica online della porta, ottimizzazione per tipo di connessione, statistiche storiche.");
+    line(L"Funzioni: torrent e magnet v1/v2, creazione di torrent v1/v2/hybrid, DHT, PeX, LSD, UPnP/NAT-PMP, cifratura, "
+         L"code automatiche, Super-seeding, limiti di velocità e di ratio per torrent o globali, gestione tracker, "
+         L"priorità dei file, fast resume, salute dello swarm, grafico delle velocità, diagnostica di rete con verifica "
+         L"online della porta, ottimizzazione per tipo di connessione, statistiche storiche.");
     line(L"");
     line(L"Dati e impostazioni: " + app_data_dir().wstring());
     line(L"Cartella di download: " + widen(download_dir()));
     line(L"");
+    line(L"Licenza: GNU GPL v3 (GPL-3.0-only).");
     line(L"Componenti di terze parti:");
     line(L"  • libtorrent-rasterbar — Arvid Norberg e collaboratori, licenza BSD 3-clause");
     line(L"  • Boost C++ Libraries — Boost Software License 1.0");
     line(L"  • OpenSSL (se incluso nella build) — Apache License 2.0");
-    line(L"  • Icone: glifi Segoe Fluent Icons / Segoe MDL2 Assets di Windows");
+    line(L"  • Icone: set SeedFlow originale (stile duotone), sorgenti SVG in res/icons");
     return t;
 }
 static INT_PTR CALLBACK about_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
@@ -1319,7 +1325,7 @@ static INT_PTR CALLBACK about_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
         SendDlgItemMessageW(dlg, IDC_LOGO, STM_SETICON, reinterpret_cast<WPARAM>(big), 0);
         SetWindowLongPtrW(dlg, DWLP_USER, reinterpret_cast<LONG_PTR>(big));
         SendDlgItemMessageW(dlg, IDC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(g.big), TRUE);
-        set_text(dlg, IDC_VERSION, L"Versione " SF_VERSION_WSTRING L" (revisione 11, Win32 nativa) — x64");
+        set_text(dlg, IDC_VERSION, about_version_line());
         set_text(dlg, IDC_REPORT, about_text());
         return TRUE;
     }

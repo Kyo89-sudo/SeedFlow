@@ -97,7 +97,7 @@ bool Engine::start(EngineConfig const& cfg, std::string& error) {
         }
         auto& s = params.settings;
         s.set_str(lt::settings_pack::user_agent, cfg.user_agent);
-        s.set_str(lt::settings_pack::peer_fingerprint, lt::generate_fingerprint("SF", SF_VERSION_MAJOR, SF_VERSION_MINOR, SF_VERSION_PATCH, 0));
+        s.set_str(lt::settings_pack::peer_fingerprint, lt::generate_fingerprint("SF", SF_VERSION_MAJOR, SF_VERSION_MINOR, SF_VERSION_PATCH, SF_VERSION_BUILD));
         s.set_str(lt::settings_pack::handshake_client_version, std::string("SeedFlow ") + kVersion);
         s.set_str(lt::settings_pack::listen_interfaces, listen_string(cfg.port, cfg.ipv6));
         ipv6_ = cfg.ipv6;
@@ -663,7 +663,7 @@ bool Engine::set_user_agent(std::string const& ua) {
 }
 bool Engine::set_identity(std::string const& peer_prefix, std::string const& client) {
     if (!session_) return false;
-    std::string prefix = peer_prefix.empty() ? lt::generate_fingerprint("SF", SF_VERSION_MAJOR, SF_VERSION_MINOR, SF_VERSION_PATCH, 0) : peer_prefix;
+    std::string prefix = peer_prefix.empty() ? lt::generate_fingerprint("SF", SF_VERSION_MAJOR, SF_VERSION_MINOR, SF_VERSION_PATCH, SF_VERSION_BUILD) : peer_prefix;
     if (prefix.size() > 20) prefix.resize(20);
     lt::settings_pack p;
     p.set_str(lt::settings_pack::peer_fingerprint, prefix);

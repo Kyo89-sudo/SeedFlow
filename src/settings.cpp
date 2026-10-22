@@ -98,6 +98,16 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.send_client_name = gi(d, "send_client_name", 1) != 0;
     s.peer_id_prefix = gs(d, "peer_id_prefix", "");
     s.client_name = gs(d, "client_name", "");
+    // Presets of earlier versions follow the updated ones (same client, current release).
+    struct PresetUpdate { char const *ua, *peer, *client, *new_ua, *new_peer, *new_client; };
+    static PresetUpdate const kPresetUpdates[] = {
+        {"qBittorrent/5.1.4", "-qB5140-", "qBittorrent/5.1.4", "qBittorrent/5.3.0", "-qB5300-", "qBittorrent/5.3.0"},
+        {"Transmission/4.1.1", "-TR4110-", "Transmission 4.1.1", "Transmission/4.1.3", "-TR4130-", "Transmission 4.1.3"},
+    };
+    for (auto const& u : kPresetUpdates)
+        if (s.user_agent == u.ua && s.peer_id_prefix == u.peer && s.client_name == u.client) {
+            s.user_agent = u.new_ua; s.peer_id_prefix = u.new_peer; s.client_name = u.new_client;
+        }
     s.anonymous_mode = gi(d, "anonymous_mode", 0) != 0;
     s.port = gint(d, "port", def.port);
     s.dht = gi(d, "dht", 1) != 0; s.upnp = gi(d, "upnp", 1) != 0;
@@ -154,6 +164,7 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
             m.ratio_action = gint(v, "ratio_action", -1);
             m.ratio_done = gi(v, "ratio_done", 0) != 0;
             m.added = gi(v, "added", 0);
+            m.order = std::max(0, gint(v, "order", 0));
             s.torrents[std::string(k)] = m;
         }
     sanitize(s);
@@ -203,7 +214,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         for (auto const& [k, m] : s.torrents) {
             auto& t = ts[k];
             t["ratio_mode"] = m.ratio_mode; t["ratio_limit"] = ms(m.ratio_limit);
-            t["ratio_action"] = m.ratio_action; t["ratio_done"] = m.ratio_done; t["added"] = m.added;
+            t["ratio_action"] = m.ratio_action; t["ratio_done"] = m.ratio_done; t["added"] = m.added; t["order"] = m.order;
         }
         std::vector<char> out;
         lt::bencode(std::back_inserter(out), e);

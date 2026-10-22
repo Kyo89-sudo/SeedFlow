@@ -639,7 +639,7 @@ static void update_filter_counts() {
 static std::wstring cell_text(Row const& r, int col) {
     auto const& v = r.v;
     switch (col) {
-        case ColQueue: return v.queue_position >= 0 ? std::to_wstring(v.queue_position + 1) : L"";
+        case ColQueue: return r.number > 0 ? std::to_wstring(r.number) : L"";
         case ColName: return v.name.empty() ? L"(recupero metadati…) " + widen(v.hash) : widen(v.name);
         case ColSize: return v.has_metadata ? fmt_bytes(v.total_wanted) : L"?";
         case ColProgress: return fmt_double(v.progress * 100.0, 1) + L"%";
@@ -665,10 +665,7 @@ static std::wstring cell_text(Row const& r, int col) {
 static bool less_by(Row const& a, Row const& b, int col) {
     auto const &x = a.v, &y = b.v;
     switch (col) {
-        case ColQueue: {
-            int qa = x.queue_position < 0 ? 1 << 30 : x.queue_position, qb = y.queue_position < 0 ? 1 << 30 : y.queue_position;
-            return qa != qb ? qa < qb : x.id < y.id;
-        }
+        case ColQueue: return a.number != b.number ? a.number < b.number : x.id < y.id;
         case ColName: return _wcsicmp(widen(x.name).c_str(), widen(y.name).c_str()) < 0;
         case ColSize: return x.total_wanted < y.total_wanted;
         case ColProgress: return x.progress < y.progress;
@@ -861,6 +858,7 @@ static void restore_from_tray() {
 
 // ------------------------------------------------------------------ refresh
 static void update_animation();
+static void update_queue_buttons();
 void refresh_now() {
     g.current_down = g.current_up = 0;
     if (!g.engine.running()) return;
@@ -887,6 +885,24 @@ void refresh_now() {
         g.rows.push_back(std::move(r));
     }
     g.current_down = down; g.current_up = up;
+    // # column: queued torrents keep their libtorrent position; torrents outside the
+    // queue (seeding / finished) follow, in SeedFlow's own order (moved with the arrows,
+    // date added for new ones). The order is renumbered 1..n and saved with the settings.
+    {
+        int queued = 0;
+        std::vector<Row*> rest;
+        for (auto& r : g.rows) {
+            if (r.v.queue_position >= 0) { r.number = r.v.queue_position + 1; queued = std::max(queued, r.number); }
+            else rest.push_back(&r);
+        }
+        std::sort(rest.begin(), rest.end(), [](Row const* a, Row const* b) {
+            int const oa = meta_for(a->v.hash).order, ob = meta_for(b->v.hash).order;
+            if ((oa > 0) != (ob > 0)) return oa > 0;            // ordered ones first, new ones after
+            if (oa != ob) return oa < ob;
+            return a->v.added != b->v.added ? a->v.added < b->v.added : a->v.id < b->v.id; });
+        int index = 0;
+        for (Row* r : rest) { r->number = ++queued; meta_for(r->v.hash).order = ++index; }
+    }
     apply_ratio_rules();
 
     // global statistics from the session payload counters (includes removed torrents)
@@ -905,6 +921,7 @@ void refresh_now() {
     if (g.ticks % 5 == 0 || g.net_icon == nullptr) update_network_indicator();
     update_status(down, up);
     update_animation();
+    update_queue_buttons();
 }
 // Animated progress cells (verifying / metadata / moving): a 100 ms timer runs only
 // while at least one visible row needs it, and repaints just those cells.
@@ -1102,6 +1119,48 @@ static void remove_selected(bool delete_files) {
     persist();
     refresh_now();
 }
+// libtorrent keeps only unfinished torrents in the download queue: seeds and
+// finished torrents have queue position -1 and ignore queue moves.
+static std::vector<std::pair<int, int>> selected_queued() {   // (queue position, id)
+    std::vector<std::pair<int, int>> out;
+    for (int id : selected_ids())
+        if (Row const* r = row_by_id(id); r && r->v.queue_position >= 0) out.emplace_back(r->v.queue_position, id);
+    return out;
+}
+static void update_queue_buttons() {
+    bool const any = !selected_ids().empty();
+    for (int cmd : {ID_T_QUP, ID_T_QDOWN})
+        SendMessageW(g.toolbar, TB_ENABLEBUTTON, static_cast<WPARAM>(cmd), MAKELPARAM(any ? TRUE : FALSE, 0));
+}
+// Moves the selected torrents outside the libtorrent queue within SeedFlow's own order.
+static void move_unqueued(int action) {
+    std::vector<Row const*> list;
+    for (auto const& r : g.rows) if (r.v.queue_position < 0) list.push_back(&r);
+    std::sort(list.begin(), list.end(), [](Row const* a, Row const* b) { return a->number < b->number; });
+    auto const sel = selected_ids();
+    auto selected = [&](Row const* r) { return std::find(sel.begin(), sel.end(), r->v.id) != sel.end(); };
+    if (action == 0) {
+        for (std::size_t i = 1; i < list.size(); ++i)
+            if (selected(list[i]) && !selected(list[i - 1])) std::swap(list[i], list[i - 1]);
+    } else if (action == 1) {
+        for (std::size_t i = list.size(); i-- > 1;)
+            if (selected(list[i - 1]) && !selected(list[i])) std::swap(list[i], list[i - 1]);
+    } else {
+        std::stable_partition(list.begin(), list.end(), [&](Row const* r) { return action == 2 ? selected(r) : !selected(r); });
+    }
+    int index = 0;
+    for (Row const* r : list) meta_for(r->v.hash).order = ++index;
+}
+static void queue_selected(int action) {   // 0 up, 1 down, 2 top, 3 bottom
+    auto items = selected_queued();
+    // Download queue (libtorrent): move in an order that keeps a multiple selection together.
+    std::sort(items.begin(), items.end());
+    if (action == 1 || action == 2) std::reverse(items.begin(), items.end());
+    for (auto const& [pos, id] : items) g.engine.queue(id, action);
+    // Seeding / finished torrents: SeedFlow's own order (libtorrent has no queue for them).
+    if (items.size() < selected_ids().size()) { move_unqueued(action); persist(); }
+    refresh_now();
+}
 static void for_selected(void (*fn)(int)) {
     for (int id : selected_ids()) fn(id);
     refresh_now();
@@ -1272,10 +1331,10 @@ static void on_command(int cmd) {
         }
         refresh_now();
         break;
-    case ID_T_QTOP: for_selected([](int id) { g.engine.queue(id, 2); }); break;
-    case ID_T_QUP: for_selected([](int id) { g.engine.queue(id, 0); }); break;
-    case ID_T_QDOWN: for_selected([](int id) { g.engine.queue(id, 1); }); break;
-    case ID_T_QBOTTOM: for_selected([](int id) { g.engine.queue(id, 3); }); break;
+    case ID_T_QTOP: queue_selected(2); break;
+    case ID_T_QUP: queue_selected(0); break;
+    case ID_T_QDOWN: queue_selected(1); break;
+    case ID_T_QBOTTOM: queue_selected(3); break;
     case ID_T_REANNOUNCE: case ID_TR_REANNOUNCE: for_selected([](int id) { g.engine.reannounce(id); }); log_line(L"Riannuncio richiesto."); break;
     case ID_T_RECHECK:
         if (!selected_ids().empty() && MessageBoxW(g.main, L"Verificare di nuovo i file dei torrent selezionati?", L"SeedFlow", MB_ICONQUESTION | MB_YESNO) == IDYES)
@@ -1306,7 +1365,7 @@ static TbButton const kToolbar[] = {
     {ID_FILE_OPEN, 0, L"Torrent", true}, {ID_FILE_MAGNET, 1, L"Magnet", true}, {ID_FILE_CREATE, 17, L"Crea", true}, {0, -1, nullptr, false},
     {ID_T_START, 2, L"Avvia", true}, {ID_T_PAUSE, 3, L"Pausa", true}, {ID_T_REMOVE, 4, L"Rimuovi", true},
     {ID_T_DELETE, 5, L"Elimina", true}, {0, -1, nullptr, false},
-    {ID_T_QUP, 6, L"Su nella coda", false}, {ID_T_QDOWN, 7, L"Giù nella coda", false}, {0, -1, nullptr, false},
+    {ID_T_QUP, 6, L"Sposta su", false}, {ID_T_QDOWN, 7, L"Sposta giù", false}, {0, -1, nullptr, false},
     {ID_T_SUPERSEED, 8, L"Super-seed", true}, {ID_T_RATIO, 9, L"Ratio", true}, {0, -1, nullptr, false},
     {ID_TOOLS_WIZARD, 10, L"Ottimizza", true}, {ID_TOOLS_STATS, 11, L"Statistiche", true}, {ID_TOOLS_DIAG, 12, L"Diagnostica", true},
     {0, -1, nullptr, false}, {ID_OPT_PREFS, 16, L"Preferenze", true},
@@ -1531,7 +1590,7 @@ static LRESULT on_notify(NMHDR* nm) {
             rebuild_visible();
             return 0;
         }
-        case LVN_ITEMCHANGED: case LVN_ODSTATECHANGED: if (!rebuilding) refresh_details(true); return 0;
+        case LVN_ITEMCHANGED: case LVN_ODSTATECHANGED: if (!rebuilding) { refresh_details(true); update_queue_buttons(); } return 0;
         case NM_DBLCLK: open_selected_folder(); return 0;
         default: break;
         }

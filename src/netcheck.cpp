@@ -58,8 +58,8 @@ PortCheck check_port_online(int port) {
     r.when = std::time(nullptr);
     if (port < 1 || port > 65535) { r.status = "Porta non valida"; return r; }
     using HttpHandle = std::unique_ptr<void, decltype(&WinHttpCloseHandle)>;
-    HttpHandle s(WinHttpOpen(L"SeedFlow/" SF_VERSION_WSTRING, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0), &WinHttpCloseHandle);
-    if (!s) s.reset(WinHttpOpen(L"SeedFlow/" SF_VERSION_WSTRING, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
+    HttpHandle s(WinHttpOpen(SF_USER_AGENT_W, WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0), &WinHttpCloseHandle);
+    if (!s) s.reset(WinHttpOpen(SF_USER_AGENT_W, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
     if (!s) { r.status = "WinHTTP non disponibile"; return r; }
     WinHttpSetTimeouts(s.get(), 10000, 10000, 15000, 15000);
     std::string body;
