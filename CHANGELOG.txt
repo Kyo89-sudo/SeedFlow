@@ -16,7 +16,8 @@ SeedFlow — Changelog
   ([max 107,3 MiB/s]).
 - Colonna # più larga, con spazio per la freccia di ordinamento.
 - La colonna Nome occupa lo spazio libero: niente barra di scorrimento
-  orizzontale con le larghezze predefinite.
+  orizzontale con le larghezze predefinite. Se la allarghi a mano mantiene
+  la larghezza scelta.
 
 0.8.6 — 2026-10-22
 

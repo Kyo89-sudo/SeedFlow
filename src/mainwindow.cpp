@@ -1518,14 +1518,16 @@ static int toolbar_height(HWND tb) {
 static RECT split_v_rect, split_h_rect;
 // The Nome column takes the width left by the other columns, so the list does not
 // scroll horizontally at the default widths (space for the vertical scrollbar is kept).
+// A width the user gives Nome by hand is a minimum: it only grows to fill free space.
 static bool fitting_columns = false;
+static int name_user_width = 0;
 static void fit_name_column() {
     if (!g.list || fitting_columns) return;
     RECT rc; GetWindowRect(g.list, &rc);
     int const available = (rc.right - rc.left) - GetSystemMetricsForDpi(SM_CXVSCROLL, g.dpi) - GetSystemMetricsForDpi(SM_CXEDGE, g.dpi) * 2;
     int others = 0;
     for (int c = 0; c < ColCount; ++c) if (c != ColName) others += ListView_GetColumnWidth(g.list, c);
-    int const width = std::max(scale(160), available - others);
+    int const width = std::max({scale(160), name_user_width, available - others});
     if (width == ListView_GetColumnWidth(g.list, ColName)) return;
     fitting_columns = true;
     ListView_SetColumnWidth(g.list, ColName, width);
@@ -1693,6 +1695,13 @@ static LRESULT on_list_customdraw(NMLVCUSTOMDRAW* cd) {
 }
 static LRESULT on_notify(NMHDR* nm) {
     if (nm->hwndFrom == ListView_GetHeader(g.list) && (nm->code == HDN_ENDTRACKW || nm->code == HDN_DIVIDERDBLCLICKW)) {
+        auto const* hd = reinterpret_cast<NMHEADERW const*>(nm);
+        if (hd->iItem == ColName) {
+            // Resizing Nome itself: keep what the user chose (wider means horizontal scrolling).
+            if (nm->code == HDN_ENDTRACKW && hd->pitem && (hd->pitem->mask & HDI_WIDTH)) name_user_width = hd->pitem->cxy;
+            else PostMessageW(g.main, WM_APP_FITCOLUMNS, 1, 0);
+            return 0;
+        }
         PostMessageW(g.main, WM_APP_FITCOLUMNS, 0, 0);   // the new width is applied after this notification
         return 0;
     }
@@ -1908,7 +1917,10 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         default: break;
         }
         return 0;
-    case WM_APP_FITCOLUMNS: fit_name_column(); return 0;
+    case WM_APP_FITCOLUMNS:
+        if (wp == 1) name_user_width = ListView_GetColumnWidth(g.list, ColName);   // after a double click on the Nome divider
+        fit_name_column();
+        return 0;
     case WM_APP_PORTCHECK:
         consume_port_check();
         return 0;
