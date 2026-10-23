@@ -1080,10 +1080,13 @@ static void record_usage() {
     }
     g.last_sample_ms = now;
     g.usage.add(now, g.current_down, g.current_up);
+    // the selected torrent is recorded even while idle, so its graph shows a line instead of a wait message
+    auto const selected = g.settings.graph_source == 1 ? selected_ids() : std::vector<int>{};
+    int const selected_id = selected.empty() ? -1 : selected.front();
     for (auto const& r : g.rows) {
         auto it = g.torrent_usage.find(r.v.id);
         if (it == g.torrent_usage.end()) {
-            if (r.v.download_rate <= 0 && r.v.upload_rate <= 0) continue;
+            if (r.v.download_rate <= 0 && r.v.upload_rate <= 0 && r.v.id != selected_id) continue;
             it = g.torrent_usage.emplace(r.v.id, UsageHistory{}).first;
         }
         it->second.add(now, r.v.download_rate, r.v.upload_rate);
@@ -1188,11 +1191,11 @@ static void add_files(std::vector<std::wstring> const& files) {
             }
         }
         if (files.size() > 1) summary = std::to_wstring(files.size()) + L" torrent · " + fmt_bytes(total) + L" in totale";
-        else if (!readable) summary = fs::path(files.front()).filename().wstring();
         bool dont_ask = false;
-        if (!dlg_add_torrent(g.main, summary, folder, paused, dont_ask)) return;
+        // nothing readable: skip the question, the add below reports why each file failed
+        if (readable && !dlg_add_torrent(g.main, summary, folder, paused, dont_ask)) return;
         if (dont_ask) { g.settings.ask_save_path = false; log_line(L"Cartella di salvataggio: non verrà più chiesta (Preferenze › Generale per riattivare)."); }
-        remember_dir(folder);
+        if (readable) remember_dir(folder);
     }
     std::error_code ec;
     fs::create_directories(fs::path(widen(folder)), ec);
@@ -1620,6 +1623,9 @@ static TbButton const kToolbar[] = {
     {ID_TOOLS_WIZARD, 10, L"Ottimizza le impostazioni", false}, {ID_TOOLS_STATS, 11, L"Statistiche", false}, {ID_TOOLS_DIAG, 12, L"Diagnostica di rete", false},
     {0, -1, nullptr, false}, {ID_OPT_PREFS, 16, L"Preferenze", false},
 };
+static void set_toolbar_padding(HWND tb, bool compact_buttons) {
+    SendMessageW(tb, TB_SETPADDING, 0, MAKELPARAM(scale(compact_buttons ? 6 : 9), scale(compact_buttons ? 4 : 7)));
+}
 static HWND make_toolbar(HWND parent, TbButton const* buttons, int count, bool compact_buttons, HIMAGELIST images) {
     HWND tb = CreateWindowExW(0, TOOLBARCLASSNAMEW, nullptr,
         WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_LIST | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NOPARENTALIGN | CCS_NORESIZE,
@@ -1640,7 +1646,7 @@ static HWND make_toolbar(HWND parent, TbButton const* buttons, int count, bool c
         t.iString = reinterpret_cast<INT_PTR>(buttons[i].text);
     }
     SendMessageW(tb, TB_ADDBUTTONSW, static_cast<WPARAM>(count), reinterpret_cast<LPARAM>(b.data()));
-    SendMessageW(tb, TB_SETPADDING, 0, MAKELPARAM(scale(compact_buttons ? 6 : 9), scale(compact_buttons ? 4 : 7)));
+    set_toolbar_padding(tb, compact_buttons);
     SendMessageW(tb, TB_AUTOSIZE, 0, 0);
     return tb;
 }
@@ -1782,15 +1788,18 @@ static void apply_fonts_after_dpi() {
     name_user_width = 0;    // pixel widths of the old DPI no longer apply
     status_need.clear();    // re-measure the status bar parts with the new font
     status_mask = -1;
-    for (HWND w : {g.filters, g.list, g.tabs, g.trackers, g.peers, g.files, g.status, g.toolbar, g.tracker_bar})
-        SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(g.font), TRUE);
-    SendMessageW(g.log, WM_SETFONT, reinterpret_cast<WPARAM>(g.mono), TRUE);
+    // hand the new image lists to the controls first: the old ones are already destroyed
     SendMessageW(g.toolbar, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(g.il_main_bar));
     SendMessageW(g.tracker_bar, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(g.il_toolbar));
     ListView_SetImageList(g.list, g.il_states, LVSIL_SMALL);
     ListView_SetImageList(g.filters, g.il_filters, LVSIL_SMALL);
     ListView_SetImageList(g.trackers, g.il_small, LVSIL_SMALL);
     TabCtrl_SetImageList(g.tabs, g.il_small);
+    for (HWND w : {g.filters, g.list, g.tabs, g.trackers, g.peers, g.files, g.status, g.toolbar, g.tracker_bar})
+        SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(g.font), TRUE);
+    SendMessageW(g.log, WM_SETFONT, reinterpret_cast<WPARAM>(g.mono), TRUE);
+    set_toolbar_padding(g.toolbar, false);
+    set_toolbar_padding(g.tracker_bar, true);
     SendMessageW(g.toolbar, TB_AUTOSIZE, 0, 0);
     SendMessageW(g.tracker_bar, TB_AUTOSIZE, 0, 0);
     if (g.net_icon) { DestroyIcon(g.net_icon); g.net_icon = nullptr; }

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param([switch]$NoPause, [switch]$CheckOnly, [switch]$DebugBuild, [switch]$SharedLibraries, [switch]$RunTests)
-# SeedFlow 0.8.7.1 - build nativa Win32 C++ con libtorrent statico.
+# SeedFlow 0.8.7.2 - build nativa Win32 C++ con libtorrent statico.
 # Requisiti: Visual Studio 2026 (18) o 2022 (17) con "Sviluppo desktop con C++",
 # CMake (incluso in VS) e Git. NON serve piu' .NET.
 Set-StrictMode -Version Latest
@@ -47,7 +47,7 @@ try {
     Start-Transcript -LiteralPath $log -Force | Out-Null
     $started = $true
     Set-Location -LiteralPath $root
-    Write-Host "SeedFlow 0.8.7.1 (Win32 nativa) - build $config $triplet - $(Get-Date -Format o)"
+    Write-Host "SeedFlow 0.8.7.2 (Win32 nativa) - build $config $triplet - $(Get-Date -Format o)"
     Write-Host "Sorgenti: $root"
 
     $stage = 'Visual Studio'

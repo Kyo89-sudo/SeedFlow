@@ -1,5 +1,14 @@
 SeedFlow — Changelog
 
+0.8.7.2 — 2026-10-23
+
+- Grafico: il torrent selezionato viene registrato anche quando è fermo, quindi
+  mostra la sua linea invece di "Raccolta dei dati" all'infinito.
+- Aggiunta di .torrent non validi: niente finestra della cartella, compare
+  subito il motivo dell'errore; la cartella non finisce tra le recenti.
+- Cambio di scala dello schermo (DPI): le immagini vengono assegnate ai
+  controlli prima del ridisegno e la spaziatura delle toolbar viene ricalcolata.
+
 0.8.7.1 — 2026-10-23
 
 - Grafico: niente più vuoto a sinistra quando la cronologia è più corta
