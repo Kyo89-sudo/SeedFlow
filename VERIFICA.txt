@@ -1,3 +1,9 @@
+VERIFICHE SeedFlow 0.8.7.1 - 23/10/2026
+
+- Correzione del grafico (vuoto iniziale): nuovo caso nella regressione con
+  cronologia più corta dell'intervallo (5 min e 2 ore). Compilazione llvm-mingw
+  senza warning; da verificare con build.bat -RunTests.
+
 VERIFICHE SeedFlow 0.8.7 - 23/10/2026
 
 Eseguito realmente:
