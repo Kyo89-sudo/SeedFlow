@@ -1,5 +1,11 @@
 SeedFlow — Changelog
 
+0.8.7.4 — 2026-10-23
+
+- Pulizia: rimossi include inutilizzati e semplificato il disegno del valore
+  al passaggio del mouse nel grafico; repository alleggerito (SVG generati
+  non più versionati, immagine inutilizzata rimossa, VERIFICA ridotto).
+
 0.8.7.3 — 2026-10-23
 
 - La larghezza della colonna Nome scelta a mano viene salvata: all'avvio la

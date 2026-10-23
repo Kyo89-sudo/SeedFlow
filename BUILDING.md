@@ -1,4 +1,4 @@
-# Compilazione SeedFlow 0.8.7.3
+# Compilazione SeedFlow 0.8.7.4
 
 Visual Studio 2026 o 2022 con MSVC x64, Windows SDK, CMake e Git. Con VS 2026 serve CMake >= 4.2. Non serve .NET per eseguire il programma.
 
@@ -31,4 +31,4 @@ ctest --test-dir build-win32 -C Release --output-on-failure
 
 I sorgenti e le risorse sono UTF-8; MSVC usa `/utf-8`, rc `/c65001`. Le icone sono già incluse: non occorre rigenerarle per compilare. Per modificarle: `python tools/make_icons.py` con Playwright e Chromium disponibili.
 
-La versione condivisa è in `src/version.h`, FileVersion `0.8.7.3`. Consulta [VERIFICA.txt](VERIFICA.txt) per le verifiche effettivamente eseguite e [BUILD-STATIC-RECIPE.txt](BUILD-STATIC-RECIPE.txt) per le dipendenze della build consegnata.
+La versione condivisa è in `src/version.h`, FileVersion `0.8.7.4`. Consulta [VERIFICA.txt](VERIFICA.txt) per le verifiche effettivamente eseguite e [BUILD-STATIC-RECIPE.txt](BUILD-STATIC-RECIPE.txt) per le dipendenze della build consegnata.

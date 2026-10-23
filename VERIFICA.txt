@@ -1,4 +1,4 @@
-VERIFICHE SeedFlow 0.8.7.3 - 23/10/2026
+VERIFICHE SeedFlow 0.8.7.4 - 23/10/2026
 
 Le verifiche delle versioni precedenti restano nella cronologia di git.
 
@@ -7,7 +7,7 @@ Eseguito realmente:
   (VS 2026), /MT, triplet x64-windows-static: CTest 2/2 superati
   (superseed-flags, win32-regression); prova manuale dell'interfaccia: funziona.
 - Compilazione per Windows x64 con llvm-mingw (app e regressione) di ogni
-  revisione fino alla 0.8.7.3: nessun warning.
+  revisione fino alla 0.8.7.4: nessun warning.
 - Motore su Linux con ASan/UBSan: lettura del .torrent (nome, dimensione, file),
   spostamento dei file con move_storage, aggiornamento del solo percorso con
   verifica dei dati, percorsi con lettere accentate.
@@ -22,6 +22,6 @@ della colonna Nome), cronologia velocità a tre livelli (1/6/24 s), disegno del
 tab Grafico in tutti gli intervalli, con cronologia corta, senza selezione e in
 finestra stretta, senza crescita di oggetti GDI.
 
-Da verificare con la build dell'utente: correzioni 0.8.7.1-0.8.7.3 (vuoto
+Da verificare con la build dell'utente: correzioni 0.8.7.1-0.8.7.4 (vuoto
 iniziale del grafico, torrent selezionato fermo, .torrent non validi, cambio
 DPI, larghezza di Nome salvata) e rimozione della Guida rapida.

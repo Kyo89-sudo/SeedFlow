@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <cstring>
-#include <functional>
 #include <string>
 #include <vector>
 
@@ -304,7 +302,8 @@ void draw_speed_graph(HDC target, RECT area, GraphView const& v, HFONT font, HFO
     }
 
     // ---- plot
-    struct Tip { bool ok = false; int hx = -1; std::function<double(std::uint64_t)> X; std::function<double(std::int64_t)> Y; } tip;
+    // scale of the plot, kept for the hover read-out drawn after the text
+    struct Tip { bool ok = false; int hx = -1; double pw = 0, ph = 0; std::int64_t top = 1; } tip;
     RECT plot{s(78), y + s(6), w - s(18), h - s(26)};
     hits.plot = {area.left + plot.left, area.top + plot.top, area.left + plot.right, area.top + plot.bottom};
     bool const plot_ok = plot.right - plot.left >= s(60) && plot.bottom - plot.top >= s(30);
@@ -390,7 +389,7 @@ void draw_speed_graph(HDC target, RECT area, GraphView const& v, HFONT font, HFO
         else if (counted == 0) text(plot, L"Raccolta dei dati di velocità…", paint::kGray, DT_CENTER);
         // hover read-out, drawn after the other text so nothing shows through it
         tip.hx = v.hover_x - area.left;
-        tip.X = X; tip.Y = Y;
+        tip.pw = pw; tip.ph = ph; tip.top = top;
         tip.ok = true;
     }
 
@@ -412,8 +411,11 @@ void draw_speed_graph(HDC target, RECT area, GraphView const& v, HFONT font, HFO
     if (tip.ok && tip.hx >= plot.left && tip.hx <= plot.right && counted > 0 && (v.show_down || v.show_up)) {
         texts.clear();
         int const hx = tip.hx;
-        auto const& X = tip.X;
-        auto const& Y = tip.Y;
+        std::uint64_t const now = v.now;
+        double const pw = tip.pw, ph = tip.ph;
+        std::int64_t const top = tip.top;
+        auto X = [plot, pw, now, window](std::uint64_t t) { return plot.left + (1.0 - static_cast<double>(now - t) / static_cast<double>(window)) * pw; };
+        auto Y = [plot, ph, top](std::int64_t rate) { return plot.bottom - std::min(1.0, static_cast<double>(rate) / static_cast<double>(top)) * ph; };
         SpeedSample const* best = nullptr;
         double best_d = 1e18;
         for (auto const& smp : samples) {

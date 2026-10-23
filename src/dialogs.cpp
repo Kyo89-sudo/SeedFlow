@@ -13,7 +13,6 @@
 #include <uxtheme.h>
 #include <algorithm>
 #include <cmath>
-#include <random>
 #include <map>
 
 namespace fs = std::filesystem;
