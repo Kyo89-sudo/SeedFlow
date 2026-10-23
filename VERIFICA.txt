@@ -3,6 +3,10 @@ VERIFICHE SeedFlow 0.8.7.4 - 23/10/2026
 Le verifiche delle versioni precedenti restano nella cronologia di git.
 
 Eseguito realmente:
+- Windows (utente), build 0.8.7.4: build.bat -NoPause -RunTests completato
+  (l'eseguibile viene copiato in SeedFlow-Pronto solo con CTest 2/2 superati).
+  SeedFlow.exe 10,7 MB, x64, FileVersion e manifest 0.8.7.4, User-Agent
+  SeedFlow/0.8.7.4, solo DLL di sistema Windows (nessuna dipendenza esterna).
 - Windows (utente), build 0.8.7: build.bat -NoPause -RunTests con MSVC 14.51
   (VS 2026), /MT, triplet x64-windows-static: CTest 2/2 superati
   (superseed-flags, win32-regression); prova manuale dell'interfaccia: funziona.
@@ -22,6 +26,6 @@ della colonna Nome), cronologia velocità a tre livelli (1/6/24 s), disegno del
 tab Grafico in tutti gli intervalli, con cronologia corta, senza selezione e in
 finestra stretta, senza crescita di oggetti GDI.
 
-Da verificare con la build dell'utente: correzioni 0.8.7.1-0.8.7.4 (vuoto
-iniziale del grafico, torrent selezionato fermo, .torrent non validi, cambio
-DPI, larghezza di Nome salvata) e rimozione della Guida rapida.
+Non verificato: trasferimenti estesi verso tracker pubblici; prova manuale
+completa delle correzioni 0.8.7.1-0.8.7.4 (vuoto iniziale del grafico, torrent
+selezionato fermo, .torrent non validi, cambio DPI, larghezza di Nome salvata).
