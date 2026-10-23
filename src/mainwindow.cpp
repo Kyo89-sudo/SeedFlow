@@ -200,8 +200,6 @@ static void decorate_menu(HMENU m) {
     set_menu_icon(m, ID_TOOLS_STATS, IcStats);
     set_menu_icon(m, ID_TOOLS_DATAFOLDER, IcFolder);
     set_menu_icon(m, ID_HELP_ABOUT, IcInfo);
-    set_menu_icon(m, ID_HELP_GUIDE, IcFile);
-    set_menu_icon(m, ID_HELP_KEYS, IcWindow);
     set_menu_icon(m, ID_HELP_RELEASES, IcPriority);
     set_menu_icon(m, ID_HELP_GITHUB, IcGlobe);
     set_menu_icon(m, ID_HELP_REPORT, IcError);
@@ -1543,8 +1541,6 @@ static void on_command(int cmd) {
     case ID_TOOLS_STATS: dlg_stats(g.main); break;
     case ID_TOOLS_DATAFOLDER: open_path(app_data_dir().wstring()); break;
     case ID_HELP_ABOUT: dlg_about(g.main); break;
-    case ID_HELP_GUIDE: dlg_guide(g.main); break;
-    case ID_HELP_KEYS: dlg_guide(g.main, true); break;
     case ID_HELP_GITHUB: open_path(kProjectUrl); break;
     case ID_HELP_RELEASES: open_path(kReleasesUrl); break;
     case ID_HELP_REPORT: report_problem(g.main); break;

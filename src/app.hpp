@@ -118,7 +118,6 @@ void start_port_check(HWND notify);
 bool dlg_magnet(HWND owner, std::vector<std::string>& magnets, std::string& folder, bool& paused);
 enum PrefPage { PrefGeneral, PrefFolders, PrefConnection, PrefBandwidth, PrefBitTorrent, PrefQueue, PrefIdentity, PrefAdvanced, PrefPerformance };
 bool dlg_preferences(HWND owner, int page = PrefGeneral);
-void dlg_guide(HWND owner, bool keys = false);   // Aiuto › Guida rapida / Scorciatoie
 void report_problem(HWND owner);                 // copies system info, opens a GitHub issue
 extern wchar_t const* const kProjectUrl;
 extern wchar_t const* const kReleasesUrl;   // true if anything was applied

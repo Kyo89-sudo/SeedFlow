@@ -4,6 +4,7 @@ SeedFlow — Changelog
 
 - La larghezza della colonna Nome scelta a mano viene salvata: all'avvio la
   colonna non torna più stretta tagliando i nomi dei torrent.
+- Rimossa la Guida rapida dal menu Aiuto (e il tasto F1).
 
 0.8.7.2 — 2026-10-23
 
@@ -44,9 +45,8 @@ Grafico
   su 6 e 24 secondi.
 
 Aiuto
-- Menu Aiuto rifatto: Guida rapida (F1) con 12 argomenti, Scorciatoie da
-  tastiera, Novità di questa versione, pagina del progetto su GitHub e
-  "Segnala un problema" (copia le informazioni di sistema e apre una issue).
+- Menu Aiuto rifatto: Novità di questa versione, pagina del progetto su GitHub
+  e "Segnala un problema" (copia le informazioni di sistema e apre una issue).
 - Finestra Informazioni riscritta: descrizione, link al progetto e alle
   release, componenti, licenze e dati tecnici separati.
 

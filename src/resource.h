@@ -26,8 +26,6 @@
 #define ID_TOOLS_STATS          1022
 #define ID_TOOLS_DATAFOLDER     1023
 #define ID_HELP_ABOUT           1030
-#define ID_HELP_GUIDE           1031
-#define ID_HELP_KEYS            1032
 #define ID_HELP_GITHUB          1033
 #define ID_HELP_RELEASES        1034
 #define ID_HELP_REPORT          1035
@@ -85,7 +83,6 @@
 #define IDD_PG_PERFORMANCE      221
 #define IDD_CREATE              222
 #define IDD_ADDTORRENT          223
-#define IDD_GUIDE               224
 
 // Common controls
 #define IDC_EDIT                300
@@ -190,6 +187,4 @@
 #define IDC_SB_TOTALS           488
 #define IDC_SB_RAM              489
 #define IDC_RANDOMSTART         490
-#define IDC_G_TOPICS            491
-#define IDC_G_TEXT              492
 #define IDC_ABOUT_DESC          493
