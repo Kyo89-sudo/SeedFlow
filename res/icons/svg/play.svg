@@ -1,8 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><defs>
- <linearGradient id="green" x2="0" y2="1"><stop stop-color="#81BF53"/><stop offset="1" stop-color="#388B35"/></linearGradient>
- <linearGradient id="blue" x2="0" y2="1"><stop stop-color="#6BAEDC"/><stop offset="1" stop-color="#2D76B1"/></linearGradient>
- <linearGradient id="amber" x2="0" y2="1"><stop stop-color="#F4CC64"/><stop offset="1" stop-color="#D39224"/></linearGradient>
- <linearGradient id="red" x2="0" y2="1"><stop stop-color="#EC8A7D"/><stop offset="1" stop-color="#BE4940"/></linearGradient>
- <linearGradient id="paper" x2="0" y2="1"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE5ED"/></linearGradient>
- <linearGradient id="metal" x2="0" y2="1"><stop stop-color="#CBD5DD"/><stop offset="1" stop-color="#7B8D9E"/></linearGradient>
- </defs><g stroke-linejoin="round" stroke-linecap="round"><circle cx="12" cy="12" r="9.5" fill="url(#green)" stroke="#447D35"/><path d="M4.5 11a7.6 7.6 0 0 1 15-1" fill="none" stroke="#B9DC99" stroke-width=".8"/><path d="M10 7.5l7 4.5-7 4.5z" fill="#FFFFFF" stroke="#E4F2D9" stroke-width=".6"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 1 0 18a9 9 0 1 1 0-18z" fill="#deefe1" stroke="#2E9B45"/><path d="M10 8.3v7.4l5.8-3.7z" fill="#2E9B45" stroke="#2E9B45"/></svg>

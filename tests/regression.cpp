@@ -206,6 +206,22 @@ int wmain(int argc, wchar_t** argv) {
             buf.clear(); libtorrent::bencode(std::back_inserter(buf), pane_settings);
             check(sf::parse_settings(buf, loaded) && loaded.status_panes == 0x3F, "unknown status bar pane bits dropped");
         }
+        {
+            bool in_range = true, avoided = true;
+            for (int i = 0; i < 200; ++i) {
+                int const p = sf::random_listen_port(51413);
+                in_range = in_range && p >= 10000 && p <= 65000;
+                avoided = avoided && p != 51413;
+            }
+            check(in_range && avoided && sf::random_listen_port(65000) != 65000, "random listen port in 10000-65000 and different from the current one");
+            libtorrent::entry saved(libtorrent::entry::dictionary_t);
+            saved["random_port_start"] = 1;
+            saved["recent_dirs"] = libtorrent::entry::list_type{libtorrent::entry(std::string(1500, 'x')), libtorrent::entry("D:\\Ok")};
+            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), saved);
+            sf::AppSettings loaded;
+            check(sf::parse_settings(buf, loaded) && loaded.random_port_start && loaded.recent_dirs.size() == 1 && loaded.recent_dirs[0] == "D:\\Ok",
+                  "random port option persisted, oversized recent folders dropped");
+        }
 
         std::vector<int> order(sf::ColCount);
         std::iota(order.begin(), order.end(), 0);
@@ -270,12 +286,25 @@ int wmain(int argc, wchar_t** argv) {
         HGDIOBJ graph_old = SelectObject(graph_dc, graph_bitmap);
         HFONT graph_font = CreateFontW(-14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
             OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+        HFONT graph_big = CreateFontW(-20, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+            OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+        sf::GraphView graph_view;
+        graph_view.samples = &fixture; graph_view.now = 300000; graph_view.range = 1;
+        graph_view.current_down = 6 * 1024 * 1024; graph_view.current_up = 512 * 1024;
+        graph_view.limit_down = 7 * 1024 * 1024; graph_view.hover_x = 600;
+        graph_view.tile3_label = L"Sessione"; graph_view.tile3_value = L"18,4 GiB ↓ · 2,1 GiB ↑"; graph_view.tile3_sub = L"ratio 0,11";
+        sf::GraphHit graph_hit{};
         // Warm GDI font realization before measuring repeated redraws.
-        sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, fixture, 300000, graph_font, 96);
+        sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, graph_view, graph_font, graph_big, graph_big, 96, &graph_hit);
+        check(graph_hit.plot.right > graph_hit.plot.left && graph_hit.range[3].right > graph_hit.range[0].left &&
+              graph_hit.limits.right <= 900, "graph controls laid out inside the window");
+        sf::draw_speed_graph(graph_dc, {0, 0, 520, 280}, graph_view, graph_font, graph_big, graph_big, 96, &graph_hit);
+        check(graph_hit.limits.right <= 520 && graph_hit.source[1].right <= 520 && graph_hit.limits.top > graph_hit.range[0].top,
+              "graph controls wrap onto a second row in a narrow window");
         GdiFlush();
         DWORD graph_handles = GetGuiResources(GetCurrentProcess(), GR_GDIOBJECTS);
         for (int i = 0; i < 40; ++i)
-            sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, fixture, 300000, graph_font, 96);
+            sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, graph_view, graph_font, graph_big, graph_big, 96);
         GdiFlush();
         std::cout << "Graph GDI handles: " << graph_handles << " -> " << GetGuiResources(GetCurrentProcess(), GR_GDIOBJECTS) << '\n';
         check(GetGuiResources(GetCurrentProcess(), GR_GDIOBJECTS) <= graph_handles,
@@ -291,9 +320,28 @@ int wmain(int argc, wchar_t** argv) {
             image.write(static_cast<char*>(graph_bits), 900 * 280 * 4);
             check(static_cast<bool>(image), "export native graph rendering for visual inspection");
         }
-        sf::draw_speed_graph(graph_dc, {0, 0, 320, 140}, sf::SpeedHistory{}, 0, graph_font, 144);
-        sf::draw_speed_graph(graph_dc, {0, 0, 8, 8}, fixture, 300000, graph_font, 192);
-        SelectObject(graph_dc, graph_old); DeleteObject(graph_font); DeleteObject(graph_bitmap); DeleteDC(graph_dc);
+        sf::GraphView empty_view;
+        sf::draw_speed_graph(graph_dc, {0, 0, 320, 140}, empty_view, graph_font, graph_big, graph_big, 144);
+        empty_view.source = 1; empty_view.has_selection = false;
+        sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, empty_view, graph_font, graph_big, graph_big, 96);
+        sf::draw_speed_graph(graph_dc, {0, 0, 8, 8}, graph_view, graph_font, graph_big, graph_big, 192);
+        for (int r = 0; r < sf::kGraphRangeCount; ++r) {
+            graph_view.range = r;
+            sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, graph_view, graph_font, graph_big, graph_big, 96);
+        }
+        {
+            sf::UsageHistory usage;
+            for (std::uint64_t t = 1000; t <= 7300000; t += 1000) usage.add(t, 6000, 600);
+            check(usage.level_for(60000) == 0 && usage.level_for(300000) == 0 && usage.level_for(1800000) == 1 && usage.level_for(7200000) == 2,
+                  "usage history picks the finest level covering the window");
+            auto const& l1 = usage.level(1);
+            auto const& l2 = usage.level(2);
+            check(l1.size() == sf::SpeedHistory::capacity && l1.at(l1.size() - 1).down == 6000 && l2.at(l2.size() - 1).up == 600 &&
+                  l2.at(l2.size() - 1).time - l2.at(0).time >= 7000000, "usage history averages into 6 s and 24 s levels");
+            usage.add(10, 1, 1);
+            check(usage.level(0).at(usage.level(0).size() - 1).time == 7300000, "usage history ignores samples from the past");
+        }
+        SelectObject(graph_dc, graph_old); DeleteObject(graph_font); DeleteObject(graph_big); DeleteObject(graph_bitmap); DeleteDC(graph_dc);
 
         module = LoadLibraryExW(argv[1], nullptr, LOAD_LIBRARY_AS_DATAFILE);
         check(module != nullptr, "load actual executable resources without execution");
@@ -314,10 +362,13 @@ int wmain(int argc, wchar_t** argv) {
         HDC tree_dc = GetDC(tree);
         auto tree_font = reinterpret_cast<HFONT>(SendMessageW(tree, WM_GETFONT, 0, 0));
         auto previous_font = SelectObject(tree_dc, tree_font);
-        SIZE extent{}; GetTextExtentPoint32W(tree_dc, L"Prestazioni e memoria", 21, &extent);
+        // the widest entry: "Prestazioni" is a child of "Avanzate" (one more indentation level)
+        SIZE child{}; GetTextExtentPoint32W(tree_dc, L"Prestazioni", 11, &child);
+        SIZE top{}; GetTextExtentPoint32W(tree_dc, L"Code e ratio", 12, &top);
         SelectObject(tree_dc, previous_font); ReleaseDC(tree, tree_dc);
-        check(tree_rect.right >= extent.cx + 2 * static_cast<int>(TreeView_GetIndent(tree)) + 24,
-            "performance and memory title fits tree including indentation and icon");
+        int const indent = static_cast<int>(TreeView_GetIndent(tree));
+        check(tree_rect.right >= std::max(child.cx + 2 * indent, top.cx + indent) + 24,
+            "preferences tree titles fit including indentation and icon");
         DestroyWindow(preferences);
         check(resource_text(module, IDD_PG_SYSTEM).find(L"Priorità del processo") != std::wstring::npos, "advanced page accent intact");
         for (int size : sf::icons::kStripSizes) {

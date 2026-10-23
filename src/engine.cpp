@@ -179,7 +179,7 @@ int Engine::find_id(lt::torrent_handle const& h) const {
 fs::path Engine::resume_path(std::string const& hash) const { return state_dir_ / (hash + ".fastresume"); }
 
 static std::string add_error(lt::error_code const& ec, AddResult* r) {
-    if (ec == lt::errors::duplicate_torrent) { if (r) *r = AddResult::Duplicate; return "Torrent gia' presente nell'elenco."; }
+    if (ec == lt::errors::duplicate_torrent) { if (r) *r = AddResult::Duplicate; return "Torrent già presente nell'elenco."; }
     if (r) *r = AddResult::Error;
     return ec.message();
 }

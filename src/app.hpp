@@ -12,6 +12,7 @@
 #include <mutex>
 #include <memory>
 #include <utility>
+#include <map>
 
 namespace sf {
 
@@ -59,10 +60,15 @@ struct App {
     HINSTANCE inst = nullptr;
     HWND main = nullptr, toolbar = nullptr, filters = nullptr, list = nullptr, tabs = nullptr, status = nullptr;
     HWND chart = nullptr;
-    SpeedHistory speed_history;
+    UsageHistory usage;                          // all torrents
+    std::map<int, UsageHistory> torrent_usage;   // per torrent, created when it moves data
+    std::int64_t session_down = 0, session_up = 0;   // bytes since SeedFlow started
+    std::uint64_t last_sample_ms = 0;
+    int graph_hover_x = -1;
     std::int64_t current_down = 0, current_up = 0;
     HWND general = nullptr, tracker_bar = nullptr, trackers = nullptr, peers = nullptr, files = nullptr, log = nullptr;
     HFONT font = nullptr, bold = nullptr, mono = nullptr, big = nullptr;
+    HIMAGELIST il_main_bar = nullptr;   // main toolbar: icon-only, 20 px at 96 DPI
     HIMAGELIST il_toolbar = nullptr, il_states = nullptr, il_filters = nullptr, il_small = nullptr;
     HICON app_icon = nullptr, app_icon_small = nullptr, net_icon = nullptr;
     HTHEME list_theme = nullptr;    // cached for the custom-drawn cells; reset on WM_THEMECHANGED
@@ -111,7 +117,11 @@ void start_port_check(HWND notify);
 // dialogs.cpp
 bool dlg_magnet(HWND owner, std::vector<std::string>& magnets, std::string& folder, bool& paused);
 enum PrefPage { PrefGeneral, PrefFolders, PrefConnection, PrefBandwidth, PrefBitTorrent, PrefQueue, PrefIdentity, PrefAdvanced, PrefPerformance };
-bool dlg_preferences(HWND owner, int page = PrefGeneral);   // true if anything was applied
+bool dlg_preferences(HWND owner, int page = PrefGeneral);
+void dlg_guide(HWND owner, bool keys = false);   // Aiuto › Guida rapida / Scorciatoie
+void report_problem(HWND owner);                 // copies system info, opens a GitHub issue
+extern wchar_t const* const kProjectUrl;
+extern wchar_t const* const kReleasesUrl;   // true if anything was applied
 void dlg_create_torrent(HWND owner);
 // "Aggiungi torrent": save folder (with recent folders), paused, "don't ask again". false = cancelled.
 bool dlg_add_torrent(HWND owner, std::wstring const& summary, std::string& folder, bool& paused, bool& dont_ask);

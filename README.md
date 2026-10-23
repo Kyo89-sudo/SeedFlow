@@ -24,14 +24,14 @@ La distribuzione è un **singolo eseguibile statico**: nessuna DLL da distribuir
 
 | Area | Dettagli |
 | :--- | :--- |
-| Download | File .torrent e magnet link, selezione e priorità dei singoli file, copia del magnet |
+| Download | File .torrent e magnet link con scelta della cartella e cartelle recenti, selezione e priorità dei singoli file, spostamento dei file in un'altra cartella, copia del magnet |
 | Creazione torrent | Formati ibrido v1+v2, v1 e v2 da file o cartella; tracker per livello, web seed, commento, flag privato, dimensione dei pezzi automatica o manuale; hashing in background e seeding immediato |
 | Code e banda | Coda automatica, limiti globali e per torrent, numero di connessioni e slot di upload |
 | Seeding | Obiettivi di ratio con azioni automatiche (pausa, super-seeding, rimozione) e super-seeding per la distribuzione iniziale |
 | Rete | IPv4/IPv6, UPnP e NAT-PMP, cifratura del protocollo configurabile, tracker HTTP/UDP, DHT, PeX e Local Peer Discovery |
 | Affidabilità | Fast resume, scrittura atomica dello stato su disco, verifica forzata dei file |
-| Monitoraggio | Peer, tracker, salute dello swarm, statistiche globali e grafico delle velocità |
-| Integrazione | Area di notifica, avvio con Windows, verifica della porta e diagnostica di rete |
+| Monitoraggio | Peer, tracker, salute dello swarm, statistiche globali e tab Grafico (da 1 minuto a 2 ore, totale o per torrent) |
+| Integrazione | Area di notifica, avvio con Windows, verifica della porta, porta casuale a ogni avvio, diagnostica di rete e guida rapida integrata |
 
 ## Screenshot
 

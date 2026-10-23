@@ -56,6 +56,8 @@ struct AppSettings {
     std::vector<std::string> recent_dirs; // UTF-8, most recent first (max 8)
     // status bar: bit i shows pane i (StatusPane); 0 hides the bar
     int status_panes = 0x3F;
+    // "Grafico" tab: range index (1/5/30/120 min), source (all / selected), bits 1 download 2 upload 4 limits
+    int graph_range = 1, graph_source = 0, graph_flags = 7;
     int process_priority = 0;       // 0 normal, 1 below normal, 2 idle (applied at start and on change)
     // network
     int port = 51413;
@@ -63,6 +65,7 @@ struct AppSettings {
     bool announce_all_trackers = true, announce_all_tiers = true; // qBittorrent "always announce to all ..."
     int encryption = 1;         // 0 allowed, 1 preferred, 2 required
     bool auto_port_check = false;
+    bool random_port_start = false; // pick a new listen port at every start
     // transfers
     int down_kib = 0, up_kib = 0;
     int connections = 200, upload_slots = 8;
@@ -90,6 +93,9 @@ bool save_settings(AppSettings const& s, std::string& error);
 // One-time import from SeedFlow <= 0.7.1 (WPF): reads a few keys of session.json.
 struct LegacyImport { bool found = false; std::string folder; std::vector<std::string> magnets, torrent_files; };
 LegacyImport import_legacy(AppSettings& s);
+
+// A random listen port in 10000-65000, different from `avoid`.
+int random_listen_port(int avoid = 0);
 
 } // namespace sf
 
