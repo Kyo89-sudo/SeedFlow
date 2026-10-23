@@ -1,4 +1,4 @@
-// SeedFlow - custom-drawn widgets sharing the icon set's look (style A duotone:
+// SeedFlow - custom-drawn widgets sharing the icon set's look (style B duotone:
 // rounded shapes, coloured outline, light tint, solid fill; same palette).
 #pragma once
 #include "win.hpp"

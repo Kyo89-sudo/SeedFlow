@@ -1,163 +1,27 @@
 VERIFICHE SeedFlow 0.8.7.3 - 23/10/2026
 
-- Larghezza della colonna Nome salvata nelle impostazioni (name_width, 96 DPI);
-  regressione: persistenza e limiti del valore. Compilazione llvm-mingw senza
-  warning; da verificare con build.bat -RunTests.
-
-VERIFICHE SeedFlow 0.8.7.2 - 23/10/2026
-
-- Revisione del codice nuovo (grafico, aggiunta torrent, cambio DPI): tre
-  correzioni, vedi CHANGELOG. Compilazione llvm-mingw senza warning; da
-  verificare con build.bat -RunTests.
-
-VERIFICHE SeedFlow 0.8.7.1 - 23/10/2026
-
-- Correzione del grafico (vuoto iniziale): nuovo caso nella regressione con
-  cronologia più corta dell'intervallo (5 min e 2 ore). Compilazione llvm-mingw
-  senza warning; da verificare con build.bat -RunTests.
-
-VERIFICHE SeedFlow 0.8.7 - 23/10/2026
+Le verifiche delle versioni precedenti restano nella cronologia di git.
 
 Eseguito realmente:
-- Windows (utente): build.bat -NoPause -RunTests con MSVC 14.51 (VS 2026), /MT,
-  triplet x64-windows-static: CTest 2/2 superati (superseed-flags,
-  win32-regression); prova manuale dell'interfaccia: funziona.
-- Compilazione per Windows x64 con llvm-mingw (app e regressione): nessun warning.
+- Windows (utente), build 0.8.7: build.bat -NoPause -RunTests con MSVC 14.51
+  (VS 2026), /MT, triplet x64-windows-static: CTest 2/2 superati
+  (superseed-flags, win32-regression); prova manuale dell'interfaccia: funziona.
+- Compilazione per Windows x64 con llvm-mingw (app e regressione) di ogni
+  revisione fino alla 0.8.7.3: nessun warning.
 - Motore su Linux con ASan/UBSan: lettura del .torrent (nome, dimensione, file),
   spostamento dei file con move_storage, aggiornamento del solo percorso con
   verifica dei dati, percorsi con lettere accentate.
-- Controllo automatico del layout delle Preferenze: nessun controllo fuori
-  dalla pagina (276 x 272 DLU) o sovrapposto.
-- Regressione estesa (da eseguire con build.bat -RunTests): cartelle recenti,
-  barra di stato con voci nascoste, porta casuale, persistenza delle nuove
-  impostazioni, cronologia velocità a tre livelli (1/6/24 s), disegno del tab
-  Grafico in tutti gli intervalli e senza selezione, senza crescita di oggetti GDI.
+- Controllo automatico del layout di Preferenze e Informazioni: nessun
+  controllo fuori dalla pagina o sovrapposto.
 - Icone: 43 icone x 7 dimensioni rigenerate con tools/make_icons.py (Chromium),
   ordine e ID invariati (src/icon_ids.hpp identico).
-- Layout della finestra Informazioni: nessun controllo fuori o sovrapposto.
 
-Non verificato: interfaccia su Windows reale (finestre, toolbar, tooltip,
-tab Grafico), da controllare con la build dell'utente.
+Regressione (build.bat -RunTests): cartelle recenti, barra di stato con voci
+nascoste, porta casuale, persistenza delle nuove impostazioni (anche larghezza
+della colonna Nome), cronologia velocità a tre livelli (1/6/24 s), disegno del
+tab Grafico in tutti gli intervalli, con cronologia corta, senza selezione e in
+finestra stretta, senza crescita di oggetti GDI.
 
-VERIFICHE artwork Classic (0.8.7) - 22/10/2026
-
-- Verificate 43 icone in 7 dimensioni (301 celle PNG non vuote, RGBA).
-- ICO del programma con 9 dimensioni distinte da 16 a 256 px; trasparenza verificata.
-- Compilazione risorse SeedFlow.rc con Windows SDK 10.0.28000.0: superata.
-- Controllo visivo delle icone e confronto del logo su fondo chiaro e scuro.
-- Build completa tentata con CMake/MSBuild, rimasta su "Checking File Globs"
-  senza avanzamenti; interrotta. Nessun nuovo EXE o esito CTest dichiarato.
-- Corretta la variabile che causava C4456 nel test; da ricompilare con i test.
-
-VERIFICHE SeedFlow 0.8.6 - 22/10/2026
-
-Base: 0.8.5 r16 (ramo main).
-
-Eseguito realmente:
-- Windows (utente): build.bat -RunTests con MSVC 19.51 (VS 2026), /MT,
-  triplet x64-windows-static: SeedFlow.exe 10,1 MB, CTest 2/2 superati
-  (superseed-flags, win32-regression). Unico avviso: C4996 nel test
-  superseed per il costruttore deprecato di create_torrent, corretto dopo
-  la build (stesso test eseguito su Linux con l'API nuova: superato).
-- Compilazione per Windows x64 con llvm-mingw: nessun warning.
-- Regressione estesa: versione mostrata in Informazioni, versione del
-  manifest uguale a FileVersion, migrazione dei preset User-Agent.
-
-Non verificato:
-- Uso interattivo del riordino dei torrent (frecce e menu Coda) su Windows.
-
----
-
-VERIFICHE SeedFlow 0.8.5 r16 - 21/10/2026
-
-Base: 0.8.4 r15 (ramo main). Ambiente: Linux x64, nessun Windows disponibile.
-
-Eseguito realmente:
-- Compilazione e link per Windows x64 con llvm-mingw (clang 19), libtorrent
-  2.1.2 + OpenSSL 3.5.4 statici: SeedFlow.exe e SeedFlowRegression.exe senza
-  errori e senza warning nei sorgenti dell'applicazione.
-- clang --analyze su tutti i sorgenti: nessun avviso. clang-tidy (bugprone,
-  clang-analyzer): solo avvisi di stile (catch vuoti voluti verso handle
-  libtorrent non piu' validi, cast GetProcAddress), nessun difetto.
-- Motore SeedFlow (aggiunta, duplicati, tracker, limiti, fast resume,
-  ripristino, rimozione con cancellazione) con I/O pread e mmap sotto
-  AddressSanitizer + LeakSanitizer + UBSan: superato, 0 errori, 0 leak.
-- Creazione torrent sotto ASan/UBSan: tracker per tier e duplicati, URL non
-  validi rifiutati, web seed; cartella con nome Unicode in formato ibrido
-  (v1+v2), v1 (con flag privato) e v2, hash e tier verificati rileggendo il
-  file; file singolo con pezzi da 64 KiB; sorgente mancante, cartella vuota e
-  dimensione pezzi non valida rifiutate; annullamento durante l'hash e
-  riavvio; aggiunta al motore in seed mode: seeding immediato senza recheck,
-  anche per un torrent v2 di una cartella con un solo file.
-- Windows (utente): build MSVC 19.51 /MT riuscita; la prima esecuzione della
-  regressione Win32 ha trovato il caso v2 con un solo file in cartella
-  (nome del torrent = nome del file), corretto in questa revisione.
-- Windows (utente), dopo la correzione: build.bat -RunTests con MSVC 19.51
-  (VS 2026), /MT, triplet x64-windows-static: SeedFlow.exe 10,1 MB,
-  CTest 2/2 superati (superseed-flags, win32-regression).
-- Annullamento: libtorrent non ha un'API di interruzione, l'hash viene fermato
-  dalla callback (come qBittorrent). LeakSanitizer rileva circa 5 KB non
-  liberati dentro libtorrent per ogni annullamento: trascurabile, nessun
-  errore di memoria.
-- file_io: primo salvataggio, sostituzione con backup, nessun file temporaneo
-  residuo, lettura limitata prima dell'allocazione, file vuoti, destinazione
-  non sostituibile (percorso POSIX; il ramo Windows FlushFileBuffers /
-  MoveFileExW e' compilato ma non eseguito).
-- Nuove icone rigenerate con tools/make_icons.py (43 icone, 7 dimensioni).
-
-Non verificato in questa revisione:
-- GUI interattiva della finestra Crea torrent su Windows reale.
-
----
-
-VERIFICHE SeedFlow 0.8.4 r15 - 21/10/2026
-
-Base: sorgenti Win32 0.8.4 r14 pubblicati su GitHub, con documentazione GPL.
-Questa e' una revisione di manutenzione della r14.
-
-Eseguito realmente su Windows x64:
-- Compilazione e link nativi cl/link/rc con MSVC 19.51.36260 (VS 2026),
-  SDK 10.0.28000.0, C++17, /utf-8, /MT, /O2, /W4; risorse rc /c65001.
-- Sorgenti applicazione senza warning. Il test motore mantiene un avviso
-  C4996 per il costruttore compatibile deprecato di create_torrent.
-- Dipendenze statiche: libtorrent 2.1.2, Boost 1.92.0, OpenSSL 3.6.5.
-- Configurazione CMake e registrazione dei test riuscite.
-- CTest 2/2 superati, con gli eseguibili della compilazione nativa copiati
-  nella directory Release configurata. Regressione: 124 controlli.
-- Controllati regressioni Unicode/risorse/icona, colonne, ownership diagnostica,
-  input numerici persistiti fuori intervallo, flag booleani grandi, reset
-  statistiche assenti, cache diagnostica di porta diversa/scaduta/futura,
-  rifiuto porta non valida senza accesso alla rete.
-- Barra di stato controllata a larghezze 760/1024/1920 e DPI 96/144/192.
-- Creata la finestra Preferenze dalle risorse effettive dell'EXE e misurata
-  la larghezza del testo Prestazioni e memoria, includendo rientri e icona.
-- Test su file reali in una cartella temporanea di test: primo salvataggio,
-  sostituzione, backup della versione precedente, backup non scrivibile,
-  conservazione del file corrente su errore, pulizia temporanei, file vuoti
-  e limite di lettura prima dell'allocazione. Nessun accesso ai dati utente.
-- Controlli GDI ripetuti del grafico e dei menu superati.
-- Test motore: fixture locale senza tracker e con discovery e trasporti peer
-  disabilitati; flag Super-seeding su incompleto/completo e disattivazione.
-- FileVersion 0.8.4.15, ProductVersion 0.8.4.
-- dumpbin /dependents: solo DLL di sistema; nessuna DLL aggiuntiva da distribuire.
-- Script PowerShell controllato sintatticamente; licenza e documentazione
-  incluse nell'output di build. -RunTests abilita entrambe le suite CMake.
-- ZIP verificati con CRC e manifesto SHA-256 di ogni file.
-
-Limiti:
-- Il tentativo completo tramite MSBuild in questo ambiente e' stato fermato
-  per assenza di avanzamento dopo Checking Build System; il secondo tentativo,
-  con rigenerazione CMake disattivata localmente, ha prodotto gli oggetti ma
-  non ha terminato. Non viene dichiarata una build MSBuild completa verificata.
-- Non e' stato eseguito un collaudo interattivo completo della GUI, della tray
-  o del cambio monitor/DPI. Le verifiche GUI sono controlli delle risorse,
-  della geometria e del rendering previsti dalla suite.
-- Nessuna verifica online reale della porta, annuncio a tracker pubblici,
-  trasferimento esterno o confronto prestazionale eseguito per questa revisione.
-- Il limite HTTP e la gestione delle eccezioni WinHTTP sono stati verificati
-  in revisione del codice, senza simulatore del servizio HTTPS remoto.
-
-Pulizia locale autorizzata:
-Eliminate 25 vecchie cartelle di lavoro C#/WPF 0.7.x e copie estratte per
-le verifiche (circa 127.9 MiB). Conservati gli archivi consegnati, la base
-Win32 r14 e le dipendenze riutilizzate. Nessuna cancellazione dei dati utente.
+Da verificare con la build dell'utente: correzioni 0.8.7.1-0.8.7.3 (vuoto
+iniziale del grafico, torrent selezionato fermo, .torrent non validi, cambio
+DPI, larghezza di Nome salvata) e rimozione della Guida rapida.

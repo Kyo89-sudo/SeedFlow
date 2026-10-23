@@ -1,5 +1,5 @@
-// SeedFlow - icon set (style A: duotone 24x24, stroke 2) pre-rendered from
-// res/icons/svg into PNG strips (16..48 px) embedded as RCDATA resources.
+// SeedFlow - icon set (style B: macOS-inspired duotone, 24x24, stroke 1.7) pre-rendered from
+// res/icons/icons.py (SVG drawings) into PNG strips (16..48 px) embedded as RCDATA resources.
 #pragma once
 #include "win.hpp"
 #include "icon_ids.hpp"
