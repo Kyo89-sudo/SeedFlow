@@ -214,10 +214,10 @@ int wmain(int argc, wchar_t** argv) {
                 avoided = avoided && p != 51413;
             }
             check(in_range && avoided && sf::random_listen_port(65000) != 65000, "random listen port in 10000-65000 and different from the current one");
-            libtorrent::entry e(libtorrent::entry::dictionary_t);
-            e["random_port_start"] = 1;
-            e["recent_dirs"] = libtorrent::entry::list_type{libtorrent::entry(std::string(1500, 'x')), libtorrent::entry("D:\\Ok")};
-            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), e);
+            libtorrent::entry saved(libtorrent::entry::dictionary_t);
+            saved["random_port_start"] = 1;
+            saved["recent_dirs"] = libtorrent::entry::list_type{libtorrent::entry(std::string(1500, 'x')), libtorrent::entry("D:\\Ok")};
+            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), saved);
             sf::AppSettings loaded;
             check(sf::parse_settings(buf, loaded) && loaded.random_port_start && loaded.recent_dirs.size() == 1 && loaded.recent_dirs[0] == "D:\\Ok",
                   "random port option persisted, oversized recent folders dropped");
@@ -362,10 +362,13 @@ int wmain(int argc, wchar_t** argv) {
         HDC tree_dc = GetDC(tree);
         auto tree_font = reinterpret_cast<HFONT>(SendMessageW(tree, WM_GETFONT, 0, 0));
         auto previous_font = SelectObject(tree_dc, tree_font);
-        SIZE extent{}; GetTextExtentPoint32W(tree_dc, L"Prestazioni e memoria", 21, &extent);
+        // the widest entry: "Prestazioni" is a child of "Avanzate" (one more indentation level)
+        SIZE child{}; GetTextExtentPoint32W(tree_dc, L"Prestazioni", 11, &child);
+        SIZE top{}; GetTextExtentPoint32W(tree_dc, L"Code e ratio", 12, &top);
         SelectObject(tree_dc, previous_font); ReleaseDC(tree, tree_dc);
-        check(tree_rect.right >= extent.cx + 2 * static_cast<int>(TreeView_GetIndent(tree)) + 24,
-            "performance and memory title fits tree including indentation and icon");
+        int const indent = static_cast<int>(TreeView_GetIndent(tree));
+        check(tree_rect.right >= std::max(child.cx + 2 * indent, top.cx + indent) + 24,
+            "preferences tree titles fit including indentation and icon");
         DestroyWindow(preferences);
         check(resource_text(module, IDD_PG_SYSTEM).find(L"Priorità del processo") != std::wstring::npos, "advanced page accent intact");
         for (int size : sf::icons::kStripSizes) {
