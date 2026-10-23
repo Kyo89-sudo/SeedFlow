@@ -9,10 +9,14 @@ Eseguito realmente:
   dalla pagina (276 x 272 DLU) o sovrapposto.
 - Regressione estesa (da eseguire con build.bat -RunTests): cartelle recenti,
   barra di stato con voci nascoste, porta casuale, persistenza delle nuove
-  impostazioni.
+  impostazioni, cronologia velocità a tre livelli (1/6/24 s), disegno del tab
+  Grafico in tutti gli intervalli e senza selezione, senza crescita di oggetti GDI.
+- Icone: 43 icone x 7 dimensioni rigenerate con tools/make_icons.py (Chromium),
+  ordine e ID invariati (src/icon_ids.hpp identico).
+- Layout di Informazioni e Guida rapida: nessun controllo fuori o sovrapposto.
 
-Non verificato: interfaccia su Windows reale (finestre, toolbar, tooltip),
-da controllare con la build dell'utente.
+Non verificato: interfaccia su Windows reale (finestre, toolbar, tooltip,
+tab Grafico, guida), da controllare con la build dell'utente.
 
 VERIFICHE artwork Classic (0.8.7) - 22/10/2026
 

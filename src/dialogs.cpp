@@ -1371,11 +1371,10 @@ static std::wstring windows_version() {
 std::wstring about_version_line() {
     return L"Versione " SF_VERSION_WSTRING L" (Win32 nativa) — x64";
 }
+// Technical details of the About box (also what "Copia info di sistema" copies).
 static std::wstring about_text() {
     std::wstring t;
     auto line = [&](std::wstring const& s) { t += s + L"\r\n"; };
-    line(L"Client BitTorrent nativo per Windows, leggero e senza pubblicità.");
-    line(L"");
     line(L"Motore: libtorrent-rasterbar " + widen(Engine::libtorrent_version()) + L" (ABI " + std::to_wstring(g.engine.abi_version()) + L")");
     line(L"I/O disco: " + widen(g.engine.disk_io_name()));
 #if defined(_MSC_VER)
@@ -1384,12 +1383,8 @@ static std::wstring about_text() {
     line(L"Compilato con clang " + widen(__clang_version__) + L", " + widen(__DATE__));
 #endif
     line(L"Sistema: " + windows_version());
-    line(L"");
-    line(L"Funzioni: torrent e magnet v1/v2, creazione di torrent v1/v2/hybrid, DHT, PeX, LSD, UPnP/NAT-PMP, cifratura, "
-         L"code automatiche, Super-seeding, limiti di velocità e di ratio per torrent o globali, gestione tracker, "
-         L"priorità dei file, fast resume, salute dello swarm, grafico delle velocità, diagnostica di rete con verifica "
-         L"online della porta, ottimizzazione per tipo di connessione, statistiche storiche.");
-    line(L"");
+    line(L"Identità: " + widen(g.settings.user_agent.empty() ? std::string(SF_USER_AGENT) : g.settings.user_agent));
+    line(L"Porta di ascolto: " + std::to_wstring(g.settings.port));
     line(L"Dati e impostazioni: " + app_data_dir().wstring());
     line(L"Cartella di download: " + widen(download_dir()));
     line(L"");
@@ -1398,7 +1393,7 @@ static std::wstring about_text() {
     line(L"  • libtorrent-rasterbar — Arvid Norberg e collaboratori, licenza BSD 3-clause");
     line(L"  • Boost C++ Libraries — Boost Software License 1.0");
     line(L"  • OpenSSL (se incluso nella build) — Apache License 2.0");
-    line(L"  • Icone: disegni SVG SeedFlow, sorgenti in res/icons");
+    line(L"  • Icone e grafica: disegni originali SeedFlow (sorgenti SVG in res/icons)");
     return t;
 }
 static INT_PTR CALLBACK about_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
@@ -1409,6 +1404,8 @@ static INT_PTR CALLBACK about_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
         SetWindowLongPtrW(dlg, DWLP_USER, reinterpret_cast<LONG_PTR>(big));
         SendDlgItemMessageW(dlg, IDC_TITLE, WM_SETFONT, reinterpret_cast<WPARAM>(g.big), TRUE);
         set_text(dlg, IDC_VERSION, about_version_line());
+        set_text(dlg, IDC_ABOUT_DESC, L"Client BitTorrent nativo per Windows: download, seeding e creazione di torrent "
+                                      L"v1/v2/ibridi in un unico eseguibile, leggero e senza pubblicità.");
         set_text(dlg, IDC_REPORT, about_text());
         return TRUE;
     }
@@ -1435,6 +1432,145 @@ static INT_PTR CALLBACK about_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
     return FALSE;
 }
 void dlg_about(HWND owner) { DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_ABOUT), owner, about_proc, 0); }
+
+// ------------------------------------------------------------------ help
+wchar_t const* const kProjectUrl = L"https://github.com/Kyo89-sudo/SeedFlow";
+wchar_t const* const kReleasesUrl = L"https://github.com/Kyo89-sudo/SeedFlow/releases";
+wchar_t const* const kIssuesUrl = L"https://github.com/Kyo89-sudo/SeedFlow/issues/new";
+
+// Copies version and system details, then opens a new issue on GitHub.
+void report_problem(HWND owner) {
+    bool const copied = copy_to_clipboard(owner, SF_DISPLAY_VERSION_W L"\r\n" + about_text());
+    MessageBoxW(owner, copied
+        ? L"Le informazioni su versione e sistema sono state copiate negli appunti.\n\n"
+          L"Ora si apre la pagina per segnalare il problema su GitHub: descrivi cosa è successo e cosa ti aspettavi, "
+          L"poi incolla le informazioni (Ctrl+V). Se serve, allega anche le righe del tab Log."
+        : L"Ora si apre la pagina per segnalare il problema su GitHub: descrivi cosa è successo e cosa ti aspettavi.",
+        L"Segnala un problema", MB_ICONINFORMATION);
+    open_path(kIssuesUrl);
+}
+
+struct GuideTopic { wchar_t const* title; wchar_t const* text; };
+static GuideTopic const kGuide[] = {
+    {L"Primi passi",
+     L"SeedFlow scarica e condivide file con il protocollo BitTorrent.\r\n\r\n"
+     L"1. Aggiungi un file .torrent (Ctrl+O, oppure trascinalo nella finestra) o un magnet link (Ctrl+U).\r\n"
+     L"2. Scegli la cartella dove salvare i file e conferma.\r\n"
+     L"3. Segui l'avanzamento nella lista; i dettagli del torrent selezionato sono nei tab in basso.\r\n\r\n"
+     L"A download finito il torrent passa in seeding: continua a inviare i dati agli altri. "
+     L"Fermalo con Pausa o rimuovilo dalla lista quando vuoi.\r\n\r\n"
+     L"Prima di tutto conviene usare Strumenti › Ottimizza per la mia connessione: imposta limiti e connessioni "
+     L"in base alla tua linea."},
+    {L"Aggiungere torrent",
+     L"File .torrent: Ctrl+O, trascinamento nella finestra o doppio clic da Esplora risorse. Si apre la finestra "
+     L"\"Aggiungi torrent\" con nome, dimensione e cartella di destinazione: puoi scegliere una delle cartelle recenti, "
+     L"cercarne un'altra o scriverla (se non esiste viene creata).\r\n\r\n"
+     L"\"Aggiungi in pausa\" aggiunge il torrent senza avviarlo. \"Non chiedere più\" salva direttamente nella "
+     L"cartella predefinita (Preferenze › Cartelle); la domanda si riattiva in Preferenze › Generale.\r\n\r\n"
+     L"Magnet: Ctrl+U apre la finestra in cui incollare uno o più link (uno per riga); Ctrl+V incolla subito "
+     L"il magnet presente negli appunti. Un torrent già presente nella lista non viene aggiunto due volte."},
+    {L"Creare un torrent",
+     L"File › Crea torrent (Ctrl+N). Scegli un file o una cartella, i tracker (uno per riga, una riga vuota separa "
+     L"i livelli) ed eventuali web seed.\r\n\r\n"
+     L"Formato: ibrido v1+v2 (consigliato, compatibile con tutti i client), solo v1 oppure solo v2. "
+     L"La dimensione dei pezzi automatica va bene quasi sempre.\r\n\r\n"
+     L"\"Avvia subito il seeding\" aggiunge il torrent creato alla lista usando i file originali, senza riscaricarli. "
+     L"Il magnet si può copiare negli appunti alla fine."},
+    {L"Coda e priorità",
+     L"La colonna # indica l'ordine: prima i torrent in coda per il download, poi quelli completati o in seeding.\r\n\r\n"
+     L"Usa le frecce della barra o il tasto destro › Coda per spostare i torrent selezionati; con più torrent "
+     L"selezionati l'ordine tra loro resta lo stesso.\r\n\r\n"
+     L"Il numero di download e seed attivi insieme si imposta in Preferenze › Code e ratio. \"Avvio forzato\" "
+     L"avvia un torrent ignorando la coda. Nel tab File, con il tasto destro, cambi la priorità dei singoli file o li escludi."},
+    {L"Seeding e ratio",
+     L"Il ratio è il rapporto tra dati caricati e scaricati. In Preferenze › Code e ratio puoi fissare un ratio "
+     L"globale e cosa fare quando viene raggiunto (pausa, Super-seeding o rimozione); dal tasto destro › Limite ratio "
+     L"puoi dare a un torrent un limite suo.\r\n\r\n"
+     L"Super-seeding: utile quando sei l'unico ad avere il file completo; invia a ogni peer pezzi diversi così il "
+     L"file si diffonde più in fretta. Da usare solo nella fase iniziale."},
+    {L"Spostare i file",
+     L"Tasto destro › Sposta in un'altra cartella. Dopo aver scelto la cartella:\r\n\r\n"
+     L"• Sposta i file: SeedFlow sposta i dati nella nuova cartella e la usa da quel momento.\r\n"
+     L"• I file sono già nella nuova cartella: se li hai spostati tu, aggiorna solo il percorso e verifica i dati.\r\n\r\n"
+     L"L'esito compare nel tab Log. Durante lo spostamento non chiudere SeedFlow."},
+    {L"Porta e connessione",
+     L"Per ricevere connessioni la porta di ascolto deve essere raggiungibile da Internet. L'indicatore a sinistra "
+     L"nella barra di stato è verde se la porta risulta aperta, arancione se sei dietro un firewall o un NAT; "
+     L"un clic apre la diagnostica di rete.\r\n\r\n"
+     L"In Preferenze › Connessione: porta (meglio tra 10000 e 65535), \"Porta casuale a ogni avvio\", UPnP e "
+     L"NAT-PMP per aprirla in automatico sul router, IPv6 e cifratura. Se UPnP non funziona, apri la porta a mano "
+     L"sul router (TCP e UDP) verso il PC."},
+    {L"Grafico e barra di stato",
+     L"Il tab Grafico mostra le velocità di download (blu) e upload (verde) degli ultimi 1, 5, 30 minuti o 2 ore, "
+     L"per tutti i torrent o per quello selezionato. I riquadri riportano velocità attuale, media e picco, più "
+     L"i totali della sessione. Passa il mouse sul grafico per leggere i valori in un punto; \"Mostra limiti\" "
+     L"disegna i limiti di velocità impostati.\r\n\r\n"
+     L"La barra di stato mostra rete, nodi DHT, velocità, totali e memoria: ogni voce si può nascondere in "
+     L"Preferenze › Generale."},
+    {L"Identità del client",
+     L"In Preferenze › Identità puoi scegliere come SeedFlow si presenta a tracker e peer (User-Agent, prefisso del "
+     L"peer ID, nome nell'handshake), anche con i preset di altri client.\r\n\r\n"
+     L"Attenzione: molti tracker privati accettano solo client autorizzati e aggirarne le regole può portare al ban. "
+     L"Lasciando i campi vuoti SeedFlow usa la propria identità."},
+    {L"Dati e backup",
+     L"Impostazioni, stato dei torrent e dati di ripresa sono nella cartella dati (Strumenti › Apri cartella dati "
+     L"SeedFlow, di solito %LOCALAPPDATA%\\SeedFlow). Per spostare SeedFlow su un altro PC chiudi il programma "
+     L"e copia quella cartella; i file scaricati vanno copiati nelle stesse posizioni.\r\n\r\n"
+     L"SeedFlow è un unico eseguibile: non richiede installazione e non scrive altrove."},
+    {L"Scorciatoie da tastiera",
+     L"Ctrl+O\tApri file .torrent\r\n"
+     L"Ctrl+U\tAggiungi magnet\r\n"
+     L"Ctrl+V\tIncolla magnet dagli appunti\r\n"
+     L"Ctrl+N\tCrea torrent\r\n"
+     L"Ctrl+A\tSeleziona tutti i torrent\r\n"
+     L"Canc\tRimuovi dalla lista (i file restano)\r\n"
+     L"Maiusc+Canc\tRimuovi e cancella i file\r\n"
+     L"F5\tRiannuncia ai tracker\r\n"
+     L"Ctrl+P\tPreferenze\r\n"
+     L"F1\tGuida rapida\r\n\r\n"
+     L"Doppio clic su un torrent: apre la sua cartella.\r\n"
+     L"Tasto destro su un torrent: tutti i comandi (coda, ratio, sposta, copia magnet...)."},
+    {L"Problemi comuni",
+     L"Il download non parte: controlla che il torrent non sia in pausa o in coda e guarda il tab Tracker; "
+     L"se non ci sono seed (Salute rossa) nessuno ha il file completo.\r\n\r\n"
+     L"Velocità bassa: verifica la porta (indicatore nella barra di stato), prova Ottimizza per la mia connessione "
+     L"e controlla i limiti in Preferenze › Banda.\r\n\r\n"
+     L"Errore sul disco: spazio esaurito o cartella non scrivibile; libera spazio o sposta il torrent in un'altra "
+     L"cartella.\r\n\r\n"
+     L"Per tutto il resto: Aiuto › Segnala un problema copia le informazioni utili e apre la pagina su GitHub."},
+};
+int const kGuideKeysTopic = 10;
+
+static INT_PTR CALLBACK guide_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM lp) {
+    auto show = [dlg](int i) {
+        if (i < 0 || i >= static_cast<int>(std::size(kGuide))) return;
+        SendDlgItemMessageW(dlg, IDC_G_TOPICS, LB_SETCURSEL, static_cast<WPARAM>(i), 0);
+        set_text(dlg, IDC_G_TEXT, kGuide[i].text);
+    };
+    switch (msg) {
+    case WM_INITDIALOG: {
+        for (auto const& t : kGuide) SendDlgItemMessageW(dlg, IDC_G_TOPICS, LB_ADDSTRING, 0, reinterpret_cast<LPARAM>(t.title));
+        int tabs = 64;   // dialog units: aligns the shortcut list
+        SendDlgItemMessageW(dlg, IDC_G_TEXT, EM_SETTABSTOPS, 1, reinterpret_cast<LPARAM>(&tabs));
+        show(static_cast<int>(lp));
+        SetFocus(GetDlgItem(dlg, IDC_G_TOPICS));
+        return FALSE;
+    }
+    case WM_COMMAND:
+        switch (LOWORD(wp)) {
+        case IDC_G_TOPICS:
+            if (HIWORD(wp) == LBN_SELCHANGE) show(static_cast<int>(SendDlgItemMessageW(dlg, IDC_G_TOPICS, LB_GETCURSEL, 0, 0)));
+            return TRUE;
+        case ID_HELP_REPORT: report_problem(dlg); return TRUE;
+        case IDOK: case IDCANCEL: EndDialog(dlg, IDOK); return TRUE;
+        }
+        break;
+    }
+    return FALSE;
+}
+void dlg_guide(HWND owner, bool keys) {
+    DialogBoxParamW(g.inst, MAKEINTRESOURCEW(IDD_GUIDE), owner, guide_proc, keys ? kGuideKeysTopic : 0);
+}
 
 } // namespace sf
 

@@ -57,6 +57,7 @@ BEGIN
     VK_DELETE, ID_T_DELETE, VIRTKEY, SHIFT
     VK_F5, ID_T_REANNOUNCE, VIRTKEY
     "P", ID_OPT_PREFS, VIRTKEY, CONTROL
+    VK_F1, ID_HELP_GUIDE, VIRTKEY
 END
 
 IDR_MAINMENU MENU
@@ -93,6 +94,13 @@ BEGIN
     END
     POPUP "&Aiuto"
     BEGIN
+        MENUITEM "Guida rapida\tF1", ID_HELP_GUIDE
+        MENUITEM "Scorciatoie da tastiera", ID_HELP_KEYS
+        MENUITEM SEPARATOR
+        MENUITEM "Novità di questa versione", ID_HELP_RELEASES
+        MENUITEM "Pagina del progetto su GitHub", ID_HELP_GITHUB
+        MENUITEM "Segnala un problema...", ID_HELP_REPORT
+        MENUITEM SEPARATOR
         MENUITEM "Informazioni su SeedFlow", ID_HELP_ABOUT
     END
 END
@@ -427,19 +435,32 @@ BEGIN
     DEFPUSHBUTTON   "Chiudi", IDCANCEL, 322, 268, 50, 15
 END
 
-IDD_ABOUT DIALOGEX 0, 0, 320, 230
+IDD_ABOUT DIALOGEX 0, 0, 320, 252
 STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Informazioni su SeedFlow"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     ICON            IDI_APP, IDC_LOGO, 10, 10, 32, 32, SS_REALSIZEIMAGE
-    LTEXT           "SeedFlow", IDC_TITLE, 52, 10, 260, 16
-    LTEXT           "", IDC_VERSION, 52, 28, 260, 18
-    EDITTEXT        IDC_REPORT, 10, 52, 300, 132, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL
-    CONTROL         "<a href=""https://www.libtorrent.org"">libtorrent.org</a>", IDC_LINK, "SysLink", WS_TABSTOP, 10, 190, 120, 10
-    PUSHBUTTON      "Copia info di sistema", IDC_COPY, 10, 208, 86, 15
-    PUSHBUTTON      "Cartella dati", IDC_DATAFOLDER, 100, 208, 60, 15
-    DEFPUSHBUTTON   "OK", IDOK, 260, 208, 50, 15
+    LTEXT           "SeedFlow", IDC_TITLE, 52, 8, 260, 16
+    LTEXT           "", IDC_VERSION, 52, 25, 260, 9
+    LTEXT           "", IDC_ABOUT_DESC, 52, 37, 260, 28
+    CONTROL         "<a href=""https://github.com/Kyo89-sudo/SeedFlow"">Progetto su GitHub</a>   ·   <a href=""https://github.com/Kyo89-sudo/SeedFlow/releases"">Novità e download</a>   ·   <a href=""https://www.libtorrent.org"">libtorrent.org</a>", IDC_LINK, "SysLink", WS_TABSTOP, 52, 68, 260, 10
+    LTEXT           "Componenti, licenze e informazioni di sistema", -1, 10, 86, 300, 9
+    EDITTEXT        IDC_REPORT, 10, 97, 300, 128, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL
+    PUSHBUTTON      "Copia info di sistema", IDC_COPY, 10, 231, 86, 15
+    PUSHBUTTON      "Cartella dati", IDC_DATAFOLDER, 100, 231, 60, 15
+    DEFPUSHBUTTON   "OK", IDOK, 260, 231, 50, 15
+END
+
+IDD_GUIDE DIALOGEX 0, 0, 440, 282
+STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Guida rapida di SeedFlow"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_G_TOPICS, 8, 8, 118, 248, LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_G_TEXT, 134, 8, 298, 248, ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Segnala un problema...", ID_HELP_REPORT, 8, 262, 90, 14
+    DEFPUSHBUTTON   "Chiudi", IDOK, 382, 262, 50, 14
 END
 
 IDD_ADDTORRENT DIALOGEX 0, 0, 340, 126

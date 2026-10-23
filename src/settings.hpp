@@ -56,6 +56,8 @@ struct AppSettings {
     std::vector<std::string> recent_dirs; // UTF-8, most recent first (max 8)
     // status bar: bit i shows pane i (StatusPane); 0 hides the bar
     int status_panes = 0x3F;
+    // "Grafico" tab: range index (1/5/30/120 min), source (all / selected), bits 1 download 2 upload 4 limits
+    int graph_range = 1, graph_source = 0, graph_flags = 7;
     int process_priority = 0;       // 0 normal, 1 below normal, 2 idle (applied at start and on change)
     // network
     int port = 51413;

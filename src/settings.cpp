@@ -51,6 +51,9 @@ static void sanitize(AppSettings& s) {
     auto fix = [&](int& v, int lo, int hi, int fallback) { if (!in(v, lo, hi)) v = fallback; };
     fix(s.port, 1024, 65535, def.port);
     fix(s.status_panes, 0, 0x3F, def.status_panes);
+    fix(s.graph_range, 0, 3, def.graph_range);
+    fix(s.graph_source, 0, 1, def.graph_source);
+    fix(s.graph_flags, 0, 7, def.graph_flags);
     fix(s.encryption, 0, 2, def.encryption);
     fix(s.down_kib, 0, 2000000, 0);
     fix(s.up_kib, 0, 2000000, 0);
@@ -95,6 +98,9 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.create_copy_magnet = gi(d, "create_copy_magnet", 0) != 0;
     s.ask_save_path = gi(d, "ask_save_path", 1) != 0;
     s.status_panes = gint(d, "status_panes", 0x3F) & 0x3F;
+    s.graph_range = std::clamp(gint(d, "graph_range", 1), 0, 3);
+    s.graph_source = std::clamp(gint(d, "graph_source", 0), 0, 1);
+    s.graph_flags = gint(d, "graph_flags", 7) & 7;
     s.recent_dirs.clear();
     if (auto rd = d.dict_find_list("recent_dirs"))
         for (int i = 0; i < rd.list_size() && s.recent_dirs.size() < 8; ++i)
@@ -200,6 +206,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         e["create_format"] = s.create_format; e["create_piece"] = s.create_piece; e["create_trackers"] = s.create_trackers;
         e["create_seed"] = s.create_seed; e["create_private"] = s.create_private; e["create_copy_magnet"] = s.create_copy_magnet;
         e["ask_save_path"] = s.ask_save_path; e["status_panes"] = s.status_panes;
+        e["graph_range"] = s.graph_range; e["graph_source"] = s.graph_source; e["graph_flags"] = s.graph_flags;
         { lt::entry::list_type dirs; for (auto const& d2 : s.recent_dirs) dirs.emplace_back(d2); e["recent_dirs"] = dirs; }
         e["confirm_remove"] = s.confirm_remove; e["user_agent"] = s.user_agent;
         e["send_client_name"] = s.send_client_name;

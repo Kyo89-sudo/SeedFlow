@@ -1,4 +1,4 @@
-"""SeedFlow - rasterizza il set di icone (stile A, res/icons/svg) in strisce PNG
+"""SeedFlow - rasterizza il set di icone (stile B, res/icons/svg) in strisce PNG
 per ogni dimensione e genera src/icon_ids.hpp. Serve solo se si modificano le icone:
 i PNG generati sono gia' inclusi nei sorgenti.
 Requisiti: Python 3 + Playwright con Chromium (pip install playwright; playwright install chromium)."""
