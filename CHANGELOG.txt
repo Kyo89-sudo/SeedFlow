@@ -1,33 +1,44 @@
 SeedFlow — Changelog
 
-0.8.6.1 — 2026-10-22
+0.8.7 — 2026-10-23
 
-- Barra degli strumenti più compatta: solo icone, leggermente più grandi
-  (20 px), con il nome del comando nel tooltip.
-- Nuovo set di 43 icone Classic: forme piene, colori riconoscibili e rilievo
-  leggero. Disegni SVG originali SeedFlow.
-- Rifinita anche l'icona del programma: foglia e onde, bordo discreto e colori
-  coerenti con i comandi. ICO con nove dimensioni da 16 a 256 px.
-- Eliminato il warning C4456 nel test delle preferenze della barra di stato.
-- Aggiunta la scelta della cartella di salvataggio quando si aggiunge un file
-  .torrent (anche trascinato o aperto da Esplora risorse): nome e dimensione,
-  cartelle recenti, aggiunta in pausa e opzione "Non chiedere più"
-  (riattivabile in Preferenze › Generale).
-- Finestra dei magnet: stessa lista delle cartelle recenti; una cartella
-  che non esiste viene creata su richiesta.
-- Aggiunto "Sposta in un'altra cartella..." nel menu del tasto destro: sposta
-  i file oppure aggiorna solo il percorso se i dati sono già stati spostati,
-  con verifica automatica. Esito dello spostamento nel log.
-- Barra di stato configurabile da Preferenze › Generale: rete, DHT,
-  velocità, totali e RAM si possono nascondere una per una; togliendole
-  tutte la barra sparisce.
-- Barra di stato: larghezza dei pannelli calcolata dal testo, niente più testo
-  che sborda o tagliato; limite di velocità mostrato in forma compatta
-  ([max 107,3 MiB/s]).
-- Colonna # più larga, con spazio per la freccia di ordinamento.
-- La colonna Nome occupa lo spazio libero: niente barra di scorrimento
-  orizzontale con le larghezze predefinite. Se la allarghi a mano mantiene
-  la larghezza scelta.
+Aggiunta torrent
+- Scelta della cartella di salvataggio quando si aggiunge un .torrent (anche
+  trascinato o aperto da Esplora risorse): nome, dimensione, cartelle recenti,
+  aggiunta in pausa e "Non chiedere più" (riattivabile in Preferenze › Generale).
+- Finestra dei magnet con la stessa lista di cartelle recenti; una cartella che
+  non esiste viene creata su richiesta.
+- Un .torrent già presente nell'elenco ora viene segnalato con un messaggio.
+
+Gestione dei file
+- Nuovo "Sposta in un'altra cartella..." nel menu del tasto destro: sposta i
+  file oppure aggiorna solo il percorso se i dati sono già stati spostati, con
+  verifica automatica. Esito nel log.
+
+Interfaccia
+- Toolbar solo icone (20 px) con il nome del comando nel tooltip: non va più
+  a capo e non esce dalla finestra.
+- Preferenze riscritte, circa un terzo più strette: testi più brevi e note
+  sotto i controlli.
+- Barra di stato configurabile: rete, DHT, velocità, totali e RAM si possono
+  nascondere una per una; senza voci la barra sparisce.
+- Pannelli della barra di stato larghi quanto il loro testo; limite di
+  velocità in forma compatta ([max 107,3 MiB/s]).
+- Colonna # più larga; la colonna Nome riempie lo spazio libero e mantiene la
+  larghezza scelta a mano.
+- Nuovo set di icone Classic (43 icone, SVG originali) e icona del programma
+  rifinita, ICO da 16 a 256 px.
+
+Rete
+- Opzione "Porta casuale a ogni avvio" in Preferenze › Connessione.
+
+Correzioni e robustezza
+- Lettura di .torrent, fast resume e stato della sessione con dimensione
+  controllata (max 64 MiB).
+- Dopo un cambio di DPI la colonna Nome e la barra di stato vengono
+  ricalcolate.
+- Cartelle recenti troppo lunghe o vuote scartate al caricamento.
+- Eliminato il warning C4456 nel test di regressione.
 
 0.8.6 — 2026-10-22
 

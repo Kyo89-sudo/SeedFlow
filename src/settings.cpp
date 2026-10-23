@@ -9,6 +9,7 @@
 #include <regex>
 #include <vector>
 #include <limits>
+#include <random>
 
 namespace lt = libtorrent;
 namespace fs = std::filesystem;
@@ -97,7 +98,8 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.recent_dirs.clear();
     if (auto rd = d.dict_find_list("recent_dirs"))
         for (int i = 0; i < rd.list_size() && s.recent_dirs.size() < 8; ++i)
-            if (rd.list_at(i).type() == lt::bdecode_node::string_t && !rd.list_at(i).string_value().empty())
+            if (rd.list_at(i).type() == lt::bdecode_node::string_t && !rd.list_at(i).string_value().empty() &&
+                rd.list_at(i).string_value().size() <= 1024)
                 s.recent_dirs.emplace_back(rd.list_at(i).string_value());
     s.start_paused = gi(d, "start_paused", 0) != 0;
     s.confirm_remove = gi(d, "confirm_remove", 1) != 0;
@@ -123,6 +125,7 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.announce_all_trackers = gi(d, "announce_all_trackers", 1) != 0; s.announce_all_tiers = gi(d, "announce_all_tiers", 1) != 0;
     s.encryption = gint(d, "encryption", 1);
     s.auto_port_check = gi(d, "auto_port_check", 0) != 0;
+    s.random_port_start = gi(d, "random_port_start", 0) != 0;
     s.down_kib = gint(d, "down_kib", 0);
     s.up_kib = gint(d, "up_kib", 0);
     s.connections = gint(d, "connections", def.connections);
@@ -202,7 +205,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         e["send_client_name"] = s.send_client_name;
         e["peer_id_prefix"] = s.peer_id_prefix; e["client_name"] = s.client_name; e["anonymous_mode"] = s.anonymous_mode;
         e["port"] = s.port; e["dht"] = s.dht; e["upnp"] = s.upnp; e["natpmp"] = s.natpmp; e["lsd"] = s.lsd; e["pex"] = s.pex; e["ipv6"] = s.ipv6; e["announce_all_trackers"] = s.announce_all_trackers; e["announce_all_tiers"] = s.announce_all_tiers;
-        e["encryption"] = s.encryption; e["auto_port_check"] = s.auto_port_check;
+        e["encryption"] = s.encryption; e["auto_port_check"] = s.auto_port_check; e["random_port_start"] = s.random_port_start;
         e["down_kib"] = s.down_kib; e["up_kib"] = s.up_kib;
         e["connections"] = s.connections; e["upload_slots"] = s.upload_slots;
         e["active_downloads"] = s.active_downloads; e["active_seeds"] = s.active_seeds;
@@ -305,6 +308,14 @@ LegacyImport import_legacy(AppSettings& s) {
         else if (v.size() > 8 && v.substr(v.size() - 8) == ".torrent") r.torrent_files.push_back(v);
     }
     return r;
+}
+
+int random_listen_port(int avoid) {
+    std::random_device rd;
+    std::uniform_int_distribution<int> pick(10000, 65000);
+    int port = pick(rd);
+    for (int i = 0; i < 8 && port == avoid; ++i) port = pick(rd);
+    return port == avoid ? (avoid >= 65000 ? 10000 : avoid + 1) : port;
 }
 
 } // namespace sf

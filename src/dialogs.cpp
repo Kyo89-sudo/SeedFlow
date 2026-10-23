@@ -428,6 +428,7 @@ static INT_PTR CALLBACK pg_connection(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
     case WM_INITDIALOG:
         set_int(dlg, IDC_PORT, s.port);
         check(dlg, IDC_UPNP, s.upnp); check(dlg, IDC_NATPMP, s.natpmp); check(dlg, IDC_AUTOCHECK, s.auto_port_check);
+        check(dlg, IDC_RANDOMSTART, s.random_port_start);
         check(dlg, IDC_IPV6, s.ipv6);
         combo_add(dlg, IDC_ENCRYPTION, L"Consentita (accetta anche connessioni in chiaro)");
         combo_add(dlg, IDC_ENCRYPTION, L"Preferita (cifra quando il peer lo supporta)");
@@ -436,8 +437,9 @@ static INT_PTR CALLBACK pg_connection(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
         return TRUE;
     case WM_COMMAND:
         if (LOWORD(wp) == IDC_RANDOMPORT) {
-            std::random_device rd;
-            set_int(dlg, IDC_PORT, std::uniform_int_distribution<int>(10000, 65000)(rd));
+            long long current = 0;
+            parse_int(get_text(dlg, IDC_PORT), current);
+            set_int(dlg, IDC_PORT, random_listen_port(static_cast<int>(current)));
             return TRUE;
         }
         break;
@@ -446,6 +448,7 @@ static INT_PTR CALLBACK pg_connection(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
         if (!get_int(dlg, IDC_PORT, 1024, 65535, port, L"Porta")) return page_result(dlg, false);
         s.port = static_cast<int>(port);
         s.upnp = checked(dlg, IDC_UPNP); s.natpmp = checked(dlg, IDC_NATPMP); s.auto_port_check = checked(dlg, IDC_AUTOCHECK);
+        s.random_port_start = checked(dlg, IDC_RANDOMSTART);
         s.ipv6 = checked(dlg, IDC_IPV6);
         s.encryption = std::max(0, combo_get(dlg, IDC_ENCRYPTION));
         return page_result(dlg, true);
@@ -675,9 +678,9 @@ static PageDef const kPages[] = {
     {PrefBandwidth, -1, L"Banda", IDD_PG_BANDWIDTH, pg_bandwidth, icons::IcBandwidth},
     {PrefBitTorrent, -1, L"BitTorrent", IDD_PG_BITTORRENT, pg_bittorrent, icons::IcMagnet},
     {PrefQueue, -1, L"Code e ratio", IDD_PG_QUEUE, pg_queue, icons::IcRatio},
-    {PrefIdentity, -1, L"Identità client", IDD_PG_IDENTITY, pg_identity, icons::IcIdentity},
+    {PrefIdentity, -1, L"Identità", IDD_PG_IDENTITY, pg_identity, icons::IcIdentity},
     {PrefAdvanced, -1, L"Avanzate", IDD_PG_SYSTEM, pg_system, icons::IcPreferences},
-    {PrefPerformance, PrefAdvanced, L"Prestazioni e memoria", IDD_PG_PERFORMANCE, pg_performance, icons::IcCpu},
+    {PrefPerformance, PrefAdvanced, L"Prestazioni", IDD_PG_PERFORMANCE, pg_performance, icons::IcCpu},
 };
 struct PrefsCtx {
     int start = PrefGeneral, current = -1;

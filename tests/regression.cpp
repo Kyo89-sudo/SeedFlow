@@ -206,6 +206,22 @@ int wmain(int argc, wchar_t** argv) {
             buf.clear(); libtorrent::bencode(std::back_inserter(buf), pane_settings);
             check(sf::parse_settings(buf, loaded) && loaded.status_panes == 0x3F, "unknown status bar pane bits dropped");
         }
+        {
+            bool in_range = true, avoided = true;
+            for (int i = 0; i < 200; ++i) {
+                int const p = sf::random_listen_port(51413);
+                in_range = in_range && p >= 10000 && p <= 65000;
+                avoided = avoided && p != 51413;
+            }
+            check(in_range && avoided && sf::random_listen_port(65000) != 65000, "random listen port in 10000-65000 and different from the current one");
+            libtorrent::entry e(libtorrent::entry::dictionary_t);
+            e["random_port_start"] = 1;
+            e["recent_dirs"] = libtorrent::entry::list_type{libtorrent::entry(std::string(1500, 'x')), libtorrent::entry("D:\\Ok")};
+            std::vector<char> buf; libtorrent::bencode(std::back_inserter(buf), e);
+            sf::AppSettings loaded;
+            check(sf::parse_settings(buf, loaded) && loaded.random_port_start && loaded.recent_dirs.size() == 1 && loaded.recent_dirs[0] == "D:\\Ok",
+                  "random port option persisted, oversized recent folders dropped");
+        }
 
         std::vector<int> order(sf::ColCount);
         std::iota(order.begin(), order.end(), 0);

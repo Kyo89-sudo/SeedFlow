@@ -1125,8 +1125,8 @@ static void add_files(std::vector<std::wstring> const& files) {
         int id = g.engine.add_torrent_file(narrow(f), folder, paused, err, &r);
         if (id > 0) { after_add(id); log_line(L"Aggiunto: " + fs::path(f).filename().wstring()); }
         else log_line(L"Non aggiunto (" + fs::path(f).filename().wstring() + L"): " + widen(err));
-        if (id <= 0 && r != AddResult::Duplicate && files.size() == 1)
-            MessageBoxW(g.main, widen(err).c_str(), L"SeedFlow", MB_ICONWARNING);
+        if (id <= 0 && files.size() == 1)   // a duplicate is only information, other failures are warnings
+            MessageBoxW(g.main, widen(err).c_str(), L"SeedFlow", r == AddResult::Duplicate ? MB_ICONINFORMATION : MB_ICONWARNING);
     }
     persist();
     refresh_now();
@@ -1697,6 +1697,9 @@ static void create_children(HWND hwnd) {
 static void apply_fonts_after_dpi() {
     create_fonts();
     create_imagelists();
+    name_user_width = 0;    // pixel widths of the old DPI no longer apply
+    status_need.clear();    // re-measure the status bar parts with the new font
+    status_mask = -1;
     for (HWND w : {g.filters, g.list, g.tabs, g.trackers, g.peers, g.files, g.status, g.toolbar, g.tracker_bar})
         SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(g.font), TRUE);
     SendMessageW(g.log, WM_SETFONT, reinterpret_cast<WPARAM>(g.mono), TRUE);
@@ -2127,6 +2130,11 @@ static int run(HINSTANCE inst, int show) {
     // engine
     EngineConfig cfg;
     cfg.disk_io = g.settings.disk_io;
+    if (g.settings.random_port_start) {
+        int const old_port = g.settings.port;
+        g.settings.port = random_listen_port(old_port);
+        log_line(L"Porta casuale all'avvio: " + std::to_wstring(g.settings.port) + L" (prima " + std::to_wstring(old_port) + L").");
+    }
     cfg.port = g.settings.port;
     cfg.dht = g.settings.dht; cfg.pex = g.settings.pex; cfg.ipv6 = g.settings.ipv6; cfg.upnp = g.settings.upnp; cfg.natpmp = g.settings.natpmp; cfg.lsd = g.settings.lsd;
     cfg.user_agent = g.settings.user_agent;

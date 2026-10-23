@@ -63,6 +63,7 @@ struct AppSettings {
     bool announce_all_trackers = true, announce_all_tiers = true; // qBittorrent "always announce to all ..."
     int encryption = 1;         // 0 allowed, 1 preferred, 2 required
     bool auto_port_check = false;
+    bool random_port_start = false; // pick a new listen port at every start
     // transfers
     int down_kib = 0, up_kib = 0;
     int connections = 200, upload_slots = 8;
@@ -90,6 +91,9 @@ bool save_settings(AppSettings const& s, std::string& error);
 // One-time import from SeedFlow <= 0.7.1 (WPF): reads a few keys of session.json.
 struct LegacyImport { bool found = false; std::string folder; std::vector<std::string> magnets, torrent_files; };
 LegacyImport import_legacy(AppSettings& s);
+
+// A random listen port in 10000-65000, different from `avoid`.
+int random_listen_port(int avoid = 0);
 
 } // namespace sf
 

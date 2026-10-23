@@ -1,4 +1,20 @@
-VERIFICHE artwork Classic 0.8.6.1 - 22/10/2026
+VERIFICHE SeedFlow 0.8.7 - 23/10/2026
+
+Eseguito realmente:
+- Compilazione per Windows x64 con llvm-mingw (app e regressione): nessun warning.
+- Motore su Linux con ASan/UBSan: lettura del .torrent (nome, dimensione, file),
+  spostamento dei file con move_storage, aggiornamento del solo percorso con
+  verifica dei dati, percorsi con lettere accentate.
+- Controllo automatico del layout delle Preferenze: nessun controllo fuori
+  dalla pagina (276 x 272 DLU) o sovrapposto.
+- Regressione estesa (da eseguire con build.bat -RunTests): cartelle recenti,
+  barra di stato con voci nascoste, porta casuale, persistenza delle nuove
+  impostazioni.
+
+Non verificato: interfaccia su Windows reale (finestre, toolbar, tooltip),
+da controllare con la build dell'utente.
+
+VERIFICHE artwork Classic (0.8.7) - 22/10/2026
 
 - Verificate 43 icone in 7 dimensioni (301 celle PNG non vuote, RGBA).
 - ICO del programma con 9 dimensioni distinte da 16 a 256 px; trasparenza verificata.

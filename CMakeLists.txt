@@ -15,7 +15,7 @@ else()
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
-project(SeedFlow VERSION 0.8.6.1 LANGUAGES CXX RC)
+project(SeedFlow VERSION 0.8.7 LANGUAGES CXX RC)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

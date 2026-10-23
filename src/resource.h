@@ -183,3 +183,4 @@
 #define IDC_SB_UP               487
 #define IDC_SB_TOTALS           488
 #define IDC_SB_RAM              489
+#define IDC_RANDOMSTART         490

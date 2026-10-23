@@ -185,194 +185,197 @@ BEGIN
 END
 
 // ------------------------------------------------------------------ preferences (unified, uTorrent style)
-IDD_PREFS DIALOGEX 0, 0, 526, 326
+// Page area 276 x 272 DLU; controls inside a group start at x 8 and end at 268.
+IDD_PREFS DIALOGEX 0, 0, 404, 326
 STYLE DS_SHELLFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Preferenze"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    CONTROL         "", IDC_PREFTREE, "SysTreeView32", TVS_SHOWSELALWAYS | TVS_FULLROWSELECT | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_TRACKSELECT | WS_BORDER | WS_TABSTOP, 8, 8, 160, 290
-    LTEXT           "", IDC_PAGETITLE, 176, 8, 342, 12
-    CONTROL         "", -1, "Static", SS_ETCHEDHORZ, 176, 22, 342, 1
-    LTEXT           "", IDC_PAGEAREA, 176, 28, 342, 272, NOT WS_VISIBLE
-    DEFPUSHBUTTON   "OK", IDOK, 360, 306, 50, 14
-    PUSHBUTTON      "Annulla", IDCANCEL, 414, 306, 50, 14
-    PUSHBUTTON      "Applica", IDC_APPLYNOW, 468, 306, 50, 14
+    CONTROL         "", IDC_PREFTREE, "SysTreeView32", TVS_SHOWSELALWAYS | TVS_FULLROWSELECT | TVS_HASBUTTONS | TVS_LINESATROOT | TVS_TRACKSELECT | WS_BORDER | WS_TABSTOP, 8, 8, 104, 290
+    LTEXT           "", IDC_PAGETITLE, 120, 8, 276, 12
+    CONTROL         "", -1, "Static", SS_ETCHEDHORZ, 120, 22, 276, 1
+    LTEXT           "", IDC_PAGEAREA, 120, 28, 276, 272, NOT WS_VISIBLE
+    DEFPUSHBUTTON   "OK", IDOK, 238, 306, 50, 14
+    PUSHBUTTON      "Annulla", IDCANCEL, 292, 306, 50, 14
+    PUSHBUTTON      "Applica", IDC_APPLYNOW, 346, 306, 50, 14
 END
 
-IDD_PG_GENERAL DIALOGEX 0, 0, 342, 272
+IDD_PG_GENERAL DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Finestra e area di notifica", -1, 0, 0, 342, 64
-    AUTOCHECKBOX    "Chiudi nell'area di notifica quando premi la X", IDC_CLOSETRAY, 8, 14, 326, 10
-    AUTOCHECKBOX    "Riduci nell'area di notifica quando minimizzi", IDC_MINTRAY, 8, 28, 326, 10
-    AUTOCHECKBOX    "Chiedi conferma prima di rimuovere un torrent", IDC_CONFIRMREMOVE, 8, 42, 326, 10
-    GROUPBOX        "Avvio", -1, 0, 70, 342, 50
-    AUTOCHECKBOX    "Avvia SeedFlow all'accesso a Windows", IDC_AUTOSTART, 8, 84, 326, 10
-    AUTOCHECKBOX    "Avvia ridotto nell'area di notifica", IDC_STARTMIN, 20, 98, 314, 10
-    GROUPBOX        "Nuovi torrent", -1, 0, 126, 342, 46
-    AUTOCHECKBOX    "Aggiungi i nuovi torrent in pausa", IDC_STARTPAUSED, 8, 140, 326, 10
-    AUTOCHECKBOX    "Chiedi dove salvare quando aggiungi un file .torrent", IDC_ASKPATH, 8, 154, 326, 10
-    GROUPBOX        "Barra di stato", -1, 0, 178, 342, 74
-    AUTOCHECKBOX    "Stato della rete e porta", IDC_SB_NET, 8, 192, 160, 10
-    AUTOCHECKBOX    "Nodi DHT", IDC_SB_DHT, 8, 206, 160, 10
-    AUTOCHECKBOX    "Velocità di download", IDC_SB_DOWN, 8, 220, 160, 10
-    AUTOCHECKBOX    "Velocità di upload", IDC_SB_UP, 176, 192, 158, 10
-    AUTOCHECKBOX    "Totali scaricati/caricati e ratio", IDC_SB_TOTALS, 176, 206, 158, 10
-    AUTOCHECKBOX    "Memoria usata (RAM)", IDC_SB_RAM, 176, 220, 158, 10
-    LTEXT           "Togliendo tutte le voci la barra di stato viene nascosta.", -1, 8, 236, 326, 9
+    GROUPBOX        "Finestra", -1, 0, 0, 276, 56
+    AUTOCHECKBOX    "La X chiude nell'area di notifica", IDC_CLOSETRAY, 8, 12, 260, 10
+    AUTOCHECKBOX    "Riduci a icona nell'area di notifica", IDC_MINTRAY, 8, 26, 260, 10
+    AUTOCHECKBOX    "Conferma prima di rimuovere un torrent", IDC_CONFIRMREMOVE, 8, 40, 260, 10
+    GROUPBOX        "Avvio", -1, 0, 62, 276, 42
+    AUTOCHECKBOX    "Avvia con Windows", IDC_AUTOSTART, 8, 74, 260, 10
+    AUTOCHECKBOX    "Ridotto a icona nell'area di notifica", IDC_STARTMIN, 20, 88, 248, 10
+    GROUPBOX        "Nuovi torrent", -1, 0, 110, 276, 42
+    AUTOCHECKBOX    "Aggiungi in pausa", IDC_STARTPAUSED, 8, 122, 260, 10
+    AUTOCHECKBOX    "Chiedi dove salvare i file .torrent", IDC_ASKPATH, 8, 136, 260, 10
+    GROUPBOX        "Barra di stato", -1, 0, 158, 276, 68
+    AUTOCHECKBOX    "Rete e porta", IDC_SB_NET, 8, 170, 124, 10
+    AUTOCHECKBOX    "Nodi DHT", IDC_SB_DHT, 8, 184, 124, 10
+    AUTOCHECKBOX    "Download", IDC_SB_DOWN, 8, 198, 124, 10
+    AUTOCHECKBOX    "Upload", IDC_SB_UP, 140, 170, 128, 10
+    AUTOCHECKBOX    "Totali e ratio", IDC_SB_TOTALS, 140, 184, 128, 10
+    AUTOCHECKBOX    "Memoria (RAM)", IDC_SB_RAM, 140, 198, 128, 10
+    LTEXT           "Senza voci la barra viene nascosta.", -1, 8, 212, 260, 9
 END
 
-IDD_PG_FOLDERS DIALOGEX 0, 0, 342, 272
+IDD_PG_FOLDERS DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Cartella di download", -1, 0, 0, 342, 50
-    EDITTEXT        IDC_FOLDER, 8, 14, 270, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Sfoglia...", IDC_BROWSE, 284, 13, 50, 15
-    LTEXT           "Vale per i nuovi torrent; quelli già aggiunti restano nella loro cartella.", -1, 8, 32, 326, 9
-    GROUPBOX        "Disco", -1, 0, 56, 342, 32
-    AUTOCHECKBOX    "Prealloca lo spazio dei nuovi torrent (riduce la frammentazione)", IDC_PREALLOC, 8, 70, 326, 10
+    GROUPBOX        "Cartella di download", -1, 0, 0, 276, 50
+    EDITTEXT        IDC_FOLDER, 8, 13, 204, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Sfoglia...", IDC_BROWSE, 218, 12, 50, 15
+    LTEXT           "Vale per i nuovi torrent; quelli già aggiunti restano dove sono.", -1, 8, 32, 260, 9
+    GROUPBOX        "Disco", -1, 0, 56, 276, 40
+    AUTOCHECKBOX    "Prealloca lo spazio dei nuovi torrent", IDC_PREALLOC, 8, 68, 260, 10
+    LTEXT           "Riduce la frammentazione; la creazione richiede più tempo.", -1, 20, 81, 248, 9
 END
 
-IDD_PG_CONNECTION DIALOGEX 0, 0, 342, 272
+IDD_PG_CONNECTION DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Porta di ascolto (TCP e uTP)", -1, 0, 0, 342, 40
-    EDITTEXT        IDC_PORT, 8, 16, 56, 13, ES_NUMBER | WS_TABSTOP
-    PUSHBUTTON      "Porta casuale", IDC_RANDOMPORT, 70, 15, 64, 15
-    LTEXT           "Usa una porta tra 10000 e 65535; la 6881-6889 è spesso filtrata dai provider.", -1, 142, 13, 192, 20
-    GROUPBOX        "Apertura porta sul router", -1, 0, 46, 342, 56
-    AUTOCHECKBOX    "UPnP (apertura automatica della porta)", IDC_UPNP, 8, 60, 326, 10
-    AUTOCHECKBOX    "NAT-PMP / PCP (apertura automatica della porta)", IDC_NATPMP, 8, 74, 326, 10
-    AUTOCHECKBOX    "Verifica la porta online all'avvio (servizio ifconfig.co)", IDC_AUTOCHECK, 8, 88, 326, 10
-    GROUPBOX        "Protocollo", -1, 0, 108, 342, 84
-    AUTOCHECKBOX    "Usa anche IPv6 (disattiva se la tua linea non ha IPv6 funzionante)", IDC_IPV6, 8, 122, 326, 10
-    LTEXT           "Cifratura del protocollo", -1, 8, 138, 326, 9
-    COMBOBOX        IDC_ENCRYPTION, 8, 149, 326, 60, CBS_DROPDOWNLIST | WS_TABSTOP
-    LTEXT           "«Richiesta» riduce i peer disponibili ma evita il traffico in chiaro (utile con provider che rallentano il BitTorrent).", -1, 8, 166, 326, 18
+    GROUPBOX        "Porta di ascolto (TCP e uTP)", -1, 0, 0, 276, 62
+    EDITTEXT        IDC_PORT, 8, 13, 50, 13, ES_NUMBER | WS_TABSTOP
+    PUSHBUTTON      "Casuale", IDC_RANDOMPORT, 62, 12, 50, 15
+    AUTOCHECKBOX    "Porta casuale a ogni avvio", IDC_RANDOMSTART, 8, 32, 260, 10
+    LTEXT           "Meglio tra 10000 e 65535; 6881-6889 è spesso filtrata.", -1, 8, 46, 260, 9
+    GROUPBOX        "Router", -1, 0, 68, 276, 56
+    AUTOCHECKBOX    "UPnP", IDC_UPNP, 8, 80, 260, 10
+    AUTOCHECKBOX    "NAT-PMP / PCP", IDC_NATPMP, 8, 94, 260, 10
+    AUTOCHECKBOX    "Verifica la porta online all'avvio (ifconfig.co)", IDC_AUTOCHECK, 8, 108, 260, 10
+    GROUPBOX        "Protocollo", -1, 0, 130, 276, 70
+    AUTOCHECKBOX    "Usa anche IPv6", IDC_IPV6, 8, 142, 260, 10
+    LTEXT           "Cifratura", -1, 8, 159, 40, 9
+    COMBOBOX        IDC_ENCRYPTION, 50, 157, 218, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "«Richiesta» evita il traffico in chiaro ma riduce i peer.", -1, 8, 176, 260, 18
 END
 
-IDD_PG_BANDWIDTH DIALOGEX 0, 0, 342, 272
+IDD_PG_BANDWIDTH DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Limiti globali di velocità (0 = illimitato)", -1, 0, 0, 342, 50
-    LTEXT           "Download (KiB/s)", -1, 8, 16, 76, 9
-    EDITTEXT        IDC_DOWN, 86, 14, 60, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "Upload (KiB/s)", -1, 176, 16, 70, 9
-    EDITTEXT        IDC_UP, 248, 14, 60, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "1 Gb/s = 122.070 KiB/s. Lascia un 10-20% di margine sull'upload reale per non saturare la linea.", -1, 8, 33, 326, 9
-    GROUPBOX        "Connessioni", -1, 0, 56, 342, 50
-    LTEXT           "Connessioni max", -1, 8, 72, 76, 9
-    EDITTEXT        IDC_CONNECTIONS, 86, 70, 60, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "Slot upload", -1, 176, 72, 70, 9
-    EDITTEXT        IDC_SLOTS, 248, 70, 60, 13, WS_TABSTOP
-    LTEXT           "Slot upload: -1 = illimitati (consigliato con fibra veloce).", -1, 8, 89, 326, 9
+    GROUPBOX        "Limiti globali (KiB/s, 0 = illimitato)", -1, 0, 0, 276, 60
+    LTEXT           "Download", -1, 8, 15, 50, 9
+    EDITTEXT        IDC_DOWN, 60, 13, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "Upload", -1, 140, 15, 50, 9
+    EDITTEXT        IDC_UP, 192, 13, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "1 Gb/s = 122.070 KiB/s. Tieni l'upload 10-20% sotto quello reale.", -1, 8, 32, 260, 18
+    GROUPBOX        "Connessioni", -1, 0, 66, 276, 50
+    LTEXT           "Massime", -1, 8, 81, 50, 9
+    EDITTEXT        IDC_CONNECTIONS, 60, 79, 60, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "Slot upload", -1, 140, 81, 50, 9
+    EDITTEXT        IDC_SLOTS, 192, 79, 60, 13, WS_TABSTOP
+    LTEXT           "Slot upload -1 = illimitati (consigliato con fibra).", -1, 8, 99, 260, 9
 END
 
-IDD_PG_BITTORRENT DIALOGEX 0, 0, 342, 272
+IDD_PG_BITTORRENT DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Scoperta dei peer", -1, 0, 0, 342, 70
-    AUTOCHECKBOX    "DHT (rete decentralizzata)", IDC_DHT, 8, 14, 326, 10
-    AUTOCHECKBOX    "PeX, scambio dei peer (al riavvio)", IDC_PEX, 8, 28, 326, 10
-    AUTOCHECKBOX    "LSD, scoperta in rete locale", IDC_LSD, 8, 42, 326, 10
-    LTEXT           "Sui torrent privati DHT, PeX e LSD sono sempre disattivati.", -1, 8, 56, 326, 9
-    GROUPBOX        "Tracker", -1, 0, 76, 342, 48
-    AUTOCHECKBOX    "Annuncia sempre a tutti i tracker dello stesso livello (tier)", IDC_ALLTRACKERS, 8, 90, 326, 10
-    AUTOCHECKBOX    "Annuncia sempre a tutti i livelli (tier) di tracker", IDC_ALLTIERS, 8, 104, 326, 10
+    GROUPBOX        "Scoperta dei peer", -1, 0, 0, 276, 68
+    AUTOCHECKBOX    "DHT (rete decentralizzata)", IDC_DHT, 8, 12, 260, 10
+    AUTOCHECKBOX    "PeX, scambio dei peer (al riavvio)", IDC_PEX, 8, 26, 260, 10
+    AUTOCHECKBOX    "LSD, scoperta in rete locale", IDC_LSD, 8, 40, 260, 10
+    LTEXT           "Sui torrent privati sono sempre disattivati.", -1, 8, 54, 260, 9
+    GROUPBOX        "Tracker", -1, 0, 74, 276, 42
+    AUTOCHECKBOX    "Annuncia a tutti i tracker dello stesso livello", IDC_ALLTRACKERS, 8, 86, 260, 10
+    AUTOCHECKBOX    "Annuncia a tutti i livelli (tier)", IDC_ALLTIERS, 8, 100, 260, 10
 END
 
-IDD_PG_QUEUE DIALOGEX 0, 0, 342, 272
+IDD_PG_QUEUE DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Code automatiche", -1, 0, 0, 342, 34
-    LTEXT           "Download attivi", -1, 8, 16, 76, 9
-    EDITTEXT        IDC_ACTIVEDL, 86, 14, 60, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "Seed attivi", -1, 176, 16, 70, 9
-    EDITTEXT        IDC_ACTIVESEED, 248, 14, 60, 13, ES_NUMBER | WS_TABSTOP
-    GROUPBOX        "Ratio globale (vale per i torrent impostati su «globale»)", -1, 0, 40, 342, 84
-    AUTOCHECKBOX    "Al raggiungimento del ratio", IDC_RATIOON, 8, 56, 120, 10
-    EDITTEXT        IDC_RATIO, 130, 54, 40, 13, WS_TABSTOP
-    COMBOBOX        IDC_RATIOACTION, 8, 72, 326, 80, CBS_DROPDOWNLIST | WS_TABSTOP
-    LTEXT           "Il ratio è caricati / scaricati; per i torrent aggiunti già completi si usa la dimensione completata. Se riavvii a mano un torrent che ha già raggiunto il limite, l'azione non viene ripetuta finché non cambi il limite.", -1, 8, 90, 326, 28
+    GROUPBOX        "Code automatiche", -1, 0, 0, 276, 34
+    LTEXT           "Download attivi", -1, 8, 15, 56, 9
+    EDITTEXT        IDC_ACTIVEDL, 66, 13, 50, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "Seed attivi", -1, 140, 15, 50, 9
+    EDITTEXT        IDC_ACTIVESEED, 192, 13, 50, 13, ES_NUMBER | WS_TABSTOP
+    GROUPBOX        "Ratio globale (torrent impostati su «globale»)", -1, 0, 40, 276, 94
+    AUTOCHECKBOX    "Al raggiungimento del ratio", IDC_RATIOON, 8, 54, 110, 10
+    EDITTEXT        IDC_RATIO, 120, 52, 40, 13, WS_TABSTOP
+    COMBOBOX        IDC_RATIOACTION, 8, 70, 260, 80, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "Ratio = caricati / scaricati (per i torrent aggiunti già completi si usa la dimensione). Un torrent riavviato a mano dopo il limite non ripete l'azione finché non cambi il limite.", -1, 8, 88, 260, 40
 END
 
-IDD_PG_IDENTITY DIALOGEX 0, 0, 342, 272
+IDD_PG_IDENTITY DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    LTEXT           "Preset (imposta insieme User-Agent, peer ID e nome nell'handshake)", -1, 8, 0, 284, 9
-    COMBOBOX        IDC_UA_PRESET, 8, 12, 284, 140, CBS_DROPDOWNLIST | WS_TABSTOP
-    LTEXT           "User-Agent HTTP (tracker e web seed)", -1, 8, 32, 284, 9
-    EDITTEXT        IDC_UA_VALUE, 8, 43, 284, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Prefisso peer ID (es. -qB5140-)", -1, 8, 62, 140, 9
-    EDITTEXT        IDC_UA_PEERID, 8, 73, 140, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Nome client nell'handshake", -1, 154, 62, 138, 9
-    EDITTEXT        IDC_UA_CLIENT, 154, 73, 138, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    AUTOCHECKBOX    "Invia il nome del client nell'handshake BitTorrent (extension protocol)", IDC_UA_HANDSHAKE, 8, 92, 284, 10
-    AUTOCHECKBOX    "Modalità anonima (non rivela client, versione e porta di ascolto)", IDC_UA_ANON, 8, 106, 284, 10
-    LTEXT           "Il resto del peer ID è casuale. L'emulazione copre User-Agent, prefisso del peer ID e nome nell'handshake, non il comportamento di rete.", -1, 8, 122, 284, 22
-    LTEXT           "Alcuni tracker privati riconoscono il client: aggirarne la whitelist viola le loro regole (rischio di ban). Campi vuoti = identità SeedFlow.", -1, 8, 148, 284, 26
+    LTEXT           "Preset (User-Agent, peer ID e nome nell'handshake)", -1, 0, 0, 276, 9
+    COMBOBOX        IDC_UA_PRESET, 0, 11, 276, 140, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "User-Agent HTTP (tracker e web seed)", -1, 0, 30, 276, 9
+    EDITTEXT        IDC_UA_VALUE, 0, 41, 276, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Prefisso peer ID (es. -qB5300-)", -1, 0, 60, 134, 9
+    EDITTEXT        IDC_UA_PEERID, 0, 71, 134, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Nome nell'handshake", -1, 142, 60, 134, 9
+    EDITTEXT        IDC_UA_CLIENT, 142, 71, 134, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    AUTOCHECKBOX    "Invia il nome del client nell'handshake", IDC_UA_HANDSHAKE, 0, 90, 276, 10
+    AUTOCHECKBOX    "Modalità anonima (nasconde client, versione e porta)", IDC_UA_ANON, 0, 104, 276, 10
+    LTEXT           "Il resto del peer ID è casuale. Si emulano User-Agent, prefisso e nome, non il comportamento di rete.", -1, 0, 120, 276, 18
+    LTEXT           "Alcuni tracker privati accettano solo client noti: aggirarne la whitelist viola le loro regole (rischio di ban). Campi vuoti = identità SeedFlow.", -1, 0, 142, 276, 26
 END
 
-IDD_PG_SYSTEM DIALOGEX 0, 0, 342, 272
+IDD_PG_SYSTEM DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Priorità del processo", -1, 0, 0, 342, 48
-    COMBOBOX        IDC_PRIORITY, 8, 14, 160, 60, CBS_DROPDOWNLIST | WS_TABSTOP
-    LTEXT           "«Sotto il normale» lascia la precedenza a giochi e programmi in primo piano.", -1, 8, 32, 326, 9
-    LTEXT           "Thread del disco e della verifica hash, cache e memoria: Avanzate › Prestazioni e memoria.", -1, 0, 56, 342, 9
+    GROUPBOX        "Priorità del processo", -1, 0, 0, 276, 48
+    COMBOBOX        IDC_PRIORITY, 8, 13, 140, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    LTEXT           "«Sotto il normale» lascia spazio a giochi e programmi in primo piano.", -1, 8, 32, 260, 9
+    LTEXT           "Thread del disco, cache e memoria: Avanzate › Prestazioni.", -1, 0, 56, 276, 9
 END
 
-IDD_PG_PERFORMANCE DIALOGEX 0, 0, 342, 272
+IDD_PG_PERFORMANCE DIALOGEX 0, 0, 276, 272
 STYLE DS_SHELLFONT | DS_CONTROL | WS_CHILD
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    LTEXT           "Profilo:", -1, 8, 2, 30, 9
-    COMBOBOX        IDC_PROFILE, 40, 0, 110, 60, CBS_DROPDOWNLIST | WS_TABSTOP
-    PUSHBUTTON      "Applica profilo", IDC_APPLYPROFILE, 154, 0, 64, 15
-    PUSHBUTTON      "Predefiniti libtorrent", IDC_DEFAULTS, 222, 0, 110, 15
-    RTEXT           "", IDC_FLABEL0, 8, 24, 150, 9
-    EDITTEXT        IDC_FIELD0, 162, 22, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0, 222, 24, 30, 9
-    RTEXT           "", IDC_FLABEL0+1, 8, 40, 150, 9
-    EDITTEXT        IDC_FIELD0+1, 162, 38, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+1, 222, 40, 30, 9
-    RTEXT           "", IDC_FLABEL0+2, 8, 56, 150, 9
-    EDITTEXT        IDC_FIELD0+2, 162, 54, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+2, 222, 56, 30, 9
-    RTEXT           "", IDC_FLABEL0+3, 8, 72, 150, 9
-    EDITTEXT        IDC_FIELD0+3, 162, 70, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+3, 222, 72, 30, 9
-    RTEXT           "", IDC_FLABEL0+4, 8, 88, 150, 9
-    EDITTEXT        IDC_FIELD0+4, 162, 86, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+4, 222, 88, 30, 9
-    RTEXT           "", IDC_FLABEL0+5, 8, 104, 150, 9
-    EDITTEXT        IDC_FIELD0+5, 162, 102, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+5, 222, 104, 30, 9
-    RTEXT           "", IDC_FLABEL0+6, 8, 120, 150, 9
-    EDITTEXT        IDC_FIELD0+6, 162, 118, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+6, 222, 120, 30, 9
-    RTEXT           "", IDC_FLABEL0+7, 8, 136, 150, 9
-    EDITTEXT        IDC_FIELD0+7, 162, 134, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+7, 222, 136, 30, 9
-    RTEXT           "", IDC_FLABEL0+8, 8, 152, 150, 9
-    EDITTEXT        IDC_FIELD0+8, 162, 150, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+8, 222, 152, 30, 9
-    RTEXT           "", IDC_FLABEL0+9, 8, 168, 150, 9
-    EDITTEXT        IDC_FIELD0+9, 162, 166, 56, 13, ES_NUMBER | WS_TABSTOP
-    LTEXT           "", IDC_FUNIT0+9, 222, 168, 30, 9
-    LTEXT           "", IDC_HELPTEXT, 8, 184, 324, 20
-    RTEXT           "Motore di I/O su disco (al riavvio)", -1, 8, 210, 150, 9
-    COMBOBOX        IDC_DISKIO, 162, 208, 170, 60, CBS_DROPDOWNLIST | WS_TABSTOP
-    AUTOCHECKBOX    "Riduci la memoria quando la finestra è nascosta o minimizzata", IDC_TRIM, 8, 228, 324, 10
-    LTEXT           "", IDC_MEMINFO, 8, 244, 324, 20
+    LTEXT           "Profilo", -1, 0, 2, 28, 9
+    COMBOBOX        IDC_PROFILE, 30, 0, 92, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    PUSHBUTTON      "Applica", IDC_APPLYPROFILE, 126, 0, 50, 15
+    PUSHBUTTON      "Predefiniti", IDC_DEFAULTS, 180, 0, 56, 15
+    RTEXT           "", IDC_FLABEL0, 0, 24, 132, 9
+    EDITTEXT        IDC_FIELD0, 136, 22, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0, 192, 24, 30, 9
+    RTEXT           "", IDC_FLABEL0+1, 0, 40, 132, 9
+    EDITTEXT        IDC_FIELD0+1, 136, 38, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+1, 192, 40, 30, 9
+    RTEXT           "", IDC_FLABEL0+2, 0, 56, 132, 9
+    EDITTEXT        IDC_FIELD0+2, 136, 54, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+2, 192, 56, 30, 9
+    RTEXT           "", IDC_FLABEL0+3, 0, 72, 132, 9
+    EDITTEXT        IDC_FIELD0+3, 136, 70, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+3, 192, 72, 30, 9
+    RTEXT           "", IDC_FLABEL0+4, 0, 88, 132, 9
+    EDITTEXT        IDC_FIELD0+4, 136, 86, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+4, 192, 88, 30, 9
+    RTEXT           "", IDC_FLABEL0+5, 0, 104, 132, 9
+    EDITTEXT        IDC_FIELD0+5, 136, 102, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+5, 192, 104, 30, 9
+    RTEXT           "", IDC_FLABEL0+6, 0, 120, 132, 9
+    EDITTEXT        IDC_FIELD0+6, 136, 118, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+6, 192, 120, 30, 9
+    RTEXT           "", IDC_FLABEL0+7, 0, 136, 132, 9
+    EDITTEXT        IDC_FIELD0+7, 136, 134, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+7, 192, 136, 30, 9
+    RTEXT           "", IDC_FLABEL0+8, 0, 152, 132, 9
+    EDITTEXT        IDC_FIELD0+8, 136, 150, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+8, 192, 152, 30, 9
+    RTEXT           "", IDC_FLABEL0+9, 0, 168, 132, 9
+    EDITTEXT        IDC_FIELD0+9, 136, 166, 52, 13, ES_NUMBER | WS_TABSTOP
+    LTEXT           "", IDC_FUNIT0+9, 192, 168, 30, 9
+    LTEXT           "", IDC_HELPTEXT, 0, 184, 276, 20
+    RTEXT           "Motore I/O disco (al riavvio)", -1, 0, 210, 132, 9
+    COMBOBOX        IDC_DISKIO, 136, 208, 140, 60, CBS_DROPDOWNLIST | WS_TABSTOP
+    AUTOCHECKBOX    "Riduci la memoria quando la finestra è nascosta", IDC_TRIM, 0, 228, 276, 10
+    LTEXT           "", IDC_MEMINFO, 0, 244, 276, 20
 END
 
 IDD_WIZARD DIALOGEX 0, 0, 420, 300
