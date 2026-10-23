@@ -157,7 +157,8 @@ void draw_speed_graph(HDC target, RECT area, GraphView const& v, HFONT font, HFO
     GraphHit hits{};
 
     // ---- top bar: range, source, series, limits
-    int const bar_top = s(8), bar_h = s(24);
+    int bar_top = s(8);   // moves down when the controls wrap onto a second row
+    int const bar_h = s(24);
     int x = s(12);
     auto label = [&](wchar_t const* str) {
         int const tw = measure(str);
@@ -212,14 +213,31 @@ void draw_speed_graph(HDC target, RECT area, GraphView const& v, HFONT font, HFO
         out = {area.left + start, area.top + bar_top, area.left + x, area.top + bar_top + bar_h};
         x += s(14);
     };
+    // Groups flow left to right and wrap onto a new row when the window is narrow.
+    std::vector<std::wstring> const ranges{L"1 min", L"5 min", L"30 min", L"2 ore"};
+    std::vector<std::wstring> const sources{L"Tutti i torrent", L"Torrent selezionato"};
+    auto seg_width = [&](std::vector<std::wstring> const& items) {
+        int total = 0;
+        for (auto const& it : items) total += measure(it) + 2 * s(10);
+        return total;
+    };
+    auto check_width = [&](wchar_t const* str, bool swatch) { return s(13) + s(6) + (swatch ? s(19) : 0) + measure(str); };
+    auto place = [&](int width) {
+        if (x > s(12) && x + width > w - s(12)) { x = s(12); bar_top += bar_h + s(6); }
+    };
+    place(measure(L"Intervallo") + s(8) + seg_width(ranges));
     label(L"Intervallo");
-    segmented({L"1 min", L"5 min", L"30 min", L"2 ore"}, range, hits.range);
+    segmented(ranges, range, hits.range);
+    place(measure(L"Mostra") + s(8) + seg_width(sources));
     label(L"Mostra");
-    segmented({L"Tutti i torrent", L"Torrent selezionato"}, std::clamp(v.source, 0, 1), hits.source);
+    segmented(sources, std::clamp(v.source, 0, 1), hits.source);
+    place(check_width(L"Download", true));
     checkbox(L"Download", v.show_down, paint::kBlue, true, hits.down);
+    place(check_width(L"Upload", true));
     checkbox(L"Upload", v.show_up, paint::kGreen, true, hits.up);
-    {   // "Mostra limiti" right-aligned when it fits, otherwise after the others
-        int const need = s(13) + s(6) + measure(L"Mostra limiti");
+    {   // "Mostra limiti" right-aligned on its row
+        int const need = check_width(L"Mostra limiti", false);
+        place(need);
         if (w - s(12) - need > x) x = w - s(12) - need;
         checkbox(L"Mostra limiti", v.show_limits, 0, false, hits.limits);
     }

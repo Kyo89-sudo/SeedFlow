@@ -298,6 +298,9 @@ int wmain(int argc, wchar_t** argv) {
         sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, graph_view, graph_font, graph_big, graph_big, 96, &graph_hit);
         check(graph_hit.plot.right > graph_hit.plot.left && graph_hit.range[3].right > graph_hit.range[0].left &&
               graph_hit.limits.right <= 900, "graph controls laid out inside the window");
+        sf::draw_speed_graph(graph_dc, {0, 0, 520, 280}, graph_view, graph_font, graph_big, graph_big, 96, &graph_hit);
+        check(graph_hit.limits.right <= 520 && graph_hit.source[1].right <= 520 && graph_hit.limits.top > graph_hit.range[0].top,
+              "graph controls wrap onto a second row in a narrow window");
         GdiFlush();
         DWORD graph_handles = GetGuiResources(GetCurrentProcess(), GR_GDIOBJECTS);
         for (int i = 0; i < 40; ++i)
