@@ -1,6 +1,9 @@
 VERIFICHE SeedFlow 0.8.7 - 23/10/2026
 
 Eseguito realmente:
+- Windows (utente): build.bat -NoPause -RunTests con MSVC 14.51 (VS 2026), /MT,
+  triplet x64-windows-static: CTest 2/2 superati (superseed-flags,
+  win32-regression); prova manuale dell'interfaccia: funziona.
 - Compilazione per Windows x64 con llvm-mingw (app e regressione): nessun warning.
 - Motore su Linux con ASan/UBSan: lettura del .torrent (nome, dimensione, file),
   spostamento dei file con move_storage, aggiornamento del solo percorso con

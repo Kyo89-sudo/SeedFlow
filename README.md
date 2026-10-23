@@ -18,7 +18,7 @@ SeedFlow è un client BitTorrent per Windows con interfaccia nativa Win32, basat
 
 La distribuzione è un **singolo eseguibile statico**: nessuna DLL da distribuire, nessun runtime .NET o Visual C++ da installare.
 
-> **Ultima release:** [SeedFlow 0.8.6](https://github.com/Kyo89-sudo/SeedFlow/releases/tag/v0.8.6) — riordino di tutti i torrent, versione e identità client allineate. Dalla 0.8.5: creazione di torrent v1, v2 e ibridi.
+> **Ultima release:** [SeedFlow 0.8.7](https://github.com/Kyo89-sudo/SeedFlow/releases/tag/v0.8.7) — tab Grafico, nuove icone, scelta della cartella e spostamento dei file, Preferenze più compatte e guida integrata.
 
 ## Funzionalità
 
