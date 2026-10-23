@@ -151,11 +151,12 @@ static void create_fonts() {
 }
 static void create_imagelists() {
     using namespace icons;
-    for (HIMAGELIST* il : {&g.il_toolbar, &g.il_states, &g.il_filters, &g.il_small}) if (*il) { ImageList_Destroy(*il); *il = nullptr; }
+    for (HIMAGELIST* il : {&g.il_main_bar, &g.il_toolbar, &g.il_states, &g.il_filters, &g.il_small}) if (*il) { ImageList_Destroy(*il); *il = nullptr; }
     // order = toolbar image indices
     Id tb[] = {IcAdd, IcMagnet, IcPlay, IcPause, IcRemove, IcDelete, IcUp, IcDown, IcSuperseed, IcRatio, IcWizard,
                IcStats, IcDiagnostics, IcRefresh, IcCopy, IcDelete, IcPreferences, IcCreate};
     g.il_toolbar = make_imagelist(tb, static_cast<int>(std::size(tb)), scale(16));
+    g.il_main_bar = make_imagelist(tb, static_cast<int>(std::size(tb)), scale(20));
     Id st[SiCount] = {IcDownload, IcUpload, IcPause, IcQueue, IcChecking, IcMagnet, IcError, IcCheck, IcMoving};
     g.il_states = make_imagelist(st, SiCount, scale(16));
     Id fl[] = {IcAll, IcDownload, IcUpload, IcCheck, IcSuperseed, IcPause, IcError};
@@ -1527,23 +1528,24 @@ static void on_command(int cmd) {
 
 // ------------------------------------------------------------------ creation / layout
 struct TbButton { int cmd; int image; wchar_t const* text; bool show_text; };
+// Main toolbar: icons only, the text is the tooltip.
 static TbButton const kToolbar[] = {
-    {ID_FILE_OPEN, 0, L"Torrent", true}, {ID_FILE_MAGNET, 1, L"Magnet", true}, {ID_FILE_CREATE, 17, L"Crea", true}, {0, -1, nullptr, false},
-    {ID_T_START, 2, L"Avvia", true}, {ID_T_PAUSE, 3, L"Pausa", true}, {ID_T_REMOVE, 4, L"Rimuovi", true},
-    {ID_T_DELETE, 5, L"Elimina", true}, {0, -1, nullptr, false},
-    {ID_T_QUP, 6, L"Sposta su", false}, {ID_T_QDOWN, 7, L"Sposta giù", false}, {0, -1, nullptr, false},
-    {ID_T_SUPERSEED, 8, L"Super-seed", true}, {ID_T_RATIO, 9, L"Ratio", true}, {0, -1, nullptr, false},
-    {ID_TOOLS_WIZARD, 10, L"Ottimizza", true}, {ID_TOOLS_STATS, 11, L"Statistiche", true}, {ID_TOOLS_DIAG, 12, L"Diagnostica", true},
-    {0, -1, nullptr, false}, {ID_OPT_PREFS, 16, L"Preferenze", true},
+    {ID_FILE_OPEN, 0, L"Aggiungi torrent", false}, {ID_FILE_MAGNET, 1, L"Aggiungi magnet", false}, {ID_FILE_CREATE, 17, L"Crea torrent", false}, {0, -1, nullptr, false},
+    {ID_T_START, 2, L"Avvia", false}, {ID_T_PAUSE, 3, L"Pausa", false}, {ID_T_REMOVE, 4, L"Rimuovi dalla lista", false},
+    {ID_T_DELETE, 5, L"Rimuovi e cancella i file", false}, {0, -1, nullptr, false},
+    {ID_T_QUP, 6, L"Sposta su in coda", false}, {ID_T_QDOWN, 7, L"Sposta giù in coda", false}, {0, -1, nullptr, false},
+    {ID_T_SUPERSEED, 8, L"Super-seeding", false}, {ID_T_RATIO, 9, L"Limite di ratio", false}, {0, -1, nullptr, false},
+    {ID_TOOLS_WIZARD, 10, L"Ottimizza le impostazioni", false}, {ID_TOOLS_STATS, 11, L"Statistiche", false}, {ID_TOOLS_DIAG, 12, L"Diagnostica di rete", false},
+    {0, -1, nullptr, false}, {ID_OPT_PREFS, 16, L"Preferenze", false},
 };
-static HWND make_toolbar(HWND parent, TbButton const* buttons, int count, bool compact_buttons) {
+static HWND make_toolbar(HWND parent, TbButton const* buttons, int count, bool compact_buttons, HIMAGELIST images) {
     HWND tb = CreateWindowExW(0, TOOLBARCLASSNAMEW, nullptr,
         WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_LIST | TBSTYLE_TOOLTIPS | CCS_NODIVIDER | CCS_NOPARENTALIGN | CCS_NORESIZE,
         0, 0, 10, 10, parent, nullptr, g.inst, nullptr);
     SendMessageW(tb, CCM_SETUNICODEFORMAT, TRUE, 0);
     SendMessageW(tb, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
     SendMessageW(tb, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_MIXEDBUTTONS | TBSTYLE_EX_DOUBLEBUFFER);
-    SendMessageW(tb, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(g.il_toolbar));
+    SendMessageW(tb, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(images));
     SendMessageW(tb, WM_SETFONT, reinterpret_cast<WPARAM>(g.font), FALSE);
     std::vector<TBBUTTON> b(static_cast<std::size_t>(count));
     for (int i = 0; i < count; ++i) {
@@ -1556,7 +1558,7 @@ static HWND make_toolbar(HWND parent, TbButton const* buttons, int count, bool c
         t.iString = reinterpret_cast<INT_PTR>(buttons[i].text);
     }
     SendMessageW(tb, TB_ADDBUTTONSW, static_cast<WPARAM>(count), reinterpret_cast<LPARAM>(b.data()));
-    SendMessageW(tb, TB_SETPADDING, 0, MAKELPARAM(scale(compact_buttons ? 6 : 8), scale(compact_buttons ? 4 : 6)));
+    SendMessageW(tb, TB_SETPADDING, 0, MAKELPARAM(scale(compact_buttons ? 6 : 9), scale(compact_buttons ? 4 : 7)));
     SendMessageW(tb, TB_AUTOSIZE, 0, 0);
     return tb;
 }
@@ -1626,7 +1628,7 @@ static void layout() {
 static void create_children(HWND hwnd) {
     create_fonts();
     create_imagelists();
-    g.toolbar = make_toolbar(hwnd, kToolbar, static_cast<int>(std::size(kToolbar)), false);
+    g.toolbar = make_toolbar(hwnd, kToolbar, static_cast<int>(std::size(kToolbar)), false, g.il_main_bar);
 
     g.filters = CreateWindowExW(0, WC_LISTVIEWW, L"", WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | LVS_NOCOLUMNHEADER | LVS_SHOWSELALWAYS,
         0, 0, 10, 10, hwnd, nullptr, g.inst, nullptr);
@@ -1672,7 +1674,7 @@ static void create_children(HWND hwnd) {
 
     g.chart = CreateWindowExW(0, kSpeedClass, L"Velocità", WS_CHILD | WS_CLIPSIBLINGS, 0, 0, 10, 10, hwnd, nullptr, g.inst, nullptr);
     g.general = CreateWindowExW(0, kGeneralClass, L"", WS_CHILD | WS_VISIBLE, 0, 0, 10, 10, hwnd, nullptr, g.inst, nullptr);
-    g.tracker_bar = make_toolbar(hwnd, kTrackerBar, static_cast<int>(std::size(kTrackerBar)), true);
+    g.tracker_bar = make_toolbar(hwnd, kTrackerBar, static_cast<int>(std::size(kTrackerBar)), true, g.il_toolbar);
     g.trackers = make_listview(hwnd, 0, 501);
     ListView_SetImageList(g.trackers, g.il_small, LVSIL_SMALL);
     add_columns(g.trackers, {{L"URL", 300}, {L"Tier", -38}, {L"Stato", 100}, {L"Seed", -56}, {L"Peer", -56},
@@ -1698,7 +1700,7 @@ static void apply_fonts_after_dpi() {
     for (HWND w : {g.filters, g.list, g.tabs, g.trackers, g.peers, g.files, g.status, g.toolbar, g.tracker_bar})
         SendMessageW(w, WM_SETFONT, reinterpret_cast<WPARAM>(g.font), TRUE);
     SendMessageW(g.log, WM_SETFONT, reinterpret_cast<WPARAM>(g.mono), TRUE);
-    SendMessageW(g.toolbar, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(g.il_toolbar));
+    SendMessageW(g.toolbar, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(g.il_main_bar));
     SendMessageW(g.tracker_bar, TB_SETIMAGELIST, 0, reinterpret_cast<LPARAM>(g.il_toolbar));
     ListView_SetImageList(g.list, g.il_states, LVSIL_SMALL);
     ListView_SetImageList(g.filters, g.il_filters, LVSIL_SMALL);

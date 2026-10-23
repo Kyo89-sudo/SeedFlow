@@ -63,6 +63,7 @@ struct App {
     std::int64_t current_down = 0, current_up = 0;
     HWND general = nullptr, tracker_bar = nullptr, trackers = nullptr, peers = nullptr, files = nullptr, log = nullptr;
     HFONT font = nullptr, bold = nullptr, mono = nullptr, big = nullptr;
+    HIMAGELIST il_main_bar = nullptr;   // main toolbar: icon-only, 20 px at 96 DPI
     HIMAGELIST il_toolbar = nullptr, il_states = nullptr, il_filters = nullptr, il_small = nullptr;
     HICON app_icon = nullptr, app_icon_small = nullptr, net_icon = nullptr;
     HTHEME list_theme = nullptr;    // cached for the custom-drawn cells; reset on WM_THEMECHANGED
