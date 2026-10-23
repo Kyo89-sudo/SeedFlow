@@ -1743,6 +1743,7 @@ static void create_children(HWND hwnd) {
     for (auto const& c : kCols) cols.emplace_back(c.title, c.fmt == LVCFMT_RIGHT ? -c.width : c.width);
     add_columns(g.list, cols);
     load_column_widths();
+    name_user_width = g.settings.name_width > 0 ? scale(g.settings.name_width) : 0;   // width chosen last time
     update_sort_arrow();
 
     g.tabs = CreateWindowExW(0, WC_TABCONTROLW, L"", WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | TCS_FOCUSNEVER,
@@ -1785,7 +1786,7 @@ static void create_children(HWND hwnd) {
 static void apply_fonts_after_dpi() {
     create_fonts();
     create_imagelists();
-    name_user_width = 0;    // pixel widths of the old DPI no longer apply
+    name_user_width = g.settings.name_width > 0 ? scale(g.settings.name_width) : 0;   // rescaled to the new DPI
     status_need.clear();    // re-measure the status bar parts with the new font
     status_mask = -1;
     // hand the new image lists to the controls first: the old ones are already destroyed
@@ -1849,7 +1850,10 @@ static LRESULT on_notify(NMHDR* nm) {
         auto const* hd = reinterpret_cast<NMHEADERW const*>(nm);
         if (hd->iItem == ColName) {
             // Resizing Nome itself: keep what the user chose (wider means horizontal scrolling).
-            if (nm->code == HDN_ENDTRACKW && hd->pitem && (hd->pitem->mask & HDI_WIDTH)) name_user_width = hd->pitem->cxy;
+            if (nm->code == HDN_ENDTRACKW && hd->pitem && (hd->pitem->mask & HDI_WIDTH)) {
+                name_user_width = hd->pitem->cxy;
+                g.settings.name_width = MulDiv(name_user_width, 96, static_cast<int>(g.dpi));   // kept across restarts
+            }
             else PostMessageW(g.main, WM_APP_FITCOLUMNS, 1, 0);
             return 0;
         }
@@ -2069,7 +2073,10 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         }
         return 0;
     case WM_APP_FITCOLUMNS:
-        if (wp == 1) name_user_width = ListView_GetColumnWidth(g.list, ColName);   // after a double click on the Nome divider
+        if (wp == 1) {   // after a double click on the Nome divider
+            name_user_width = ListView_GetColumnWidth(g.list, ColName);
+            g.settings.name_width = MulDiv(name_user_width, 96, static_cast<int>(g.dpi));
+        }
         fit_name_column();
         return 0;
     case WM_APP_PORTCHECK:

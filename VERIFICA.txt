@@ -1,3 +1,9 @@
+VERIFICHE SeedFlow 0.8.7.3 - 23/10/2026
+
+- Larghezza della colonna Nome salvata nelle impostazioni (name_width, 96 DPI);
+  regressione: persistenza e limiti del valore. Compilazione llvm-mingw senza
+  warning; da verificare con build.bat -RunTests.
+
 VERIFICHE SeedFlow 0.8.7.2 - 23/10/2026
 
 - Revisione del codice nuovo (grafico, aggiunta torrent, cambio DPI): tre

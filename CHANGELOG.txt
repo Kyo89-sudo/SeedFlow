@@ -1,5 +1,10 @@
 SeedFlow — Changelog
 
+0.8.7.3 — 2026-10-23
+
+- La larghezza della colonna Nome scelta a mano viene salvata: all'avvio la
+  colonna non torna più stretta tagliando i nomi dei torrent.
+
 0.8.7.2 — 2026-10-23
 
 - Grafico: il torrent selezionato viene registrato anche quando è fermo, quindi

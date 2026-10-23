@@ -221,6 +221,14 @@ int wmain(int argc, wchar_t** argv) {
             sf::AppSettings loaded;
             check(sf::parse_settings(buf, loaded) && loaded.random_port_start && loaded.recent_dirs.size() == 1 && loaded.recent_dirs[0] == "D:\\Ok",
                   "random port option persisted, oversized recent folders dropped");
+            libtorrent::entry widths(libtorrent::entry::dictionary_t);
+            widths["name_width"] = 420;
+            std::vector<char> wbuf; libtorrent::bencode(std::back_inserter(wbuf), widths);
+            sf::AppSettings wloaded;
+            check(sf::parse_settings(wbuf, wloaded) && wloaded.name_width == 420, "hand-set Nome width persisted");
+            widths["name_width"] = 999999;
+            wbuf.clear(); libtorrent::bencode(std::back_inserter(wbuf), widths);
+            check(sf::parse_settings(wbuf, wloaded) && wloaded.name_width == 4096, "oversized Nome width clamped");
         }
 
         std::vector<int> order(sf::ColCount);

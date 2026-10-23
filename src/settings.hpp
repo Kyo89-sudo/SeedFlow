@@ -83,6 +83,7 @@ struct AppSettings {
     int win_x = -1, win_y = -1, win_w = 0, win_h = 0, win_max = 0;
     int split_left = 170, split_bottom = 230;
     std::string columns;        // saved list view column widths
+    int name_width = 0;         // Nome width chosen by hand (96-DPI px), 0 = fill the free space
     bool migrated = false;
     GlobalStats stats;
     std::map<std::string, TorrentMeta> torrents; // key: info-hash hex

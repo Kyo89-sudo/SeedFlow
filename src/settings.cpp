@@ -150,6 +150,7 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.split_left = gint(d, "split_left", def.split_left);
     s.split_bottom = gint(d, "split_bottom", def.split_bottom);
     s.columns = gs(d, "columns", "");
+    s.name_width = std::clamp(gint(d, "name_width", 0), 0, 4096);
     s.migrated = gi(d, "migrated", 0) != 0;
     s.int_settings.clear(); s.bool_settings.clear(); s.torrents.clear();
     if (auto is = d.dict_find_dict("int_settings"))
@@ -220,7 +221,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         e["global_ratio"] = ms(s.global_ratio); e["global_ratio_action"] = s.global_ratio_action;
         e["disk_io"] = s.disk_io; e["perf_profile"] = s.perf_profile; e["connection_profile"] = s.connection_profile;
         e["win_x"] = s.win_x; e["win_y"] = s.win_y; e["win_w"] = s.win_w; e["win_h"] = s.win_h; e["win_max"] = s.win_max;
-        e["split_left"] = s.split_left; e["split_bottom"] = s.split_bottom; e["columns"] = s.columns;
+        e["split_left"] = s.split_left; e["split_bottom"] = s.split_bottom; e["columns"] = s.columns; e["name_width"] = s.name_width;
         e["migrated"] = s.migrated;
         auto& is = e["int_settings"]; is = lt::entry(lt::entry::dictionary_t);
         for (auto const& [k, v] : s.int_settings) is[k] = v;
