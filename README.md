@@ -36,7 +36,7 @@ La distribuzione è un **singolo eseguibile statico**: nessuna DLL da distribuir
 ## Screenshot
 
 <p align="center">
-<a href="docs/seedflow-0.8.4-main-window.png"><img src="docs/seedflow-preview.svg" alt="SeedFlow 0.8.4 — main window" width="640"></a>
+<a href="docs/seedflow-main-window.png"><img src="docs/seedflow-main-window.png" alt="SeedFlow 0.8.7.4 — finestra principale" width="820"></a>
 </p>
 
 *Fai clic sull'immagine per lo screenshot a piena risoluzione.*
