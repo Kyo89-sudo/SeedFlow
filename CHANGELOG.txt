@@ -5,7 +5,7 @@ SeedFlow — Changelog
 - Barra degli strumenti più compatta: solo icone, leggermente più grandi
   (20 px), con il nome del comando nel tooltip.
 - Nuovo set di 43 icone Classic: forme piene, colori riconoscibili e rilievo
-  leggero. La barra mantiene testi e disposizione. Disegni SVG originali SeedFlow.
+  leggero. Disegni SVG originali SeedFlow.
 - Rifinita anche l'icona del programma: foglia e onde, bordo discreto e colori
   coerenti con i comandi. ICO con nove dimensioni da 16 a 256 px.
 - Eliminato il warning C4456 nel test delle preferenze della barra di stato.
