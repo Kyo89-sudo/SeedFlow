@@ -22,6 +22,8 @@ Grafico
   totali della sessione, valori al passaggio del mouse.
 - Curve più spesse con area sfumata; per 30 minuti e 2 ore i dati sono medie
   su 6 e 24 secondi.
+- Se la cronologia è più corta dell'intervallo (programma appena avviato o
+  torrent appena partito) la parte iniziale è disegnata a zero, senza vuoti.
 
 Aiuto
 - Menu Aiuto rifatto: Guida rapida (F1) con 12 argomenti, Scorciatoie da

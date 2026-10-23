@@ -325,6 +325,15 @@ int wmain(int argc, wchar_t** argv) {
         empty_view.source = 1; empty_view.has_selection = false;
         sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, empty_view, graph_font, graph_big, graph_big, 96);
         sf::draw_speed_graph(graph_dc, {0, 0, 8, 8}, graph_view, graph_font, graph_big, graph_big, 192);
+        {   // history shorter than the window: the start is padded with zeros
+            sf::SpeedHistory recent;
+            for (int i = 0; i < 40; ++i) recent.append(260000 + static_cast<std::uint64_t>(i) * 1000, 2 * 1024 * 1024, 256 * 1024);
+            sf::GraphView short_view = graph_view;
+            short_view.samples = &recent; short_view.range = 1; short_view.hover_x = 120;
+            sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, short_view, graph_font, graph_big, graph_big, 96);
+            short_view.range = 3;
+            sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, short_view, graph_font, graph_big, graph_big, 96);
+        }
         for (int r = 0; r < sf::kGraphRangeCount; ++r) {
             graph_view.range = r;
             sf::draw_speed_graph(graph_dc, {0, 0, 900, 280}, graph_view, graph_font, graph_big, graph_big, 96);

@@ -263,6 +263,21 @@ void draw_speed_graph(HDC target, RECT area, GraphView const& v, HFONT font, HFO
             peak_d = std::max(peak_d, smp.down); peak_u = std::max(peak_u, smp.up);
             sum_d += smp.down; sum_u += smp.up; ++counted;
         }
+    // History shorter than the window (SeedFlow just started, or the torrent only began moving data):
+    // the time before the first sample is drawn as zero instead of leaving an empty gap on the left.
+    if (counted > 0) {
+        auto first = std::find_if(samples.begin(), samples.end(), [&](SpeedSample const& smp) { return v.now - smp.time <= window; });
+        std::uint64_t const start = v.now > window ? v.now - window : 0;
+        std::uint64_t step = 1000;
+        if (first != samples.end() && first + 1 != samples.end()) step = std::max<std::uint64_t>(1000, (first + 1)->time - first->time);
+        if (first == samples.begin() && first->time > start + step) {
+            // zeros at the sample spacing (never wider than the gap that breaks a curve)
+            std::uint64_t const spacing = std::max<std::uint64_t>(step, window / 300);
+            std::vector<SpeedSample> pad;
+            for (std::uint64_t t = start; t + spacing <= first->time; t += spacing) pad.push_back({t, 0, 0});
+            samples.insert(samples.begin(), pad.begin(), pad.end());
+        }
+    }
 
     // ---- tiles
     int y = bar_top + bar_h + s(8);
