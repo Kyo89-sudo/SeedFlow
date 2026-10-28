@@ -345,10 +345,10 @@ static void perf_fill(HWND dlg, std::map<std::string, int> const& values) {
 static void perf_meminfo(HWND dlg) {
     auto m = memory_usage();
     auto c = g.engine.counters();
-    std::wstring t = L"Memoria del processo: " + fmt_bytes(static_cast<std::int64_t>(m.working_set)) + L" (working set), " +
-        fmt_bytes(static_cast<std::int64_t>(m.private_bytes)) + L" privata, picco " + fmt_bytes(static_cast<std::int64_t>(m.peak_working_set)) +
-        L".\nCache libtorrent in uso: " + fmt_bytes(c.disk_blocks_in_use * 16384) + L"; blocchi in cache: " + fmt_bytes(c.cached_blocks * 16384) +
-        L"; I/O disco attivo: " + widen(g.engine.disk_io_name()) + L".";
+    std::wstring t = L"RAM: " + fmt_bytes(static_cast<std::int64_t>(m.working_set)) + L" · privata " +
+        fmt_bytes(static_cast<std::int64_t>(m.private_bytes)) + L" · picco " + fmt_bytes(static_cast<std::int64_t>(m.peak_working_set)) +
+        L".\nCache: " + fmt_bytes(c.disk_blocks_in_use * 16384) + L" · scrittura " + fmt_bytes(c.cached_blocks * 16384) +
+        L" · I/O " + widen(g.engine.disk_io_name()) + L".";
     set_text(dlg, IDC_MEMINFO, t);
 }
 // ------------------------------------------------------------------ preferences

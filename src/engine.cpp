@@ -64,13 +64,6 @@ static std::string listen_string(int port, bool ipv6) {
 template <typename H> static std::string hex_of(H const& h) { std::ostringstream s; s << h; return s.str(); }
 static std::string hash_key(lt::info_hash_t const& ih) { return hex_of(ih.get_best()); }
 
-static fs::path u8path(std::string const& s) {
-#if defined(__cpp_char8_t)
-    return fs::path(std::u8string(s.begin(), s.end()));
-#else
-    return fs::u8path(s);
-#endif
-}
 static bool read_file(fs::path const& p, std::vector<char>& out) {
     // .torrent, fast resume and session state: sized before reading, capped like libtorrent's own loader.
     return file_io::read_bounded(p, out, 64u * 1024u * 1024u) && !out.empty();
@@ -213,7 +206,7 @@ int Engine::add_torrent_file(std::string const& file, std::string const& folder,
     if (!session_) { error = "Motore non avviato"; return -1; }
     try {
         std::vector<char> buf;
-        if (!read_file(u8path(file), buf)) { error = "File .torrent non leggibile"; if (result) *result = AddResult::Error; return -1; }
+        if (!read_file(file_io::from_utf8(file), buf)) { error = "File .torrent non leggibile"; if (result) *result = AddResult::Error; return -1; }
         lt::error_code ec;
         auto ti = std::make_shared<lt::torrent_info>(lt::span<char const>(buf.data(), static_cast<std::ptrdiff_t>(buf.size())), ec, lt::from_span);
         if (ec) { error = "File .torrent non valido: " + ec.message(); if (result) *result = AddResult::Error; return -1; }
@@ -256,7 +249,7 @@ int Engine::load_saved_torrents(fs::path const& dir, std::vector<std::string>& l
         std::string err;
         AddResult r = AddResult::Error;
         if (add_resume_file(entry.path(), err, &r) > 0) ++n;
-        else if (r != AddResult::Duplicate) log.push_back("Ripristino non riuscito (" + entry.path().filename().u8string() + "): " + err);
+        else if (r != AddResult::Duplicate) log.push_back("Ripristino non riuscito (" + file_io::to_utf8(entry.path().filename()) + "): " + err);
     }
     return n;
 }
@@ -285,8 +278,10 @@ static void fill_view(int id, lt::torrent_status const& s, TorrentView& v) {
     v.total_done = s.total_done;
     v.all_time_download = s.all_time_download;
     v.all_time_upload = s.all_time_upload;
-    v.download_rate = s.download_rate;
-    v.upload_rate = s.upload_rate;
+    // Present useful payload throughput. Raw rates include BitTorrent protocol
+    // traffic, which can look like downloading while a torrent seeds.
+    v.download_rate = s.is_seeding ? 0 : s.download_payload_rate;
+    v.upload_rate = s.upload_payload_rate;
     v.seeds = s.num_seeds;
     v.peers = std::max(0, s.num_peers - s.num_seeds);
     v.list_seeds = s.num_complete >= 0 ? s.num_complete : s.list_seeds;
@@ -345,7 +340,7 @@ bool Engine::move_storage(int id, std::string const& folder, bool move_files, st
 bool Engine::peek_torrent(std::string const& file, std::string& name, std::int64_t& size, int& files, std::string& error) {
     try {
         std::vector<char> buf;
-        if (!read_file(u8path(file), buf)) { error = "File .torrent non leggibile"; return false; }
+        if (!read_file(file_io::from_utf8(file), buf)) { error = "File .torrent non leggibile"; return false; }
         lt::add_torrent_params const atp = lt::load_torrent_buffer(lt::span<char const>(buf.data(), static_cast<std::ptrdiff_t>(buf.size())));
         if (!atp.ti) { error = "File .torrent non valido"; return false; }
         name = atp.ti->name();
@@ -805,6 +800,13 @@ void Engine::process_alerts() {
                 std::string ip = ex->external_address.to_string();
                 if (ip != external_ip_) push_event("IP esterno segnalato dai peer/tracker: " + ip);
                 external_ip_ = ip;
+            } else if (auto* udp = lt::alert_cast<lt::udp_error_alert>(a)) {
+                auto const& ep = udp->endpoint;
+                char const* operation = udp->operation == lt::operation_t::sock_read ? "lettura" :
+                    udp->operation == lt::operation_t::sock_write ? "scrittura" : "socket";
+                push_throttled("udp" + std::to_string(udp->error.value()),
+                    "Socket UDP locale " + ep.address().to_string() + ":" + std::to_string(ep.port()) +
+                    " (" + operation + "): " + udp->error.message());
             } else if (auto* perf = lt::alert_cast<lt::performance_alert>(a)) {
                 push_throttled("perf" + std::to_string(static_cast<int>(perf->warning_code)), "Avviso prestazioni: " + perf->message());
             } else if (auto* fin = lt::alert_cast<lt::torrent_finished_alert>(a)) {

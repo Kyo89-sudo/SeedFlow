@@ -52,7 +52,7 @@ Per aggiornare, chiudi la versione in uso con **File → Esci**, anche se è rid
 
 ## Compilazione
 
-Requisiti: Visual Studio 2026 o 2022 con MSVC x64 e Windows SDK, CMake (4.2 o successivo con VS 2026) e Git.
+Requisiti: Visual Studio 2026 o 2022 con MSVC x64 e Windows SDK, CMake (4.2 o successivo con VS 2026) e Git. Il codice richiede C++20.
 
 ```bat
 build.bat -NoPause -RunTests

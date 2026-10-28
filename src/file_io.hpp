@@ -5,6 +5,7 @@
 #include <fstream>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -13,6 +14,23 @@
 #endif
 
 namespace sf::file_io {
+
+// C++20 gives filesystem::path::u8string() the distinct std::u8string type.
+// Keep libtorrent's UTF-8 boundary explicit while preserving the exact bytes.
+inline std::filesystem::path from_utf8(std::string_view value) {
+    std::u8string native;
+    native.reserve(value.size());
+    for (unsigned char ch : value) native.push_back(static_cast<char8_t>(ch));
+    return std::filesystem::path(native);
+}
+
+inline std::string to_utf8(std::filesystem::path const& value) {
+    auto const native = value.u8string();
+    std::string result;
+    result.reserve(native.size());
+    for (char8_t ch : native) result.push_back(static_cast<char>(ch));
+    return result;
+}
 
 // Read the size before allocating. Failed reads leave the caller's buffer intact.
 inline bool read_bounded(std::filesystem::path const& path, std::vector<char>& out,

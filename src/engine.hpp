@@ -22,7 +22,7 @@ struct TorrentView {
     float progress = 0;
     std::int64_t total_wanted = 0, total_wanted_done = 0, total_done = 0;
     std::int64_t all_time_download = 0, all_time_upload = 0;
-    int download_rate = 0, upload_rate = 0;
+    int download_rate = 0, upload_rate = 0; // useful payload bytes/s; protocol chatter excluded
     int seeds = 0, peers = 0, list_seeds = 0, list_peers = 0, connections = 0;
     int queue_position = -1;
     bool seeding = false, finished = false, paused = false, auto_managed = false;

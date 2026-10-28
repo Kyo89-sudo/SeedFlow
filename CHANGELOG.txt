@@ -1,5 +1,16 @@
 SeedFlow — Changelog
 
+0.8.8 — 2026-10-28
+
+- Passaggio a C++20 con MSVC strict mode abilitato.
+- Le velocità dei torrent mostrano i dati utili e non il traffico di protocollo;
+  un torrent in seeding non appare più come se stesse scaricando.
+- Gli errori UDP indicano ora l'indirizzo e la porta del socket locale, così è
+  chiaro che 127.0.0.1 identifica SeedFlow sul PC e non il tracker remoto.
+- La verifica del ripristino mostra la percentuale disponibile e un testo che
+  descrive il controllo dei file. Compattate le informazioni RAM/cache in
+  Preferenze › Prestazioni per evitare il taglio in fondo alla scheda.
+
 0.8.7.4 — 2026-10-23
 
 - Pulizia: rimossi include inutilizzati e semplificato il disegno del valore

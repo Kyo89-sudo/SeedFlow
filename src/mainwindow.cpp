@@ -124,7 +124,11 @@ static BarLook bar_look(Row const& r) {
     if (v.moving) return {1.0, paint::Bar::Indeterminate, L"Spostamento…", true};
     if (checking && !v.has_error) {
         if (v.paused) return {v.progress, paint::Bar::Striped, (v.auto_managed ? L"In coda: verifica " : L"Verifica ") + pct, false};
-        if (v.state == 7) return {0.0, paint::Bar::Indeterminate, L"Lettura dati di ripristino…", true};
+        if (v.state == 7) {
+            if (v.progress > 0.0f && v.progress <= 1.0f)
+                return {v.progress, paint::Bar::Striped, L"Verifica file/ripristino " + pct, true};
+            return {0.0, paint::Bar::Indeterminate, L"Verifica file e ripristino…", true};
+        }
         return {v.progress, paint::Bar::Striped, L"Verifica " + pct, true};
     }
     if (v.state == 2 && !v.paused && !v.has_error) return {0.0, paint::Bar::Indeterminate, L"Recupero metadati…", true};

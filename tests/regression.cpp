@@ -415,7 +415,7 @@ int wmain(int argc, wchar_t** argv) {
             HRSRC manifest = FindResourceW(module, MAKEINTRESOURCEW(1), MAKEINTRESOURCEW(24));
             check(manifest != nullptr, "embedded manifest present");
             std::string xml(static_cast<char const*>(LockResource(LoadResource(module, manifest))), SizeofResource(module, manifest));
-            check(xml.find(std::string("name=\"SeedFlow\" version=\"") + SF_FILE_VERSION_STRING + "\"") != std::string::npos,
+            check(xml.find(std::string("name=\"SeedFlow\" version=\"") + SF_FILE_VERSION_STRING + ".0\"") != std::string::npos,
                   "manifest version matches FileVersion");
         }
 
@@ -439,4 +439,10 @@ int wmain(int argc, wchar_t** argv) {
         return 1;
     }
 }
+
+#if defined(_MSVC_LANG)
+static_assert(_MSVC_LANG >= 202002L, "SeedFlow requires C++20");
+#else
+static_assert(__cplusplus >= 202002L, "SeedFlow requires C++20");
+#endif
 

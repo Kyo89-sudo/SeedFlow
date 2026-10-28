@@ -1,6 +1,7 @@
 // Creates only a local trackerless torrent in a dedicated build-directory fixture.
 // DHT, UPnP, NAT-PMP, LSD, PeX and outgoing peer transports are disabled.
 #include "../src/engine.hpp"
+#include "../src/file_io.hpp"
 #include <libtorrent/create_torrent.hpp>
 #include <libtorrent/bencode.hpp>
 #include <filesystem>
@@ -24,16 +25,16 @@ template<typename Predicate> static bool wait_for(sf::Engine& engine, Predicate 
 int main(int argc, char** argv) {
     try {
         check(argc == 2, "fixture argument");
-        auto folder = std::filesystem::u8path(argv[1]);
+        auto folder = sf::file_io::from_utf8(argv[1]);
         std::filesystem::create_directories(folder);
         std::string const name = "Seme_\xc3\xa8.txt";
-        { std::ofstream data(folder / std::filesystem::u8path(name), std::ios::binary); data << std::string(16384, 's'); }
+        { std::ofstream data(folder / sf::file_io::from_utf8(name), std::ios::binary); data << std::string(16384, 's'); }
         // create_file_entry list: the file_storage constructor is deprecated in libtorrent 2.1.
         std::vector<libtorrent::create_file_entry> files;
         files.emplace_back(name, 16384);
         libtorrent::create_torrent torrent(std::move(files), 16384, libtorrent::create_torrent::v1_only);
         libtorrent::error_code ec;
-        libtorrent::set_piece_hashes(torrent, folder.u8string(), ec);
+        libtorrent::set_piece_hashes(torrent, sf::file_io::to_utf8(folder), ec);
         check(!ec, "hash local completed fixture");
         std::vector<char> metadata;
         libtorrent::bencode(std::back_inserter(metadata), torrent.generate());
@@ -47,9 +48,9 @@ int main(int argc, char** argv) {
         check(engine.start(cfg, error), "start isolated engine");
         for (auto setting : {"enable_outgoing_tcp", "enable_outgoing_utp", "enable_incoming_tcp", "enable_incoming_utp"})
             check(engine.set_bool(setting, false, error), "disable peer transport");
-        int incomplete = engine.add_magnet("magnet:?xt=urn:btih:0123456789012345678901234567890123456789", folder.u8string(), true, error);
+        int incomplete = engine.add_magnet("magnet:?xt=urn:btih:0123456789012345678901234567890123456789", sf::file_io::to_utf8(folder), true, error);
         check(incomplete > 0 && !engine.super_seed(incomplete, true, error), "reject superseed on incomplete torrent");
-        int id = engine.add_torrent_file(torrent_path.u8string(), folder.u8string(), false, error);
+        int id = engine.add_torrent_file(sf::file_io::to_utf8(torrent_path), sf::file_io::to_utf8(folder), false, error);
         check(id > 0, "add local complete torrent");
         sf::TorrentView view;
         check(wait_for(engine, [&] { return engine.view(id, view) && view.seeding; }), "torrent reaches seeding after hash check");

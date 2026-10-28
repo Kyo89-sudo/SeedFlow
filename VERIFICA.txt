@@ -1,4 +1,4 @@
-VERIFICHE SeedFlow 0.8.7.4 - 23/10/2026
+VERIFICHE SeedFlow 0.8.8 - 28/10/2026
 
 Le verifiche delle versioni precedenti restano nella cronologia di git.
 
@@ -10,6 +10,11 @@ Eseguito realmente:
 - Windows (utente), build 0.8.7: build.bat -NoPause -RunTests con MSVC 14.51
   (VS 2026), /MT, triplet x64-windows-static: CTest 2/2 superati
   (superseed-flags, win32-regression); prova manuale dell'interfaccia: funziona.
+- Windows x64: `build.bat -NoPause -RunTests`, Visual Studio 2026 / MSVC
+  14.51, C++20, runtime statico e triplet x64-windows-static. Build completa;
+  nessun warning MSVC nel log; CTest 2/2 superati (superseed-flags,
+  win32-regression). L'interfaccia non è stata verificata manualmente in questa
+  revisione.
 - Compilazione per Windows x64 con llvm-mingw (app e regressione) di ogni
   revisione fino alla 0.8.7.4: nessun warning.
 - Motore su Linux con ASan/UBSan: lettura del .torrent (nome, dimensione, file),
@@ -26,6 +31,7 @@ della colonna Nome), cronologia velocità a tre livelli (1/6/24 s), disegno del
 tab Grafico in tutti gli intervalli, con cronologia corta, senza selezione e in
 finestra stretta, senza crescita di oggetti GDI.
 
-Non verificato: trasferimenti estesi verso tracker pubblici; prova manuale
-completa delle correzioni 0.8.7.1-0.8.7.4 (vuoto iniziale del grafico, torrent
-selezionato fermo, .torrent non validi, cambio DPI, larghezza di Nome salvata).
+Non eseguito in questa revisione: prova manuale della GUI e uso prolungato con
+molti torrent o peer reali. I due test automatici coprono le regressioni native
+e il flag Super-seeding, non le condizioni di rete reali né il trasferimento
+effettivo verso peer.

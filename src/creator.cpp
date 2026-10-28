@@ -1,4 +1,5 @@
 #include "creator.hpp"
+#include "file_io.hpp"
 #include <libtorrent/create_torrent.hpp>
 #include <libtorrent/torrent_info.hpp>
 #include <libtorrent/load_torrent.hpp>
@@ -90,7 +91,7 @@ CreateResult create_torrent_file(CreateRequest const& req, std::atomic<bool> con
     CreateResult r;
     try {
         namespace fs = std::filesystem;
-        fs::path const src = fs::u8path(req.source);
+        fs::path const src = file_io::from_utf8(req.source);
         std::error_code ec;
         if (req.source.empty() || !fs::exists(src, ec)) { r.error = "La sorgente non esiste."; return r; }
         if (req.piece_size != 0) {
@@ -103,10 +104,12 @@ CreateResult create_torrent_file(CreateRequest const& req, std::atomic<bool> con
 
         // libtorrent works with UTF-8 paths; the torrent root is the source's own name.
         fs::path const absolute = fs::absolute(src, ec);
-        std::string const source_u8 = (ec ? src : absolute).lexically_normal().u8string();
+        fs::path const normalized_source = (ec ? src : absolute).lexically_normal();
+        std::string const source_u8 = file_io::to_utf8(normalized_source);
         std::string trimmed = source_u8;
         while (trimmed.size() > 1 && (trimmed.back() == '/' || trimmed.back() == '\\')) trimmed.pop_back();
-        std::string const parent = fs::u8path(trimmed).parent_path().u8string();
+        fs::path const trimmed_path = file_io::from_utf8(trimmed);
+        std::string const parent = file_io::to_utf8(trimmed_path.parent_path());
 
         auto files = lt::list_files(trimmed, [](std::string const&) { return true; }, flags);
         std::int64_t size = 0;
@@ -150,7 +153,7 @@ CreateResult create_torrent_file(CreateRequest const& req, std::atomic<bool> con
         // torrent of a folder holding a single file into a single-file torrent named after
         // that file (the folder name is dropped): its data then lives inside the source folder.
         r.seed_dir = parent;
-        if (fs::is_directory(fs::u8path(trimmed), ec) && r.name != fs::u8path(trimmed).filename().u8string())
+        if (fs::is_directory(trimmed_path, ec) && r.name != file_io::to_utf8(trimmed_path.filename()))
             r.seed_dir = trimmed;
         r.ok = true;
     } catch (Cancelled const&) {
