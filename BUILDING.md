@@ -1,4 +1,4 @@
-# Compilazione SeedFlow 0.8.8 (C++20)
+# Compilazione SeedFlow 0.8.8.1 (C++20)
 
 Visual Studio 2026 o 2022 con MSVC x64, Windows SDK, CMake e Git. Con VS 2026 serve CMake >= 4.2. Non serve .NET per eseguire il programma.
 

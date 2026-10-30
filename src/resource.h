@@ -188,3 +188,4 @@
 #define IDC_SB_RAM              489
 #define IDC_RANDOMSTART         490
 #define IDC_ABOUT_DESC          493
+#define IDC_A_SIZE              494

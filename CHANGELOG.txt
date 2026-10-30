@@ -1,5 +1,14 @@
 SeedFlow — Changelog
 
+0.8.8.1 — 2026-10-30
+
+- Finestra "Aggiungi torrent": il nome lungo non spinge più fuori la riga con
+  dimensione e numero di file; il nome viene accorciato con "…" e la seconda
+  riga resta sempre visibile.
+- Avviso "max outstanding piece requests reached": con un peer molto veloce
+  SeedFlow alza da solo il limite delle richieste in sospeso (fino a 2000) e lo
+  scrive una sola volta nel log, invece di ripetere l'avviso ogni minuto.
+
 0.8.8 — 2026-10-28
 
 - Passaggio a C++20 con MSVC strict mode abilitato.

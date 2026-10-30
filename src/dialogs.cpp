@@ -172,7 +172,11 @@ static INT_PTR CALLBACK add_torrent_proc(HWND dlg, UINT msg, WPARAM wp, LPARAM l
     case WM_INITDIALOG: {
         SetWindowLongPtrW(dlg, DWLP_USER, lp);
         ctx = reinterpret_cast<AddCtx*>(lp);
-        set_text(dlg, IDC_A_INFO, ctx->summary);
+        {   // first line: torrent name (ellipsis when too long), second: size and files
+            auto const nl = ctx->summary.find(L'\n');
+            set_text(dlg, IDC_A_INFO, ctx->summary.substr(0, nl));
+            set_text(dlg, IDC_A_SIZE, nl == std::wstring::npos ? std::wstring() : ctx->summary.substr(nl + 1));
+        }
         fill_folder_combo(dlg, IDC_A_FOLDER, *ctx->folder);
         check(dlg, IDC_PAUSED, *ctx->paused);
         check(dlg, IDC_A_NOASK, false);

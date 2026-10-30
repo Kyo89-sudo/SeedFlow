@@ -808,7 +808,21 @@ void Engine::process_alerts() {
                     "Socket UDP locale " + ep.address().to_string() + ":" + std::to_string(ep.port()) +
                     " (" + operation + "): " + udp->error.message());
             } else if (auto* perf = lt::alert_cast<lt::performance_alert>(a)) {
-                push_throttled("perf" + std::to_string(static_cast<int>(perf->warning_code)), "Avviso prestazioni: " + perf->message());
+                if (perf->warning_code == lt::performance_alert::outstanding_request_limit_reached) {
+                    // A fast peer filled the request queue (max_out_request_queue). Not an error:
+                    // raise the limit once, up to 2000, and say so in the log only that time.
+                    int const current = session_->get_settings().get_int(lt::settings_pack::max_out_request_queue);
+                    if (current < 2000) {
+                        int const raised = std::min(2000, std::max(1000, current * 2));
+                        lt::settings_pack p;
+                        p.set_int(lt::settings_pack::max_out_request_queue, raised);
+                        session_->apply_settings(p);
+                        push_event("Peer veloce: limite delle richieste in sospeso portato da " + std::to_string(current) +
+                                   " a " + std::to_string(raised) + " (max_out_request_queue).");
+                    }
+                } else {
+                    push_throttled("perf" + std::to_string(static_cast<int>(perf->warning_code)), "Avviso prestazioni: " + perf->message());
+                }
             } else if (auto* fin = lt::alert_cast<lt::torrent_finished_alert>(a)) {
                 // also posted after loading an already complete torrent: report real downloads only
                 if (fin->handle.is_valid() && fin->handle.status(lt::status_flags_t{}).total_payload_download > 0)
