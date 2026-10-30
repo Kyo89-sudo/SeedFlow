@@ -415,7 +415,10 @@ int wmain(int argc, wchar_t** argv) {
             HRSRC manifest = FindResourceW(module, MAKEINTRESOURCEW(1), MAKEINTRESOURCEW(24));
             check(manifest != nullptr, "embedded manifest present");
             std::string xml(static_cast<char const*>(LockResource(LoadResource(module, manifest))), SizeofResource(module, manifest));
-            check(xml.find(std::string("name=\"SeedFlow\" version=\"") + SF_FILE_VERSION_STRING + ".0\"") != std::string::npos,
+            // four numbers, as in the FileVersion resource (0.8.8 -> 0.8.8.0, 0.8.8.1 -> 0.8.8.1)
+            std::string const four = std::to_string(SF_VERSION_MAJOR) + "." + std::to_string(SF_VERSION_MINOR) + "." +
+                                     std::to_string(SF_VERSION_PATCH) + "." + std::to_string(SF_VERSION_BUILD);
+            check(xml.find("name=\"SeedFlow\" version=\"" + four + "\"") != std::string::npos,
                   "manifest version matches FileVersion");
         }
 
