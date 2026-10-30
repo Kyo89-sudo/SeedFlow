@@ -160,7 +160,6 @@ public:
 private:
     int register_handle(libtorrent::torrent_handle const& h);
     libtorrent::torrent_handle const* find(int id) const;
-    int find_id(libtorrent::torrent_handle const& h) const;
     void push_event(std::string s);
     void push_throttled(std::string const& key, std::string s);
     void write_resume(libtorrent::add_torrent_params const& p);

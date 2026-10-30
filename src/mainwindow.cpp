@@ -1785,6 +1785,7 @@ static void create_children(HWND hwnd) {
 }
 static void apply_fonts_after_dpi() {
     create_fonts();
+    icons::trim_cache();    // drop the strips decoded for the old DPI before decoding the new sizes
     create_imagelists();
     name_user_width = g.settings.name_width > 0 ? scale(g.settings.name_width) : 0;   // rescaled to the new DPI
     status_need.clear();    // re-measure the status bar parts with the new font
@@ -2198,7 +2199,8 @@ static int run(HINSTANCE inst, int show) {
     g.taskbar_created = RegisterWindowMessageW(L"TaskbarCreated");
     g.accel = LoadAcceleratorsW(inst, MAKEINTRESOURCEW(IDR_ACCEL));
 
-    WNDCLASSEXW wc{sizeof(wc)};
+    WNDCLASSEXW wc{};
+    wc.cbSize = sizeof(wc);
     wc.lpfnWndProc = general_proc;
     wc.hInstance = inst;
     wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);

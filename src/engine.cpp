@@ -165,10 +165,6 @@ lt::torrent_handle const* Engine::find(int id) const {
     if (it == items_.end() || !it->second.is_valid()) return nullptr;
     return &it->second;
 }
-int Engine::find_id(lt::torrent_handle const& h) const {
-    for (auto const& [id, handle] : items_) if (handle == h) return id;
-    return 0;
-}
 fs::path Engine::resume_path(std::string const& hash) const { return state_dir_ / (hash + ".fastresume"); }
 
 static std::string add_error(lt::error_code const& ec, AddResult* r) {

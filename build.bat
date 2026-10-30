@@ -1,5 +1,5 @@
 @echo off
-rem SeedFlow 0.8.8.1 - compilazione Windows x64 (Visual Studio 2026/2022 + vcpkg)
+rem SeedFlow 0.8.8.2 - compilazione Windows x64 (Visual Studio 2026/2022 + vcpkg)
 rem Uso:  build.bat            compila e crea SeedFlow-Pronto\<data-ora>\SeedFlow.exe
 rem       build.bat -CheckOnly verifica solo i prerequisiti
 rem       build.bat -NoPause   nessuna pausa finale (deve essere il primo argomento)

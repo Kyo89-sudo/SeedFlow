@@ -1,5 +1,14 @@
 SeedFlow — Changelog
 
+0.8.8.2 — 2026-10-30
+
+- Dopo un cambio di scala dello schermo le icone decodificate per la scala
+  precedente vengono liberate invece di restare in memoria.
+- Pulizia: rimosse funzioni mai usate (disegno diretto di un'icona, ricerca
+  di un torrent per handle) e un avviso del compilatore.
+- Test di regressione: il controllo della versione del manifest funziona
+  anche con le build di manutenzione.
+
 0.8.8.1 — 2026-10-30
 
 - Finestra "Aggiungi torrent": il nome lungo non spinge più fuori la riga con

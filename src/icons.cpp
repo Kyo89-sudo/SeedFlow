@@ -173,18 +173,6 @@ HICON make_icon(Id id, int size, COLORREF badge) {
 
 HBITMAP make_menu_bitmap(Id id, int size) { return to_bitmap(pixels(id, size), size, size); }
 
-void draw(HDC dc, Id id, int x, int y, int size) {
-    HBITMAP bmp = make_menu_bitmap(id, size);
-    if (!bmp) return;
-    HDC mem = CreateCompatibleDC(dc);
-    HGDIOBJ old = SelectObject(mem, bmp);
-    BLENDFUNCTION bf{AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-    GdiAlphaBlend(dc, x, y, size, size, mem, 0, 0, size, size, bf);
-    SelectObject(mem, old);
-    DeleteDC(mem);
-    DeleteObject(bmp);
-}
-
 void trim_cache() { g_cache.clear(); }
 
 } // namespace sf::icons
