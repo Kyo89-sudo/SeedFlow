@@ -386,6 +386,25 @@ int wmain(int argc, wchar_t** argv) {
         int const indent = static_cast<int>(TreeView_GetIndent(tree));
         check(tree_rect.right >= std::max(child.cx + 2 * indent, top.cx + indent) + 24,
             "preferences tree titles fit including indentation and icon");
+        {   // every performance field label fits its (right-aligned) static control
+            HWND perf = CreateDialogParamW(module, MAKEINTRESOURCEW(IDD_PG_PERFORMANCE), preferences,  // a page is a child window
+                [](HWND, UINT, WPARAM, LPARAM) -> INT_PTR { return FALSE; }, 0);
+            check(perf != nullptr, "create performance page for layout verification");
+            bool fits = perf != nullptr;
+            auto const& fields = sf::tuning::memory_fields();
+            for (std::size_t i = 0; perf && i < fields.size() && i < 10; ++i) {
+                HWND label = GetDlgItem(perf, IDC_FLABEL0 + static_cast<int>(i));
+                if (!label) { fits = false; break; }
+                RECT r{}; GetClientRect(label, &r);
+                HDC dc = GetDC(label);
+                HGDIOBJ old = SelectObject(dc, reinterpret_cast<HFONT>(SendMessageW(label, WM_GETFONT, 0, 0)));
+                SIZE sz{}; GetTextExtentPoint32W(dc, fields[i].label, static_cast<int>(wcslen(fields[i].label)), &sz);
+                SelectObject(dc, old); ReleaseDC(label, dc);
+                if (sz.cx > r.right) { std::wcout << L"  too wide: " << fields[i].label << L'\n'; fits = false; }
+            }
+            check(fits, "performance field labels fit their controls");
+            if (perf) DestroyWindow(perf);
+        }
         DestroyWindow(preferences);
         check(resource_text(module, IDD_PG_SYSTEM).find(L"Priorità del processo") != std::wstring::npos, "advanced page accent intact");
         for (int size : sf::icons::kStripSizes) {

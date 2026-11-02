@@ -627,7 +627,7 @@ static INT_PTR CALLBACK pg_performance(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
         combo_sel(dlg, IDC_DISKIO, std::clamp(s.disk_io, 0, 3));
         check(dlg, IDC_TRIM, s.trim_when_hidden);
         perf_fill(dlg, s.int_settings);
-        set_text(dlg, IDC_HELPTEXT, L"Seleziona un campo per la descrizione. I valori si applicano subito, tranne il motore di I/O (al prossimo avvio).");
+        set_text(dlg, IDC_HELPTEXT, L"Clic su un campo per la sua descrizione. I valori valgono subito, il motore I/O dal prossimo avvio.");
         perf_meminfo(dlg);
         SetTimer(dlg, 1, 2000, nullptr);
         return TRUE;

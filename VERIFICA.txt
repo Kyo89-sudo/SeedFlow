@@ -1,11 +1,12 @@
-VERIFICHE SeedFlow 0.8.8.2 - 30/10/2026
+VERIFICHE SeedFlow 0.8.8.3 - 02/11/2026
 
 Le verifiche delle versioni precedenti restano nella cronologia di git.
 
 Eseguito realmente:
-- 0.8.8.1-0.8.8.2: compilazione llvm-mingw (C++20, anche con -Wextra -Wshadow) di app e regressione senza warning;
+- 0.8.8.1-0.8.8.3: compilazione llvm-mingw (C++20, anche con -Wextra -Wshadow) di app e regressione senza warning;
   motore su Linux (C++20): lettura .torrent e spostamento dei file superati.
-  Da verificare con build.bat -RunTests e prova della finestra Aggiungi torrent.
+  Layout di Prestazioni senza controlli fuori pagina o sovrapposti.
+  Da verificare con build.bat -RunTests e prova di Aggiungi torrent e Prestazioni.
 - Windows (utente), build 0.8.7.4: build.bat -NoPause -RunTests completato
   (l'eseguibile viene copiato in SeedFlow-Pronto solo con CTest 2/2 superati).
   SeedFlow.exe 10,7 MB, x64, FileVersion e manifest 0.8.7.4, User-Agent

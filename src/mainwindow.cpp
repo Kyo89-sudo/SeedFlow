@@ -1846,6 +1846,7 @@ static LRESULT on_list_customdraw(NMLVCUSTOMDRAW* cd) {
     }
     return CDRF_DODEFAULT;
 }
+static std::vector<std::wstring> pending_args;   // see WM_COPYDATA
 static LRESULT on_notify(NMHDR* nm) {
     if (nm->hwndFrom == ListView_GetHeader(g.list) && (nm->code == HDN_ENDTRACKW || nm->code == HDN_DIVIDERDBLCLICKW)) {
         auto const* hd = reinterpret_cast<NMHEADERW const*>(nm);
@@ -2043,13 +2044,25 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         return 0;
     }
     case WM_COPYDATA: {
+        // Arguments from a second instance (files / magnets opened from Explorer). They are
+        // queued and handled after returning, so the sender is not blocked by our dialogs and
+        // no modal loop runs inside SendMessage.
         auto* cds = reinterpret_cast<COPYDATASTRUCT*>(lp);
-        if (cds && cds->dwData == 0x5346 && cds->lpData) {
+        if (cds && cds->dwData == 0x5346 && cds->lpData && cds->cbData <= 256 * 1024) {
             std::wstring args(static_cast<wchar_t const*>(cds->lpData), cds->cbData / sizeof(wchar_t));
-            restore_from_tray();
-            handle_arguments(L"SeedFlow.exe " + args);
+            while (!args.empty() && args.back() == L'\0') args.pop_back();
+            pending_args.push_back(std::move(args));
+            PostMessageW(hwnd, WM_APP_ARGS, 0, 0);
         }
         return TRUE;
+    }
+    case WM_APP_ARGS: {
+        if (pending_args.empty()) return 0;
+        auto batch = std::move(pending_args);
+        pending_args.clear();
+        restore_from_tray();
+        for (auto const& args : batch) handle_arguments(L"SeedFlow.exe " + args);
+        return 0;
     }
     case WM_APP_TRAY:
         switch (LOWORD(lp)) {

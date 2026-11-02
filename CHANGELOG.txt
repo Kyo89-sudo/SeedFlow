@@ -1,5 +1,16 @@
 SeedFlow — Changelog
 
+0.8.8.3 — 2026-11-02
+
+- Preferenze › Prestazioni riordinata come le altre pagine: profilo in alto,
+  gruppi "Disco e cache" (con il motore di I/O) e "Peer e upload", memoria e
+  descrizione del campo in fondo; etichette più corte che non vengono tagliate.
+- File o magnet aperti mentre SeedFlow è già avviato: vengono messi in coda e
+  gestiti subito dopo, così la seconda istanza non resta in attesa delle
+  finestre di dialogo; dati ricevuti limitati e puliti.
+- Regressione: controllo che le etichette della pagina Prestazioni entrino nei
+  loro campi.
+
 0.8.8.2 — 2026-10-30
 
 - Dopo un cambio di scala dello schermo le icone decodificate per la scala
