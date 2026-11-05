@@ -189,3 +189,6 @@
 #define IDC_RANDOMSTART         490
 #define IDC_ABOUT_DESC          493
 #define IDC_A_SIZE              494
+#define IDC_PEERFLAGS           495
+#define IDC_GEOIPDIR            496
+#define IDC_GEOIPBROWSE         497

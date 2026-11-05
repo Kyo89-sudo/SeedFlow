@@ -370,17 +370,30 @@ static INT_PTR CALLBACK pg_general(HWND dlg, UINT msg, WPARAM wp, LPARAM) {
         check(dlg, IDC_CLOSETRAY, s.close_to_tray); check(dlg, IDC_MINTRAY, s.minimize_to_tray);
         check(dlg, IDC_CONFIRMREMOVE, s.confirm_remove); check(dlg, IDC_STARTPAUSED, s.start_paused);
         check(dlg, IDC_ASKPATH, s.ask_save_path);
+        check(dlg, IDC_PEERFLAGS, s.show_peer_flags);
+        set_text(dlg, IDC_GEOIPDIR, widen(s.geoip_dir));
         for (int i = 0; i < 6; ++i) check(dlg, IDC_SB_NET + i, (s.status_panes >> i) & 1);
         check(dlg, IDC_AUTOSTART, autostart_enabled()); check(dlg, IDC_STARTMIN, s.start_minimized);
         EnableWindow(GetDlgItem(dlg, IDC_STARTMIN), checked(dlg, IDC_AUTOSTART));
         return TRUE;
     case WM_COMMAND:
         if (LOWORD(wp) == IDC_AUTOSTART) EnableWindow(GetDlgItem(dlg, IDC_STARTMIN), checked(dlg, IDC_AUTOSTART));
+        if (LOWORD(wp) == IDC_GEOIPBROWSE) {
+            std::wstring folder = get_text(dlg, IDC_GEOIPDIR);
+            if (pick_folder(dlg, folder)) set_text(dlg, IDC_GEOIPDIR, folder);
+            return TRUE;
+        }
         break;
     case WM_PAGE_APPLY: {
         s.close_to_tray = checked(dlg, IDC_CLOSETRAY); s.minimize_to_tray = checked(dlg, IDC_MINTRAY);
         s.confirm_remove = checked(dlg, IDC_CONFIRMREMOVE); s.start_paused = checked(dlg, IDC_STARTPAUSED);
         s.ask_save_path = checked(dlg, IDC_ASKPATH);
+        s.show_peer_flags = checked(dlg, IDC_PEERFLAGS);
+        s.geoip_dir = narrow(get_text(dlg, IDC_GEOIPDIR));
+        if (s.geoip_dir.size() > 4096) {
+            MessageBoxW(dlg, L"Percorso del database GeoIP troppo lungo.", L"SeedFlow", MB_ICONWARNING);
+            return page_result(dlg, false);
+        }
         s.status_panes = 0;
         for (int i = 0; i < 6; ++i) if (checked(dlg, IDC_SB_NET + i)) s.status_panes |= 1 << i;
         s.start_minimized = checked(dlg, IDC_STARTMIN);

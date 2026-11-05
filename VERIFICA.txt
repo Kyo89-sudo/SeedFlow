@@ -1,4 +1,28 @@
-VERIFICHE SeedFlow 0.8.8.3 - 02/11/2026
+VERIFICHE SeedFlow 0.8.9.4 - 05/11/2026
+
+- Build Release x64 con Visual Studio 2026, MSVC 14.51, C++20, runtime
+  statico /MT, libtorrent 2.1.2.0 e OpenSSL 3.6.5 dalle dipendenze locali.
+- CTest 3/3 superati: superseed-flags, win32-regression, native-installer.
+  Il terzo richiede accesso al registro HKCU per creare una chiave di test
+  temporanea. RegOverridePredefKey isola le operazioni dalle chiavi reali.
+- GeoIP: prefissi IPv4 sovrapposti, IPv6, IPv4 mappati, record non validi,
+  paese di fallback, disattivazione durante il caricamento e riattivazione;
+  caricamento delle preferenze nuove e compatibilità con quelle precedenti.
+- Installer: payload incorporato, versione registrata, comandi con percorsi
+  quotati, installazione ripetuta, associazioni opzionali, collegamento
+  desktop, disinstallazione e conservazione dei dati personali simulati.
+  Le verifiche usano cartelle temporanee e un registro isolato.
+- GUI installer aperta e controllata manualmente: layout chiaro, logo piccolo,
+  controlli nativi, testi e percorso visibili. Installazione reale attraverso
+  la GUI e scelta delle app predefinite non eseguite.
+- Il disinstallatore usa una copia temporanea per poter rimuovere gli
+  eseguibili installati; la cancellazione finale della copia temporanea usa
+  la disposizione POSIX di Windows. Il percorso completo della GUI di
+  disinstallazione e l'auto-rimozione non sono coperti dal test isolato.
+- Il consumo RAM/CPU e le prestazioni con un database GeoLite2 completo non
+  sono stati misurati. Le verifiche GeoIP usano una fixture CSV locale.
+
+Verifiche precedenti, fino alla 0.8.8.3:
 
 Le verifiche delle versioni precedenti restano nella cronologia di git.
 

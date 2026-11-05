@@ -53,6 +53,8 @@ struct AppSettings {
     bool create_seed = true, create_private = false, create_copy_magnet = false;
     // adding torrents
     bool ask_save_path = true;            // ask where to save each added .torrent
+    bool show_peer_flags = false;
+    std::string geoip_dir;                // local GeoLite2 Country CSV folder, UTF-8
     std::vector<std::string> recent_dirs; // UTF-8, most recent first (max 8)
     // status bar: bit i shows pane i (StatusPane); 0 hides the bar
     int status_panes = 0x3F;

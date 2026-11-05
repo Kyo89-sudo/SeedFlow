@@ -1,5 +1,34 @@
 SeedFlow — Changelog
 
+0.8.9.4 — 2026-11-05
+
+- Installer nativo C++/Win32 con logo SeedFlow, installazione per utente,
+  opzioni per torrent e magnet, collegamento desktop e disinstallazione.
+  Le associazioni vengono registrate nelle app predefinite di Windows.
+- Integrate le modifiche della 0.8.8.3 pubblicata su GitHub.
+- Aggiunte verifiche offline per GeoIP: prefissi sovrapposti, IPv6,
+  indirizzi IPv4 mappati, annullamento, riattivazione e vecchie impostazioni.
+
+0.8.9.3 — 2026-11-04 (sviluppo locale)
+
+- Controllo del caricamento GeoIP una sola volta per aggiornamento della
+  scheda Peer; chiavi di rete fisse per eliminare allocazioni temporanee.
+
+0.8.9.2 — 2026-11-04 (sviluppo locale)
+
+- Caricamento dei CSV GeoIP in background. Disattivando le bandierine si
+  libera il database e si annulla il caricamento in corso.
+
+0.8.9.1 — 2026-11-02 (sviluppo locale)
+
+- Pulizia del resolver GeoIP e gestione della cartella vuota.
+
+0.8.9.0 — 2026-11-02 (sviluppo locale)
+
+- Bandierine opzionali nella scheda Peer, configurabili in Preferenze >
+  Generale. Ricerca locale su GeoLite2 Country CSV per IPv4 e IPv6, cache
+  per indirizzo e gestione dei record non validi.
+
 0.8.8.3 — 2026-11-02
 
 - Preferenze › Prestazioni riordinata come le altre pagine: profilo in alto,

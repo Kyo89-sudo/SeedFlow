@@ -6,6 +6,7 @@
 #include "util.hpp"
 #include "tuning.hpp"
 #include "version.h"
+#include "geoip.hpp"
 #include <shellapi.h>
 #include <shobjidl.h>
 #include <uxtheme.h>
@@ -572,13 +573,19 @@ static void refresh_trackers(int id) {
 static void refresh_peers(int id) {
     if (!id) { clear_listview(g.peers); return; }
     auto list = g.engine.peers(id);
+    bool const show_flags = g.settings.show_peer_flags && !list.empty() && geoip::prepare_peer_flags();
     std::sort(list.begin(), list.end(), [](PeerView const& a, PeerView const& b) { return a.down + a.up > b.down + b.up; });
     std::vector<std::wstring> keys;
     std::vector<std::vector<std::wstring>> cells;
     for (auto const& p : list) {
         std::wstring flags = std::wstring(p.incoming ? L"I" : L"O") + (p.encrypted ? L"E" : L"") + (p.utp ? L"P" : L"") + (p.seed ? L"S" : L"");
         keys.push_back(widen(p.address) + L":" + std::to_wstring(p.port));
-        cells.push_back({widen(p.address), widen(p.client), flags, fmt_double(p.progress * 100, 1) + L"%",
+        std::wstring address = widen(p.address);
+        if (show_flags) {
+            auto country_flag = geoip::peer_flag(p.address);
+            if (!country_flag.empty()) address = country_flag + L" " + address;
+        }
+        cells.push_back({std::move(address), widen(p.client), flags, fmt_double(p.progress * 100, 1) + L"%",
             fmt_speed(p.down), fmt_speed(p.up), fmt_bytes(p.total_down), fmt_bytes(p.total_up)});
     }
     sync_listview(g.peers, keys, cells);
@@ -1325,6 +1332,7 @@ static void open_torrent_dialog() {
 // ------------------------------------------------------------------ settings application
 void apply_session_settings() {
     auto& s = g.settings;
+    geoip::set_directory(s.show_peer_flags ? s.geoip_dir : std::string{});
     auto& e = g.engine;
     std::string err;
     if (!e.set_network(s.port, s.dht, s.upnp, s.natpmp, s.lsd, s.ipv6, err)) log_line(L"Rete: " + widen(err));

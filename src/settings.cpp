@@ -97,6 +97,9 @@ static bool parse_settings(std::vector<char> const& buf, AppSettings& s) {
     s.create_private = gi(d, "create_private", 0) != 0;
     s.create_copy_magnet = gi(d, "create_copy_magnet", 0) != 0;
     s.ask_save_path = gi(d, "ask_save_path", 1) != 0;
+    s.show_peer_flags = gi(d, "show_peer_flags", 0) != 0;
+    s.geoip_dir = gs(d, "geoip_dir", "");
+    if (s.geoip_dir.size() > 4096) s.geoip_dir.clear();
     s.status_panes = gint(d, "status_panes", 0x3F) & 0x3F;
     s.graph_range = std::clamp(gint(d, "graph_range", 1), 0, 3);
     s.graph_source = std::clamp(gint(d, "graph_source", 0), 0, 1);
@@ -207,6 +210,7 @@ bool save_settings(AppSettings const& s, std::string& error) {
         e["create_format"] = s.create_format; e["create_piece"] = s.create_piece; e["create_trackers"] = s.create_trackers;
         e["create_seed"] = s.create_seed; e["create_private"] = s.create_private; e["create_copy_magnet"] = s.create_copy_magnet;
         e["ask_save_path"] = s.ask_save_path; e["status_panes"] = s.status_panes;
+        e["show_peer_flags"] = s.show_peer_flags; e["geoip_dir"] = s.geoip_dir;
         e["graph_range"] = s.graph_range; e["graph_source"] = s.graph_source; e["graph_flags"] = s.graph_flags;
         { lt::entry::list_type dirs; for (auto const& d2 : s.recent_dirs) dirs.emplace_back(d2); e["recent_dirs"] = dirs; }
         e["confirm_remove"] = s.confirm_remove; e["user_agent"] = s.user_agent;

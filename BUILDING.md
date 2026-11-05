@@ -1,4 +1,15 @@
-# Compilazione SeedFlow 0.8.8.3 (C++20)
+# Compilazione SeedFlow 0.8.9.4 (C++20)
+
+Per produrre l'installer nativo, dopo la configurazione e la build del programma:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-installer.ps1
+```
+
+Il target CMake `SeedFlowSetup` incorpora l'applicazione statica, la licenza e
+il disinstallatore nativo. Lo script salva setup e SHA-256 in `SeedFlow-Pronto`.
+La versione deriva da `src/version.h`; il progetto CMake, il manifest e le
+risorse dei tre eseguibili devono essere aggiornati insieme.
 
 Visual Studio 2026 o 2022 con MSVC x64, Windows SDK, CMake e Git. Con VS 2026 serve CMake >= 4.2. Non serve .NET per eseguire il programma.
 
@@ -31,4 +42,4 @@ ctest --test-dir build-win32 -C Release --output-on-failure
 
 I sorgenti e le risorse sono UTF-8; MSVC usa `/utf-8`, rc `/c65001`. Le icone sono già incluse: non occorre rigenerarle per compilare. Per modificarle: `python tools/make_icons.py` con Playwright e Chromium disponibili.
 
-Il progetto richiede C++20. La versione condivisa è in `src/version.h`, FileVersion `0.8.8.0`. Consulta [VERIFICA.txt](VERIFICA.txt) per le verifiche effettivamente eseguite e [BUILD-STATIC-RECIPE.txt](BUILD-STATIC-RECIPE.txt) per le dipendenze della build consegnata.
+Il progetto richiede C++20. La versione condivisa è in `src/version.h`, FileVersion `0.8.9.4`. Consulta [VERIFICA.txt](VERIFICA.txt) per le verifiche effettivamente eseguite e [BUILD-STATIC-RECIPE.txt](BUILD-STATIC-RECIPE.txt) per le dipendenze della build consegnata.

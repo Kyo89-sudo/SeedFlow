@@ -2,6 +2,7 @@
 // starting a torrent session, touching user settings or changing the clipboard.
 #include "../src/mainwindow.cpp"
 #include "../src/settings.cpp"
+#include "../src/geoip.cpp"
 #include "../src/creator.hpp"
 #include <fstream>
 #include <iostream>
@@ -38,6 +39,58 @@ int wmain(int argc, wchar_t** argv) {
     HMODULE module = nullptr;
     try {
         check(argc == 2 || argc == 3, "executable argument");
+        {
+            FileFixture fixture(std::filesystem::path(argv[1]).parent_path());
+            auto const write = [&](wchar_t const* name, char const* content) {
+                std::ofstream file(fixture.folder / name, std::ios::binary);
+                file << content;
+                if (!file) throw std::runtime_error("GeoIP fixture write failed");
+            };
+            write(L"GeoLite2-Country-Locations-en.csv",
+                  "geoname_id,locale_code,continent_code,continent_name,country_iso_code\r\n"
+                  "1,en,EU,Europe,IT\r\n2,en,EU,Europe,DE\r\n");
+            write(L"GeoLite2-Country-Blocks-IPv4.csv",
+                  "network,geoname_id,registered_country_geoname_id\r\n"
+                  "198.51.100.0/24,1,\r\n198.51.100.128/25,2,\r\n"
+                  "203.0.113.0/24,,1\r\n192.0.2.0/99,1,\r\n");
+            write(L"GeoLite2-Country-Blocks-IPv6.csv",
+                  "network,geoname_id,registered_country_geoname_id\r\n2001:db8::/32,1,\r\n");
+            sf::geoip::Database db;
+            auto const directory = sf::narrow(fixture.folder.wstring());
+            sf::geoip::load(db, directory, {});
+            check(sf::geoip::find_country(db, "198.51.100.1") == "IT" &&
+                  sf::geoip::find_country(db, "198.51.100.200") == "DE", "GeoIP longest prefix");
+            check(sf::geoip::find_country(db, "::ffff:198.51.100.1") == "IT" &&
+                  sf::geoip::find_country(db, "2001:db8::1") == "IT", "GeoIP IPv6 and mapped IPv4");
+            check(sf::geoip::find_country(db, "203.0.113.1") == "IT" &&
+                  sf::geoip::find_country(db, "192.0.2.1").empty() &&
+                  sf::geoip::find_country(db, "invalid").empty(), "GeoIP fallback and invalid input");
+            sf::geoip::set_directory(directory);
+            sf::geoip::prepare_peer_flags();
+            sf::geoip::set_directory("");
+            check(sf::geoip::peer_flag("198.51.100.1").empty(), "GeoIP disable clears active data");
+            sf::geoip::set_directory(directory);
+            bool ready = false;
+            auto const deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            while (!(ready = sf::geoip::prepare_peer_flags()) && std::chrono::steady_clock::now() < deadline)
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            check(ready && !sf::geoip::peer_flag("198.51.100.1").empty(), "GeoIP cancel and reload");
+            sf::geoip::set_directory("");
+            check(!sf::geoip::resolver().active && !sf::geoip::resolver().pending, "GeoIP releases database");
+            sf::AppSettings loaded;
+            libtorrent::entry settings(libtorrent::entry::dictionary_t);
+            settings["show_peer_flags"] = 1;
+            settings["geoip_dir"] = directory;
+            std::vector<char> encoded;
+            libtorrent::bencode(std::back_inserter(encoded), settings);
+            check(sf::parse_settings(encoded, loaded) && loaded.show_peer_flags && loaded.geoip_dir == directory,
+                  "GeoIP preferences load");
+            settings.dict().clear();
+            encoded.clear();
+            libtorrent::bencode(std::back_inserter(encoded), settings);
+            check(sf::parse_settings(encoded, loaded) && !loaded.show_peer_flags && loaded.geoip_dir.empty(),
+                  "GeoIP older settings remain supported");
+        }
         {
             FileFixture fixture(std::filesystem::path(argv[1]).parent_path());
             auto path = fixture.folder / L"settings.dat";

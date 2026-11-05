@@ -21,6 +21,7 @@ SeedFlow viene distribuito come **un solo eseguibile statico**: non servono DLL 
 - **Scaricare e condividere:** apri file `.torrent` o magnet, scegli la cartella, imposta priorità ai file e segui download e seeding.
 - **Creare torrent:** genera metadati v1, v2 o ibridi da file e cartelle; aggiungi tracker, web seed e commenti.
 - **Gestire la rete:** controlla peer e tracker, usa DHT, PeX, IPv4/IPv6, UPnP e NAT-PMP.
+- **Riconoscere i peer:** bandierine opzionali con database GeoLite2 Country CSV locale e caricamento in background.
 - **Tenere sotto controllo l’attività:** consulta velocità, statistiche, salute dei torrent e grafici globali o per torrent.
 - **Gestire il seeding:** imposta obiettivi di ratio, usa il super-seeding e organizza i torrent con code e limiti di banda.
 
@@ -40,6 +41,12 @@ Serve Windows 10 o 11 a 64 bit.
 
 Per aggiornare, chiudi SeedFlow e sostituisci l’eseguibile. Torrent e impostazioni restano in `%LOCALAPPDATA%\SeedFlow\State`.
 
+L'installer `SeedFlow-<versione>-win64-setup.exe` offre una GUI nativa Win32 e installa il programma in `%LOCALAPPDATA%\Programs\SeedFlow`. Puoi registrare SeedFlow per i file torrent e i link magnet e aggiungere il collegamento desktop. Se esiste già un'app predefinita, scegli SeedFlow nelle impostazioni Windows aperte al termine. La disinstallazione è disponibile in Impostazioni > App e conserva download e impostazioni personali.
+
+### Bandierine dei peer
+
+In **Preferenze > Generale**, abilita le bandierine e seleziona la cartella dei CSV GeoLite2 Country forniti da MaxMind. Servono `GeoLite2-Country-Locations-en.csv` e i blocchi `GeoLite2-Country-Blocks-IPv4.csv` e `GeoLite2-Country-Blocks-IPv6.csv`. Il database va scaricato separatamente rispettando le condizioni del fornitore. La ricerca avviene sul PC. Disattivando l'opzione, SeedFlow libera indice e cache e annulla l'eventuale caricamento.
+
 ## Compilazione
 
 Sono richiesti Visual Studio 2026 o 2022 con MSVC x64 e Windows SDK, CMake 4.2 o successivo con VS 2026, e Git. Il progetto usa C++20.
@@ -52,7 +59,7 @@ La configurazione predefinita produce un eseguibile statico x64 con runtime `/MT
 
 ## Verifiche
 
-La build 0.8.8 è stata compilata con Visual Studio 2026 e ha superato entrambi i test CTest. [VERIFICA.txt](VERIFICA.txt) riporta copertura e verifiche non eseguite.
+La 0.8.9.4 è stata compilata con Visual Studio 2026 e ha superato i tre test CTest del motore, della GUI e dell'installer. [VERIFICA.txt](VERIFICA.txt) descrive la copertura e i controlli manuali.
 
 ## Licenza
 

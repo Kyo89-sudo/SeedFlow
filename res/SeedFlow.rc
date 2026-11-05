@@ -226,6 +226,10 @@ BEGIN
     AUTOCHECKBOX    "Totali e ratio", IDC_SB_TOTALS, 140, 184, 128, 10
     AUTOCHECKBOX    "Memoria (RAM)", IDC_SB_RAM, 140, 198, 128, 10
     LTEXT           "Senza voci la barra viene nascosta.", -1, 8, 212, 260, 9
+    GROUPBOX        "Elenco peer", -1, 0, 228, 276, 42
+    AUTOCHECKBOX    "Mostra bandierine (database GeoLite2 locale)", IDC_PEERFLAGS, 8, 237, 260, 10
+    EDITTEXT        IDC_GEOIPDIR, 8, 251, 206, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Sfoglia...", IDC_GEOIPBROWSE, 218, 250, 50, 15
 END
 
 IDD_PG_FOLDERS DIALOGEX 0, 0, 276, 272
