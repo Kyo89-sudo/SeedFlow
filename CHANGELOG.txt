@@ -1,5 +1,14 @@
 SeedFlow — Changelog
 
+0.8.9.5 — 2026-11-05
+
+- Corretta la barra dell'installer: avanzamento determinato dalla copia
+  dei file e dalle fasi di registrazione e creazione dei collegamenti.
+- La barra arriva al 100% quando l'operazione riesce; in caso di errore
+  conserva l'avanzamento raggiunto e segnala il fallimento.
+- Aggiunti controlli sulla progressione, sull'aggiornamento con file bloccato
+  e sulla visualizzazione del 100% nella finestra.
+
 0.8.9.4 — 2026-11-05
 
 - Installer nativo C++/Win32 con logo SeedFlow, installazione per utente,

@@ -59,7 +59,7 @@ La configurazione predefinita produce un eseguibile statico x64 con runtime `/MT
 
 ## Verifiche
 
-La 0.8.9.4 è stata compilata con Visual Studio 2026 e ha superato i tre test CTest del motore, della GUI e dell'installer. [VERIFICA.txt](VERIFICA.txt) descrive la copertura e i controlli manuali.
+La 0.8.9.5 è stata compilata con Visual Studio 2026 e ha superato i tre test CTest del motore, della GUI e dell'installer. [VERIFICA.txt](VERIFICA.txt) descrive la copertura e i controlli manuali.
 
 ## Licenza
 

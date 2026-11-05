@@ -10,12 +10,15 @@
 #include <string>
 #include <thread>
 #include <stdexcept>
+#include <algorithm>
+#include <vector>
 #include "version.h"
 
 namespace fs = std::filesystem;
 namespace {
 constexpr wchar_t kInstallKey[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\SeedFlow";
 constexpr UINT kComplete = WM_APP + 1;
+constexpr UINT kProgress = WM_APP + 2;
 HWND window, status_label, primary, torrent_box, magnet_box, desktop_box, defaults_box, progress;
 HFONT normal_font, title_font;
 HICON logo;
@@ -26,7 +29,15 @@ fs::path destination;
 std::wstring result_message;
 #ifdef SF_INSTALLER_TEST
 fs::path test_root;
+std::vector<int> progress_events;
 #endif
+
+void report_progress(int percent, wchar_t const* stage) {
+#ifdef SF_INSTALLER_TEST
+    progress_events.push_back(percent);
+#endif
+    if (window) PostMessageW(window, kProgress, static_cast<WPARAM>(percent), reinterpret_cast<LPARAM>(stage));
+}
 
 std::wstring quote(std::wstring const& value) {
     // Paths created here contain no quotes and never end with a separator.
@@ -79,7 +90,8 @@ void delete_value(wchar_t const* key, wchar_t const* name) {
         RegCloseKey(handle);
     }
 }
-void extract(int id, fs::path const& path) {
+void extract(int id, fs::path const& path, int first, int last, wchar_t const* stage) {
+    report_progress(first, stage);
     HRSRC resource = FindResourceW(instance, MAKEINTRESOURCEW(id), RT_RCDATA);
     if (!resource) throw std::runtime_error("Embedded payload missing");
     auto data = LockResource(LoadResource(instance, resource));
@@ -88,13 +100,26 @@ void extract(int id, fs::path const& path) {
     fs::path temporary = path.wstring() + L"." + std::to_wstring(GetCurrentProcessId()) + L".tmp";
     HANDLE file = CreateFileW(temporary.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) throw std::runtime_error("Cannot create payload");
-    DWORD written = 0;
-    bool const saved = WriteFile(file, data, size, &written, nullptr) && written == size && FlushFileBuffers(file);
+    DWORD copied = 0;
+    bool saved = true;
+    while (copied < size) {
+        DWORD written = 0;
+        DWORD const chunk = std::min<DWORD>(size - copied, 256 * 1024);
+        if (!WriteFile(file, static_cast<BYTE const*>(data) + copied, chunk, &written, nullptr) || written != chunk) {
+            saved = false;
+            break;
+        }
+        copied += written;
+        int const percent = first + static_cast<int>(static_cast<ULONGLONG>(copied) * (last - first - 1) / size);
+        report_progress(percent, stage);
+    }
+    saved = saved && FlushFileBuffers(file);
     CloseHandle(file);
     if (!saved || !MoveFileExW(temporary.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
         DeleteFileW(temporary.c_str());
         throw std::runtime_error("Cannot replace payload. Close SeedFlow and retry.");
     }
+    report_progress(last, stage);
 }
 void shortcut(fs::path const& path) {
     IShellLinkW* link = nullptr;
@@ -117,11 +142,13 @@ void register_type(wchar_t const* name, wchar_t const* description, bool protoco
     registry(key + L"\\shell\\open\\command", nullptr, quote((destination / L"SeedFlow.exe").wstring()) + L" \"%1\"");
 }
 void install(bool torrent, bool magnet, bool desktop) {
+    report_progress(0, L"Preparazione della cartella…");
     fs::create_directories(destination);
-    extract(201, destination / L"SeedFlow.exe");
-    extract(202, destination / L"Uninstall.exe");
-    extract(203, destination / L"LICENSE");
-    extract(204, destination / L"ThirdPartyNotices.txt");
+    extract(201, destination / L"SeedFlow.exe", 0, 65, L"Copia di SeedFlow…");
+    extract(202, destination / L"Uninstall.exe", 65, 75, L"Copia del disinstallatore…");
+    extract(203, destination / L"LICENSE", 75, 78, L"Copia della licenza…");
+    extract(204, destination / L"ThirdPartyNotices.txt", 78, 82, L"Copia degli avvisi delle dipendenze…");
+    report_progress(82, L"Registrazione in Windows…");
     if (torrent) {
         register_type(L"SeedFlow.Torrent", L"File BitTorrent", false);
         registry(L"Software\\Classes\\.torrent\\OpenWithProgids", L"SeedFlow.Torrent", L"");
@@ -141,13 +168,16 @@ void install(bool torrent, bool magnet, bool desktop) {
     registry(kInstallKey, L"InstallLocation", destination.wstring());
     registry(kInstallKey, L"UninstallString", quote((destination / L"Uninstall.exe").wstring()));
     registry(kInstallKey, L"URLInfoAbout", L"https://github.com/Kyo89-sudo/SeedFlow");
+    report_progress(92, L"Creazione dei collegamenti…");
     fs::path const menu = known_folder(FOLDERID_Programs) / L"SeedFlow";
     fs::create_directories(menu);
     shortcut(menu / L"SeedFlow.lnk");
     if (desktop) shortcut(known_folder(FOLDERID_Desktop) / L"SeedFlow.lnk");
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
+    report_progress(100, L"Installazione completata.");
 }
 void uninstall() {
+    report_progress(0, L"Controllo dell'installazione…");
     // Remove only our known files, never the download/state folders or recursively.
     if (registry_text(kInstallKey, L"InstallLocation") != destination.wstring())
         throw std::runtime_error("Installation location mismatch");
@@ -156,18 +186,21 @@ void uninstall() {
         if (!DeleteFileW(path.c_str()) && GetLastError() != ERROR_FILE_NOT_FOUND)
             throw std::runtime_error("Close SeedFlow before uninstalling");
     }
+    report_progress(50, L"Rimozione della registrazione Windows…");
     RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\SeedFlow.Torrent");
     RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\Classes\\SeedFlow.Magnet");
     delete_value(L"Software\\Classes\\.torrent\\OpenWithProgids", L"SeedFlow.Torrent");
     RegDeleteTreeW(HKEY_CURRENT_USER, L"Software\\SeedFlow\\Capabilities");
     delete_value(L"Software\\RegisteredApplications", L"SeedFlow");
     RegDeleteTreeW(HKEY_CURRENT_USER, kInstallKey);
+    report_progress(85, L"Rimozione dei collegamenti…");
     auto menu = known_folder(FOLDERID_Programs) / L"SeedFlow";
     DeleteFileW((menu / L"SeedFlow.lnk").c_str());
     RemoveDirectoryW(menu.c_str());
     DeleteFileW((known_folder(FOLDERID_Desktop) / L"SeedFlow.lnk").c_str());
     RemoveDirectoryW(destination.c_str());
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
+    report_progress(100, L"Disinstallazione completata.");
 }
 HWND control(wchar_t const* type, wchar_t const* text, DWORD style, int x, int y, int w, int h, int id) {
     HWND item = CreateWindowExW(0, type, text, WS_CHILD | WS_VISIBLE | style, x, y, w, h, window,
@@ -198,7 +231,8 @@ LRESULT CALLBACK procedure(HWND hwnd, UINT message, WPARAM wp, LPARAM lp) {
         SendMessageW(defaults_box, BM_SETCHECK, BST_CHECKED, 0);
 #endif
         status_label = control(L"STATIC", L"Pronto", 0, 28, 366, 590, 44, 0);
-        progress = control(PROGRESS_CLASSW, L"", PBS_MARQUEE, 28, 422, 360, 10, 0);
+        progress = control(PROGRESS_CLASSW, L"", 0, 28, 425, 400, 18, 0);
+        SendMessageW(progress, PBM_SETRANGE32, 0, 100);
 #ifdef SF_UNINSTALLER
         primary = control(L"BUTTON", L"Disinstalla", BS_DEFPUSHBUTTON | WS_TABSTOP, 462, 416, 156, 36, 1);
 #else
@@ -243,7 +277,8 @@ LRESULT CALLBACK procedure(HWND hwnd, UINT message, WPARAM wp, LPARAM lp) {
             busy = true;
             for (HWND item : {primary, torrent_box, magnet_box, desktop_box, defaults_box}) if (item) EnableWindow(item, FALSE);
             SetWindowTextW(status_label, L"Operazione in corso…");
-            SendMessageW(progress, PBM_SETMARQUEE, TRUE, 24);
+            SendMessageW(progress, PBM_SETPOS, 0, 0);
+            SendMessageW(progress, PBM_SETSTATE, PBST_NORMAL, 0);
             worker = std::jthread([torrent, magnet, desktop, hwnd] {
                 HRESULT const com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
                 bool success = false;
@@ -263,14 +298,25 @@ LRESULT CALLBACK procedure(HWND hwnd, UINT message, WPARAM wp, LPARAM lp) {
             });
         }
         return 0;
+    case kProgress:
+        if (busy) {
+            SendMessageW(progress, PBM_SETPOS, wp, 0);
+            std::wstring const label = std::wstring(reinterpret_cast<wchar_t const*>(lp)) + L"  " + std::to_wstring(wp) + L"%";
+            SetWindowTextW(status_label, label.c_str());
+        }
+        return 0;
     case kComplete:
         worker.join();
         busy = false;
         finished = wp != 0;
-        SendMessageW(progress, PBM_SETMARQUEE, FALSE, 0);
+        if (finished) SendMessageW(progress, PBM_SETPOS, 100, 0);
+        SendMessageW(progress, PBM_SETSTATE, finished ? PBST_NORMAL : PBST_ERROR, 0);
         SetWindowTextW(status_label, result_message.c_str());
         SetWindowTextW(primary, finished ? L"Chiudi" : L"Riprova");
         EnableWindow(primary, TRUE);
+        if (!finished) {
+            for (HWND item : {torrent_box, magnet_box, desktop_box, defaults_box}) if (item) EnableWindow(item, TRUE);
+        }
 #ifndef SF_UNINSTALLER
         if (finished && SendMessageW(defaults_box, BM_GETCHECK, 0, 0) == BST_CHECKED)
             ShellExecuteW(hwnd, L"open", L"ms-settings:defaultapps", nullptr, nullptr, SW_SHOWNORMAL);

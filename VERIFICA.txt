@@ -1,4 +1,10 @@
-VERIFICHE SeedFlow 0.8.9.4 - 05/11/2026
+VERIFICHE SeedFlow 0.8.9.5 - 05/11/2026
+
+- Barra installer: controllo della progressione monotona fino al 100%,
+  errore con destinazione bloccata, stato di disinstallazione e visualizzazione
+  del valore sul controllo Win32 in una finestra di test nascosta.
+- CTest 3/3 superati anche sulla 0.8.9.5. La verifica visiva della GUI
+  sobria descritta sotto è stata eseguita sulla 0.8.9.4.
 
 - Build Release x64 con Visual Studio 2026, MSVC 14.51, C++20, runtime
   statico /MT, libtorrent 2.1.2.0 e OpenSSL 3.6.5 dalle dipendenze locali.

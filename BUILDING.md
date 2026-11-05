@@ -1,4 +1,4 @@
-# Compilazione SeedFlow 0.8.9.4 (C++20)
+# Compilazione SeedFlow 0.8.9.5 (C++20)
 
 Per produrre l'installer nativo, dopo la configurazione e la build del programma:
 
@@ -42,4 +42,4 @@ ctest --test-dir build-win32 -C Release --output-on-failure
 
 I sorgenti e le risorse sono UTF-8; MSVC usa `/utf-8`, rc `/c65001`. Le icone sono già incluse: non occorre rigenerarle per compilare. Per modificarle: `python tools/make_icons.py` con Playwright e Chromium disponibili.
 
-Il progetto richiede C++20. La versione condivisa è in `src/version.h`, FileVersion `0.8.9.4`. Consulta [VERIFICA.txt](VERIFICA.txt) per le verifiche effettivamente eseguite e [BUILD-STATIC-RECIPE.txt](BUILD-STATIC-RECIPE.txt) per le dipendenze della build consegnata.
+Il progetto richiede C++20. La versione condivisa è in `src/version.h`, FileVersion `0.8.9.5`. Consulta [VERIFICA.txt](VERIFICA.txt) per le verifiche effettivamente eseguite e [BUILD-STATIC-RECIPE.txt](BUILD-STATIC-RECIPE.txt) per le dipendenze della build consegnata.
