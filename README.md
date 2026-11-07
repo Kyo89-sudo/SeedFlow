@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/seedflow-banner.svg" alt="SeedFlow — client BitTorrent nativo per Windows" width="100%">
+<img src="docs/seedflow-banner.svg?v=2" alt="SeedFlow — client BitTorrent nativo per Windows" width="100%">
 
 <br>
 
@@ -55,7 +55,7 @@ Basato su libtorrent 2.1 e C++20, distribuito come un solo eseguibile statico.
 ## Uno sguardo
 
 <p align="center">
-<a href="docs/seedflow-main-window.png"><img src="docs/seedflow-main-window.png" alt="Finestra principale di SeedFlow" width="900"></a>
+<a href="docs/seedflow-main-window.png"><img src="docs/seedflow-main-window.png?v=2" alt="Finestra principale di SeedFlow" width="900"></a>
 </p>
 
 ## Installazione
