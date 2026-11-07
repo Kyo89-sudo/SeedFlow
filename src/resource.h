@@ -9,6 +9,7 @@
 #define IDR_CTX_FILE            104
 #define IDR_CTX_TRAY            105
 #define IDR_ICONS_BASE          2000   // + strip size in px (RCDATA PNG)
+#define IDR_FLAGS               2200   // country flag atlas (RCDATA PNG, tools/make_flags.py)
 
 // Commands
 #define ID_FILE_OPEN            1001

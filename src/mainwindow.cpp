@@ -570,25 +570,38 @@ static void refresh_trackers(int id) {
     pseudo(L"** [LSD] **", g.settings.lsd);
     sync_listview(g.trackers, keys, cells, images);
 }
+// Attaches the flag image list to the Peer list while the option is on; detaching frees it.
+static HIMAGELIST peer_images = nullptr;
+static void attach_peer_flags(bool on) {
+    if (on && !g.il_flags) g.il_flags = icons::make_flag_imagelist(scale(16));
+    HIMAGELIST const want = on ? g.il_flags : nullptr;
+    if (want != peer_images) {
+        ListView_SetImageList(g.peers, want, LVSIL_SMALL);
+        peer_images = want;
+        lv_keys[g.peers].clear();   // reinsert the rows so the IP column gains or loses the flag slot
+    }
+    if (!on && g.il_flags) { ImageList_Destroy(g.il_flags); g.il_flags = nullptr; }
+}
 static void refresh_peers(int id) {
+    attach_peer_flags(g.settings.show_peer_flags);
     if (!id) { clear_listview(g.peers); return; }
     auto list = g.engine.peers(id);
-    bool const show_flags = g.settings.show_peer_flags && !list.empty() && geoip::prepare_peer_flags();
+    bool const flags_ready = g.settings.show_peer_flags && !list.empty() && geoip::prepare_peer_flags();
     std::sort(list.begin(), list.end(), [](PeerView const& a, PeerView const& b) { return a.down + a.up > b.down + b.up; });
     std::vector<std::wstring> keys;
     std::vector<std::vector<std::wstring>> cells;
+    std::vector<int> images;   // flag index per peer; I_IMAGENONE when unknown or still loading
     for (auto const& p : list) {
         std::wstring flags = std::wstring(p.incoming ? L"I" : L"O") + (p.encrypted ? L"E" : L"") + (p.utp ? L"P" : L"") + (p.seed ? L"S" : L"");
         keys.push_back(widen(p.address) + L":" + std::to_wstring(p.port));
-        std::wstring address = widen(p.address);
-        if (show_flags) {
-            auto country_flag = geoip::peer_flag(p.address);
-            if (!country_flag.empty()) address = country_flag + L" " + address;
+        if (peer_images) {
+            int const flag = flags_ready ? icons::flag_index(geoip::peer_country(p.address)) : -1;
+            images.push_back(flag >= 0 ? flag : I_IMAGENONE);   // never -1: that is I_IMAGECALLBACK
         }
-        cells.push_back({std::move(address), widen(p.client), flags, fmt_double(p.progress * 100, 1) + L"%",
+        cells.push_back({widen(p.address), widen(p.client), flags, fmt_double(p.progress * 100, 1) + L"%",
             fmt_speed(p.down), fmt_speed(p.up), fmt_bytes(p.total_down), fmt_bytes(p.total_up)});
     }
-    sync_listview(g.peers, keys, cells);
+    sync_listview(g.peers, keys, cells, images);
 }
 static wchar_t const* prio_label(int p) { return p == 0 ? L"Non scaricare" : p <= 1 ? L"Bassa" : p >= 7 ? L"Alta" : L"Normale"; }
 static std::vector<FileView> last_files;
@@ -1776,7 +1789,7 @@ static void create_children(HWND hwnd) {
     ListView_SetImageList(g.trackers, g.il_small, LVSIL_SMALL);
     add_columns(g.trackers, {{L"URL", 300}, {L"Tier", -38}, {L"Stato", 100}, {L"Seed", -56}, {L"Peer", -56},
         {L"Completati", -70}, {L"Prossimo", -70}, {L"Messaggio", 260}});
-    g.peers = make_listview(hwnd, 0, 502);
+    g.peers = make_listview(hwnd, LVS_SHAREIMAGELISTS, 502);   // flag image list owned by SeedFlow
     add_columns(g.peers, {{L"IP", 140}, {L"Client", 170}, {L"Flag", 50}, {L"%", -56}, {L"↓", -80}, {L"↑", -80},
         {L"Scaricati", -80}, {L"Caricati", -80}});
     g.files = make_listview(hwnd, 0, 503);
@@ -1795,6 +1808,7 @@ static void apply_fonts_after_dpi() {
     create_fonts();
     icons::trim_cache();    // drop the strips decoded for the old DPI before decoding the new sizes
     create_imagelists();
+    attach_peer_flags(false);   // rebuilt at the new size on the next Peer refresh
     name_user_width = g.settings.name_width > 0 ? scale(g.settings.name_width) : 0;   // rescaled to the new DPI
     status_need.clear();    // re-measure the status bar parts with the new font
     status_mask = -1;

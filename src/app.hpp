@@ -71,6 +71,7 @@ struct App {
     HFONT font = nullptr, bold = nullptr, mono = nullptr, big = nullptr;
     HIMAGELIST il_main_bar = nullptr;   // main toolbar: icon-only, 20 px at 96 DPI
     HIMAGELIST il_toolbar = nullptr, il_states = nullptr, il_filters = nullptr, il_small = nullptr;
+    HIMAGELIST il_flags = nullptr;      // peer country flags: built only while the option is on
     HICON app_icon = nullptr, app_icon_small = nullptr, net_icon = nullptr;
     HTHEME list_theme = nullptr;    // cached for the custom-drawn cells; reset on WM_THEMECHANGED
     HACCEL accel = nullptr;

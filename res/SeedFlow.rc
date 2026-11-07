@@ -16,6 +16,9 @@ IDI_APP ICON "SeedFlow.ico"
 2032 RCDATA "icons/strip32.png"
 2040 RCDATA "icons/strip40.png"
 2048 RCDATA "icons/strip48.png"
+
+// Bandierine dei peer (flag-icons, MIT) - atlante generato da tools/make_flags.py
+IDR_FLAGS RCDATA "flags/flags.png"
 1 24 "SeedFlow.manifest"
 
 VS_VERSION_INFO VERSIONINFO

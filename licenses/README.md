@@ -8,5 +8,6 @@ I componenti di terze parti mantengono i rispettivi avvisi e licenze:
 - Boost: [Boost.txt](Boost.txt).
 - OpenSSL: [OpenSSL.txt](OpenSSL.txt).
 - try_signal: [try_signal.txt](try_signal.txt).
+- flag-icons (bandierine della scheda Peer): [flag-icons.txt](flag-icons.txt).
 
 Conservare questi avvisi nelle distribuzioni. La licenza di SeedFlow non sostituisce le licenze dei componenti di terze parti.

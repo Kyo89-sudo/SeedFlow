@@ -2,6 +2,7 @@
 // premultiplied BGRA; sizes without a strip are area-resampled from the next larger one.
 #include "icons.hpp"
 #include "resource.h"
+#include "flag_codes.hpp"
 #include <wincodec.h>
 #include <shlwapi.h>
 #include <algorithm>
@@ -23,8 +24,9 @@ std::map<int, Strip> g_cache;
 
 template <class T> void release(T*& p) { if (p) { p->Release(); p = nullptr; } }
 
-bool decode(int size, Strip& out) {
-    HRSRC res = FindResourceW(nullptr, MAKEINTRESOURCEW(IDR_ICONS_BASE + size), MAKEINTRESOURCEW(10) /*RT_RCDATA*/);
+// Decodes an RCDATA PNG into premultiplied BGRA; fails unless it is exactly width x height.
+bool decode_png(int id, int width, int height, std::vector<std::uint32_t>& out) {
+    HRSRC res = FindResourceW(nullptr, MAKEINTRESOURCEW(id), MAKEINTRESOURCEW(10) /*RT_RCDATA*/);
     if (!res) return false;
     HGLOBAL h = LoadResource(nullptr, res);
     auto const* data = static_cast<BYTE const*>(LockResource(h));
@@ -44,14 +46,43 @@ bool decode(int size, Strip& out) {
         && SUCCEEDED(conv->Initialize(frame, kPbgra32, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeCustom))) {
         UINT w = 0, hh = 0;
         conv->GetSize(&w, &hh);
-        if (static_cast<int>(w) == size * IcCount && static_cast<int>(hh) == size) {
-            out.size = size;
-            out.px.assign(static_cast<std::size_t>(w) * hh, 0);
-            ok = SUCCEEDED(conv->CopyPixels(nullptr, w * 4, w * hh * 4, reinterpret_cast<BYTE*>(out.px.data())));
+        if (static_cast<int>(w) == width && static_cast<int>(hh) == height) {
+            out.assign(static_cast<std::size_t>(w) * hh, 0);
+            ok = SUCCEEDED(conv->CopyPixels(nullptr, w * 4, w * hh * 4, reinterpret_cast<BYTE*>(out.data())));
         }
     }
     release(conv); release(frame); release(dec); release(stream); release(f);
+    if (!ok) out.clear();
     return ok;
+}
+bool decode(int size, Strip& out) {
+    if (!decode_png(IDR_ICONS_BASE + size, size * IcCount, size, out.px)) return false;
+    out.size = size;
+    return true;
+}
+
+// Area-weighted resampling of a sw x sh block (premultiplied channels, no fringes) into
+// dw x dh pixels written at dst[dy * dst_stride + dx].
+void resample(std::uint32_t const* src, int src_stride, int sw, int sh,
+              std::uint32_t* dst, int dst_stride, int dw, int dh) {
+    double kx = static_cast<double>(sw) / dw, ky = static_cast<double>(sh) / dh;
+    for (int y = 0; y < dh; ++y)
+        for (int x = 0; x < dw; ++x) {
+            double sy0 = y * ky, sy1 = (y + 1) * ky, sx0 = x * kx, sx1 = (x + 1) * kx, acc[4] = {0, 0, 0, 0}, area = 0;
+            for (int sy = static_cast<int>(sy0); sy < sh && sy < sy1; ++sy) {
+                double wy = std::min<double>(sy + 1, sy1) - std::max<double>(sy, sy0);
+                for (int sx = static_cast<int>(sx0); sx < sw && sx < sx1; ++sx) {
+                    double w = wy * (std::min<double>(sx + 1, sx1) - std::max<double>(sx, sx0));
+                    std::uint32_t p = src[static_cast<std::size_t>(sy) * src_stride + sx];
+                    for (int c = 0; c < 4; ++c) acc[c] += w * ((p >> (c * 8)) & 0xFF);
+                    area += w;
+                }
+            }
+            std::uint32_t v = 0;
+            if (area > 0)
+                for (int c = 0; c < 4; ++c) v |= static_cast<std::uint32_t>(std::clamp(acc[c] / area + 0.5, 0.0, 255.0)) << (c * 8);
+            dst[static_cast<std::size_t>(y) * dst_stride + x] = v;
+        }
 }
 
 Strip const* strip(int size) {
@@ -80,24 +111,7 @@ std::vector<std::uint32_t> pixels(Id id, int size) {
             std::copy_n(&st->px[static_cast<std::size_t>(y) * stride + x0], size, &out[static_cast<std::size_t>(y) * size]);
         return out;
     }
-    // Area-weighted resampling on premultiplied channels (no fringes).
-    double k = static_cast<double>(src) / size;
-    for (int y = 0; y < size; ++y)
-        for (int x = 0; x < size; ++x) {
-            double sy0 = y * k, sy1 = (y + 1) * k, sx0 = x * k, sx1 = (x + 1) * k, acc[4] = {0, 0, 0, 0}, area = 0;
-            for (int sy = static_cast<int>(sy0); sy < src && sy < sy1; ++sy) {
-                double wy = std::min<double>(sy + 1, sy1) - std::max<double>(sy, sy0);
-                for (int sx = static_cast<int>(sx0); sx < src && sx < sx1; ++sx) {
-                    double w = wy * (std::min<double>(sx + 1, sx1) - std::max<double>(sx, sx0));
-                    std::uint32_t p = st->px[static_cast<std::size_t>(sy) * stride + x0 + sx];
-                    for (int c = 0; c < 4; ++c) acc[c] += w * ((p >> (c * 8)) & 0xFF);
-                    area += w;
-                }
-            }
-            std::uint32_t v = 0;
-            for (int c = 0; c < 4; ++c) v |= static_cast<std::uint32_t>(std::clamp(acc[c] / area + 0.5, 0.0, 255.0)) << (c * 8);
-            out[static_cast<std::size_t>(y) * size + x] = v;
-        }
+    resample(&st->px[static_cast<std::size_t>(x0)], stride, src, src, out.data(), size, size, size);
     return out;
 }
 
@@ -169,6 +183,50 @@ HICON make_icon(Id id, int size, COLORREF badge) {
     DeleteObject(color);
     DeleteObject(mask);
     return icon;
+}
+
+int flag_index(std::string_view code) {
+    if (code.size() != 2) return -1;
+    char const a = static_cast<char>(code[0] & ~0x20), b = static_cast<char>(code[1] & ~0x20);   // upper case
+    int lo = 0, hi = kFlagCount - 1;
+    while (lo <= hi) {
+        int const mid = (lo + hi) / 2;
+        char const* c = kFlagCodes + mid * 2;
+        int const order = c[0] != a ? c[0] - a : c[1] - b;
+        if (order == 0) return mid;
+        if (order < 0) lo = mid + 1; else hi = mid - 1;
+    }
+    return -1;
+}
+
+HIMAGELIST make_flag_imagelist(int size) {
+    if (size <= 0 || size > 256) return nullptr;
+    int const atlas_w = kFlagColumns * kFlagCellW;
+    int const atlas_h = (kFlagCount + kFlagColumns - 1) / kFlagColumns * kFlagCellH;
+    std::vector<std::uint32_t> atlas;
+    if (!decode_png(IDR_FLAGS, atlas_w, atlas_h, atlas)) return nullptr;
+    int const fw = size, fh = std::max(1, (size * 3 + 2) / 4), top = (size - fh) / 2;
+    HIMAGELIST il = ImageList_Create(size, size, ILC_COLOR32, kFlagCount, 0);
+    if (!il) return nullptr;
+    std::vector<std::uint32_t> cell(static_cast<std::size_t>(size) * size);
+    for (int i = 0; i < kFlagCount; ++i) {
+        std::fill(cell.begin(), cell.end(), 0u);
+        std::uint32_t* flag = &cell[static_cast<std::size_t>(top) * size];
+        int const sx = (i % kFlagColumns) * kFlagCellW, sy = (i / kFlagColumns) * kFlagCellH;
+        resample(&atlas[static_cast<std::size_t>(sy) * atlas_w + sx], atlas_w, kFlagCellW, kFlagCellH, flag, size, fw, fh);
+        // Thin dark outline so white or pale flags stay visible on the list background.
+        for (int y = 0; y < fh; ++y)
+            for (int x = 0; x < fw; ++x) {
+                if (x != 0 && y != 0 && x != fw - 1 && y != fh - 1) continue;
+                std::uint32_t& p = flag[static_cast<std::size_t>(y) * size + x];
+                auto dim = [&](int s) { return (((p >> s) & 0xFFu) * 200u / 255u) << s; };
+                p = (p & 0xFF000000u) | dim(16) | dim(8) | dim(0);
+            }
+        HBITMAP bmp = to_bitmap(cell, size, size);
+        ImageList_Add(il, bmp, nullptr);
+        DeleteObject(bmp);
+    }
+    return il;
 }
 
 HBITMAP make_menu_bitmap(Id id, int size) { return to_bitmap(pixels(id, size), size, size); }

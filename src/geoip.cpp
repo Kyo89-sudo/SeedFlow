@@ -27,7 +27,7 @@ struct NetworkHash {
 };
 struct Database {
     std::unordered_map<NetworkKey, std::string, NetworkHash> networks;
-    std::unordered_map<std::string, std::wstring> resolved;
+    std::unordered_map<std::string, std::string> resolved;
 };
 struct Resolver {
     std::string directory;
@@ -151,17 +151,6 @@ static std::string find_country(Database const& db, std::string const& text) {
     }
     return {};
 }
-static std::wstring flag(std::string const& code) {
-    if (code.size() != 2) return {};
-    std::wstring out;
-    for (unsigned char c : code) {
-        if (c < 'A' || c > 'Z') return {};
-        unsigned int const value = 0x1f1e6u + (c - 'A') - 0x10000;
-        out.push_back(static_cast<wchar_t>(0xd800 + (value >> 10)));
-        out.push_back(static_cast<wchar_t>(0xdc00 + (value & 0x3ff)));
-    }
-    return out;
-}
 void set_directory(std::string directory) {
     auto& state = resolver();
     if (state.directory == directory) return;
@@ -205,14 +194,14 @@ bool prepare_peer_flags() {
     }
     return state.active && !state.active->networks.empty();
 }
-std::wstring peer_flag(std::string const& address) {
+std::string peer_country(std::string const& address) {
     auto& state = resolver();
     if (!state.active) return {};
     auto& db = *state.active;
     auto found = db.resolved.find(address);
     if (found == db.resolved.end()) {
         if (db.resolved.size() >= 20000) db.resolved.clear();
-        found = db.resolved.emplace(address, flag(find_country(db, address))).first;
+        found = db.resolved.emplace(address, find_country(db, address)).first;
     }
     return found->second;
 }

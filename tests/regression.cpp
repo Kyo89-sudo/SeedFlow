@@ -3,6 +3,7 @@
 #include "../src/mainwindow.cpp"
 #include "../src/settings.cpp"
 #include "../src/geoip.cpp"
+#include "../src/flag_codes.hpp"
 #include "../src/creator.hpp"
 #include <fstream>
 #include <iostream>
@@ -68,13 +69,16 @@ int wmain(int argc, wchar_t** argv) {
             sf::geoip::set_directory(directory);
             sf::geoip::prepare_peer_flags();
             sf::geoip::set_directory("");
-            check(sf::geoip::peer_flag("198.51.100.1").empty(), "GeoIP disable clears active data");
+            check(sf::geoip::peer_country("198.51.100.1").empty(), "GeoIP disable clears active data");
             sf::geoip::set_directory(directory);
             bool ready = false;
             auto const deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
             while (!(ready = sf::geoip::prepare_peer_flags()) && std::chrono::steady_clock::now() < deadline)
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
-            check(ready && !sf::geoip::peer_flag("198.51.100.1").empty(), "GeoIP cancel and reload");
+            check(ready && sf::geoip::peer_country("198.51.100.1") == "IT", "GeoIP cancel and reload");
+            check(sf::icons::flag_index("IT") >= 0 && sf::icons::flag_index("it") == sf::icons::flag_index("IT") &&
+                  sf::icons::flag_index("AD") == 0 && sf::icons::flag_index("ZW") == sf::icons::kFlagCount - 1 &&
+                  sf::icons::flag_index("QQ") < 0 && sf::icons::flag_index("") < 0, "Flag codes lookup");
             sf::geoip::set_directory("");
             check(!sf::geoip::resolver().active && !sf::geoip::resolver().pending, "GeoIP releases database");
             sf::AppSettings loaded;
